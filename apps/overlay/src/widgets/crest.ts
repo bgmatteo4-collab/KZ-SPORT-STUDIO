@@ -35,7 +35,7 @@ export function paintCrest(el: HTMLElement, team: AnyTeam | undefined | null): v
 }
 
 /** Un maillot : rayé si l'équipe a deux couleurs, uni sinon. */
-export function jerseyEl(team: AnyTeam | undefined, keeper = false): HTMLElement {
+export function jerseyEl(team: AnyTeam | undefined, keeper = false, number?: number): HTMLElement {
   const wrap = h('div', { class: 'jersey' });
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', '0 0 40 36');
@@ -86,6 +86,25 @@ export function jerseyEl(team: AnyTeam | undefined, keeper = false): HTMLElement
   outline.setAttribute('stroke-width', '1.4');
 
   svg.append(clip, body, stripes, outline);
+
+  // Le numéro, s'il tient. En dessous de 40 px de maillot il devient illisible
+  // et on l'omet plutôt que de livrer une tache.
+  if (number !== undefined) {
+    const text = document.createElementNS(NS, 'text');
+    text.setAttribute('x', '20');
+    text.setAttribute('y', '26');
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('font-size', '13');
+    text.setAttribute('font-weight', '800');
+    text.setAttribute('font-family', 'Archivo, sans-serif');
+    text.setAttribute('fill', readable(keeper ? '#e8b45c' : base));
+    text.setAttribute('paint-order', 'stroke');
+    text.setAttribute('stroke', 'rgba(0,0,0,0.35)');
+    text.setAttribute('stroke-width', '2.5');
+    text.textContent = String(number);
+    svg.append(text);
+  }
+
   wrap.append(svg);
   return wrap;
 }

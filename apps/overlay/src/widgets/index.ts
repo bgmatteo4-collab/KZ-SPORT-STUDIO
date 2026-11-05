@@ -10,10 +10,12 @@ import { h } from '../dom.js';
 import { backdrop, camFrame, scoreRecap, social, streamCounters, title } from './chrome.js';
 import { flash } from './flash.js';
 import { lineups } from './lineups.js';
+import { momentum } from './momentum.js';
 import { multiplex } from './multiplex.js';
 import { odds } from './odds.js';
 import { prematch } from './prematch.js';
 import { radar2d } from './radar2d.js';
+import { sheet } from './sheet.js';
 import { scoreBanner } from './scoreBanner.js';
 import { standings } from './standings.js';
 import { stats } from './stats.js';
@@ -41,16 +43,20 @@ export const REGISTRY: Record<string, WidgetFactory> = {
   // Les panneaux
   stats,
   lineups,
+  // Deuxième entrée pour le même widget : le compositeur identifie une couche
+  // par sa clé, donc deux compositions à l'écran demandent deux clés.
+  'lineups-away': lineups,
   multiplex,
+  momentum,
   standings,
   odds,
   prematch,
   radar2d,
+  sheet,
 
   // À écrire
   radar3d: stub('radar3d'),
   ratings: stub('ratings'),
-  sheet: stub('sheet'),
   poll: stub('poll'),
 };
 

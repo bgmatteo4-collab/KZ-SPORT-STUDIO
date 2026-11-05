@@ -126,12 +126,21 @@ function syncScene(current: Scene): void {
 
   for (const spec of wanted) {
     const existing = mounted.get(spec.widget);
+
     if (existing) {
-      // Déjà à l'antenne : il se DÉPLACE, il ne réapparaît pas. C'est ce qui
-      // évite le clignotement du scorebug à chaque changement de scène.
-      existing.spec = spec;
-      placeHost(existing.host, spec);
-      continue;
+      if (sameOpts(existing.spec.opts, spec.opts)) {
+        // Déjà à l'antenne : il se DÉPLACE, il ne réapparaît pas. C'est ce qui
+        // évite le clignotement du scorebug à chaque changement de scène.
+        existing.spec = spec;
+        placeHost(existing.host, spec);
+        continue;
+      }
+      // Les options sont lues à la CONSTRUCTION du widget. Si elles changent
+      // d'une scène à l'autre, réutiliser l'instance lui laisserait celles de
+      // sa première scène — c'est comme ça qu'un banc de remplaçants disparaît.
+      existing.widget.destroy?.();
+      existing.host.remove();
+      mounted.delete(spec.widget);
     }
 
     const factory = REGISTRY[spec.widget];
@@ -175,6 +184,11 @@ function syncScene(current: Scene): void {
   } else if (camVideo.isConnected) {
     camVideo.remove();
   }
+}
+
+/** Deux jeux d'options sont-ils équivalents ? */
+function sameOpts(a: Record<string, unknown> | undefined, b: Record<string, unknown> | undefined): boolean {
+  return JSON.stringify(a ?? {}) === JSON.stringify(b ?? {});
 }
 
 function placeHost(host: HTMLElement, spec: SceneLayer): void {

@@ -18,7 +18,9 @@ export const standings: WidgetFactory = (): Widget => {
   ]);
   box.body.append(table);
 
-  let signature = '';
+  // `null` et non `''` : une liste vide produit la signature `''`, donc une
+  // sentinelle vide empêcherait le widget de dessiner son état vide.
+  let signature: string | null = null;
 
   return {
     el: box.el,

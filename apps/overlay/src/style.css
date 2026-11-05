@@ -311,6 +311,17 @@
 
 .banner__live[data-on='0'] { opacity: 0; }
 
+/* Sous la bannière, à gauche : au-dessus, l'écu du domicile occupe la place. */
+.banner__comp {
+  position: absolute;
+  bottom: 0;
+  left: var(--s3);
+  max-width: 420px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ═════════════════════════════ Statistiques ═══════════════════════════════ */
 
 .stats {
@@ -357,7 +368,14 @@
   color: var(--ink-soft);
 }
 
-.bars { display: flex; flex-direction: column; gap: var(--s3); }
+.bars {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  gap: var(--s3);
+  flex: 1;
+  min-height: 0;
+}
 
 .bar__label { display: block; text-align: center; margin-bottom: var(--s1); }
 
@@ -381,6 +399,22 @@
 
 .bar__num { position: relative; flex: 1; padding: 0 var(--s4); }
 .bar__num--away { text-align: right; }
+
+/* Deux colonnes dès qu'il y a plus de quatre lignes. */
+.bars--two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: space-evenly;
+  gap: var(--s3) var(--s5);
+}
+
+/* En grand, l'anneau et les barres respirent : les proportions d'un panneau
+   de colonne font maigre une fois étirées sur un demi-écran. */
+.stats--large .ring { padding: var(--s5) var(--s6); }
+.stats--large .ring__dial { width: 156px; height: 156px; }
+.stats--large .ring__label { max-width: 110px; font-size: 15px; }
+.stats--large .ring__value { font-size: 46px; }
+.stats--large .bar__track { height: 48px; }
 
 /* ═══════════════════════════ Compositions ═════════════════════════════════ */
 
@@ -420,6 +454,46 @@
   white-space: nowrap;
 }
 
+/* Un joueur sorti s'efface : l'information reste lisible sans le faire croire
+   encore sur le terrain. */
+.lineup__man[data-out='1'] { opacity: 0.45; }
+
+.lineup__coach {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  flex: none;
+  padding-top: var(--s3);
+}
+
+.lineup__coach-name { font-size: 18px; font-weight: 700; }
+
+.bench__wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex: none;
+  padding-top: var(--s3);
+  margin-top: var(--s3);
+  border-top: 1px solid var(--panel-line);
+}
+
+.bench { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s2); }
+
+.bench__man {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px var(--s2);
+  border-radius: var(--radius-pill);
+  background: var(--slab);
+  font-size: 15px;
+  font-weight: 600;
+  font-stretch: var(--width-tight);
+}
+
+.bench__man b { color: var(--ink-soft); font-weight: 700; font-variant-numeric: tabular-nums; }
+
 .lineup__mark { position: absolute; top: 2px; width: 8px; height: 11px; border-radius: 2px; }
 .lineup__mark--yellow { right: -4px; background: #ffd43b; }
 .lineup__mark--red { right: -4px; background: var(--lose); }
@@ -432,6 +506,105 @@
   border-right: 5px solid transparent;
   border-bottom: 8px solid var(--win);
 }
+
+/* ═════════════════════════════ Momentum ══════════════════════════════════ */
+
+.momentum {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex: 1;
+  min-height: 0;
+}
+
+.momentum__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  flex: none;
+}
+
+.momentum__team {
+  font-size: 17px;
+  font-weight: 700;
+  font-stretch: var(--width-tight);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.momentum__share { color: var(--ink); }
+
+.momentum__plot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: var(--radius-card);
+  background: var(--slab);
+  overflow: hidden;
+}
+.momentum__canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* ═════════════════════════ Feuille de match ══════════════════════════════ */
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sheet__empty { display: grid; place-items: center; flex: 1; }
+
+.sheet__row {
+  display: grid;
+  grid-template-columns: 1fr 64px 1fr;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.sheet__minute {
+  display: grid;
+  place-items: center;
+  height: 30px;
+  border-radius: var(--radius-pill);
+  background: var(--slab);
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.sheet__fact {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius-chip);
+  background: var(--slab);
+}
+
+.sheet__row[data-side='home'] .sheet__fact { flex-direction: row-reverse; text-align: right; }
+
+.sheet__mark { width: 9px; height: 13px; flex: none; border-radius: 2px; background: var(--ink); }
+.sheet__mark[data-kind='goal'] { border-radius: var(--radius-pill); }
+.sheet__mark[data-kind='card'] { background: #ffd43b; }
+.sheet__mark[data-kind='card-red'] { background: var(--lose); }
+.sheet__mark[data-kind='sub'] { background: var(--win); }
+
+.sheet__who {
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sheet__what { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ═════════════════════════════ Multiplex ══════════════════════════════════ */
 
@@ -490,6 +663,7 @@
 .table {
   display: flex;
   flex-direction: column;
+  justify-content: space-evenly;
   gap: var(--s1);
   flex: 1;
   min-height: 0;

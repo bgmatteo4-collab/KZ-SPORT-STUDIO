@@ -1,0 +1,68 @@
+<div class="page">
+  <header class="masthead">
+    <h1>KZ Studio</h1>
+    <p>
+      Le plateau d'habillage pour watchalongs football, rejouant un vrai match
+      enregistré. Tout tourne dans cette page : même timeline, même réducteur et
+      même horloge que ce qui sortirait dans OBS. Seule la caméra manque.
+    </p>
+  </header>
+
+  <div class="tv" id="tv"><div class="stage" id="stage"></div></div>
+
+  <div class="deck">
+    <div class="row">
+      <div class="row__head">
+        Lecture
+        <span class="row__note" id="readout">—</span>
+      </div>
+      <div class="transport">
+        <button id="play">Pause</button>
+        <div class="track">
+          <input id="scrub" type="range" min="0" max="100" value="0" step="1000"
+                 aria-label="Position dans le match" />
+          <div class="marks" id="marks"></div>
+        </div>
+        <div class="chips">
+          <button data-speed="1">x1</button>
+          <button data-speed="6">x6</button>
+          <button data-speed="30">x30</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row__head">Scènes</div>
+      <div class="chips" id="scenes"></div>
+    </div>
+
+    <div class="row">
+      <div class="row__head">Habillage</div>
+      <div class="chips" id="themes"></div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div>
+      <h2>Les points rouges</h2>
+      Chaque point sur la réglette est un but. Clique dessus pour y sauter : le
+      carton plein écran se déclenche trois secondes plus tard.
+    </div>
+    <div>
+      <h2>La case centrale</h2>
+      C'est <b>ta caméra</b>, logée dans le plateau. Un watchalong ne diffuse
+      jamais les images du match : le plateau raconte la rencontre par la donnée.
+    </div>
+    <div>
+      <h2>Les scènes</h2>
+      Les cinq premières gardent le plateau complet et ne changent que la
+      colonne de gauche. Les suivantes composent un grand panneau, un panneau
+      secondaire et la caméra en bas à droite.
+    </div>
+    <div>
+      <h2>Ce qui manque ici</h2>
+      La webcam, le décalage anti-spoiler et le pilotage par la régie — ils
+      demandent OBS et un serveur. Le reste est identique à l'antenne.
+    </div>
+  </div>
+</div>

@@ -92,6 +92,11 @@ function fit(): void {
 new ResizeObserver(fit).observe(tv);
 fit();
 
+/** Deux jeux d'options sont-ils équivalents ? */
+function sameOpts(a: Record<string, unknown> | undefined, b: Record<string, unknown> | undefined): boolean {
+  return JSON.stringify(a ?? {}) === JSON.stringify(b ?? {});
+}
+
 function placeHost(host: HTMLElement, spec: SceneLayer): void {
   const box = rectToPixels(spec.slot);
   host.style.left = `${box.x}px`;
@@ -134,10 +139,16 @@ function syncScene(): void {
   for (const spec of wanted) {
     const existing = mounted.get(spec.widget);
     if (existing) {
-      existing.spec = spec;
-      placeHost(existing.host, spec);
-      continue;
+      if (sameOpts(existing.spec.opts, spec.opts)) {
+        existing.spec = spec;
+        placeHost(existing.host, spec);
+        continue;
+      }
+      existing.widget.destroy?.();
+      existing.host.remove();
+      mounted.delete(spec.widget);
     }
+
     const factory = REGISTRY[spec.widget];
     if (!factory) continue;
 

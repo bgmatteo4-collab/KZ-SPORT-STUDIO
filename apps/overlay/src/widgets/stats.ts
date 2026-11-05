@@ -17,6 +17,7 @@ interface Row {
   format?: (v: number) => string;
 }
 
+/** L'essentiel, toujours affiché. */
 const ROWS: Row[] = [
   { label: 'Tirs (total)', read: (s) => s.stats.shots },
   { label: 'Tirs cadrés', read: (s) => s.stats.shotsOnTarget },
@@ -24,7 +25,17 @@ const ROWS: Row[] = [
   { label: 'xG', read: (s) => s.stats.xg, format: (v) => v.toFixed(2) },
 ];
 
-export const stats: WidgetFactory = (): Widget => {
+/** Le complément, sur les scènes qui ont la place (`opts.large`). */
+const ROWS_LARGE: Row[] = [
+  { label: 'Passes', read: (s) => s.stats.passes },
+  { label: 'Fautes', read: (s) => s.stats.fouls },
+  { label: 'Hors-jeu', read: (s) => s.stats.offsides },
+  { label: 'Cartons jaunes', read: (s) => s.stats.yellowCards },
+];
+
+export const stats: WidgetFactory = (ctx): Widget => {
+  const large = ctx.opts.large === true;
+  const rows = large ? [...ROWS, ...ROWS_LARGE] : ROWS;
   const box = panel({ icon: 'stats', kicker: 'En direct', title: 'Statistiques', crests: 2 });
 
   const possHome = h('div', { class: 'ring__value t-xl' }, ['50%']);
@@ -49,7 +60,7 @@ export const stats: WidgetFactory = (): Widget => {
   const dial = h('div', { class: 'ring__dial' }, [svg, h('div', { class: 'ring__label' }, ['Possession'])]);
   const ring = h('div', { class: 'ring' }, [possHome, dial, possAway]);
 
-  const built = ROWS.map((row) => {
+  const built = rows.map((row) => {
     const home = h('span', { class: 'bar__num t-l' }, ['0']);
     const away = h('span', { class: 'bar__num bar__num--away t-l' }, ['0']);
     const fill = h('i', { class: 'bar__fill' });
@@ -60,9 +71,12 @@ export const stats: WidgetFactory = (): Widget => {
     return { row, home, away, fill, node };
   });
 
-  box.body.append(
-    h('div', { class: 'stats' }, [ring, h('div', { class: 'bars' }, built.map((b) => b.node))]),
-  );
+  const barsBox = h('div', { class: 'bars' }, built.map((b) => b.node));
+  // En grand, deux colonnes : huit barres l'une sous l'autre font liste de
+  // courses, pas feuille de statistiques.
+  if (large) barsBox.classList.add('bars--two');
+  const wrap = h('div', { class: large ? 'stats stats--large' : 'stats' }, [ring, barsBox]);
+  box.body.append(wrap);
 
   return {
     el: box.el,

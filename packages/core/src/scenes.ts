@@ -102,9 +102,20 @@ const SLOT = {
   /** Pseudo social, tout en bas à droite. */
   social: { x: 0.746, y: 0.878, w: 0.246, h: 0.062 },
 
-  /** Scènes plein écran : un seul grand panneau centré. */
-  panneauPlein: { x: 0.095, y: 0.185, w: 0.655, h: 0.70 },
-  /** Caméra en grand sur les scènes d'attente et de débrief. */
+  /**
+   * Scènes plein écran. Un panneau seul au milieu d'un fond vide ne fait pas
+   * un plateau : on compose toujours un grand panneau et deux cellules à
+   * droite, dont la dernière accueille la caméra.
+   */
+  pleinPrincipal: { x: 0.012, y: 0.172, w: 0.598, h: 0.8 },
+  pleinSecondaire: { x: 0.622, y: 0.172, w: 0.366, h: 0.468 },
+  pleinTertiaire: { x: 0.622, y: 0.655, w: 0.366, h: 0.317 },
+
+  /** Deux panneaux à parité : les compositions des deux équipes. */
+  moitieGauche: { x: 0.012, y: 0.172, w: 0.483, h: 0.8 },
+  moitieDroite: { x: 0.505, y: 0.172, w: 0.483, h: 0.8 },
+
+  /** Bandeau de titre, sous la caméra des scènes d'attente et de débrief. */
   titreCentre: { x: 0.18, y: 0.72, w: 0.64, h: 0.18 },
 } as const satisfies Record<string, Rect>;
 
@@ -122,8 +133,8 @@ const CAM = {
   plein: { x: 0, y: 0, w: 1, h: 1 },
   /** Grande, centrée haut : attente et débrief. */
   grande: { x: 0.265, y: 0.13, w: 0.47, h: 0.56 },
-  /** Vignette, quand un panneau prend le centre. */
-  vignette: { x: 0.772, y: 0.33, w: 0.216, h: 0.246 },
+  /** La cellule basse droite des scènes plein écran. */
+  coin: { x: 0.622, y: 0.655, w: 0.366, h: 0.317 },
   /** Deux invités côte à côte dans la case centrale. */
   duoGauche: { x: 0.258, y: 0.158, w: 0.238, h: 0.472 },
 } as const satisfies Record<string, Rect>;
@@ -149,8 +160,13 @@ export const SCENES: Scene[] = [
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
+      { widget: 'multiplex', slot: SLOT.colonneGauche, z: 20 },
+      { widget: 'prematch', slot: SLOT.colonneDroite, z: 20 },
+      { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
+      { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
       { widget: 'title', slot: SLOT.titreCentre, z: 120, opts: { text: 'On démarre dans un instant' } },
-      { widget: 'social', slot: SLOT.social, z: 120 },
+      { widget: 'social', slot: SLOT.social, z: 20 },
+      { widget: 'cam-frame', slot: CAM.grande, z: 110 },
     ],
   },
   {
@@ -163,9 +179,10 @@ export const SCENES: Scene[] = [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
       { widget: 'prematch', slot: SLOT.colonneGauche, z: 20 },
+      { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
+      { widget: 'momentum', slot: SLOT.radar, z: 20 },
       { widget: 'lineups', slot: SLOT.colonneDroite, z: 20 },
       { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
-      { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
       { widget: 'social', slot: SLOT.social, z: 20 },
       { widget: 'cam-frame', slot: CAM.case, z: 110 },
     ],
@@ -235,57 +252,74 @@ export const SCENES: Scene[] = [
   {
     id: 'stats-plein',
     name: 'Stats plein écran',
-    cam: CAM.vignette,
+    cam: CAM.coin,
     camStyle: 'framed',
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'stats', slot: SLOT.panneauPlein, z: 20, opts: { large: true } },
+      { widget: 'stats', slot: SLOT.pleinPrincipal, z: 20, opts: { large: true } },
+      { widget: 'momentum', slot: SLOT.pleinSecondaire, z: 20 },
       { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.vignette, z: 110 },
+      { widget: 'cam-frame', slot: CAM.coin, z: 110 },
     ],
   },
   {
     id: 'compos',
     name: 'Compositions',
-    cam: CAM.vignette,
-    camStyle: 'framed',
+    cam: null,
+    camStyle: 'full',
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'lineups', slot: SLOT.panneauPlein, z: 20, opts: { large: true } },
-      { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.vignette, z: 110 },
+      { widget: 'lineups', slot: SLOT.moitieGauche, z: 20, opts: { side: 'home', large: true } },
+      { widget: 'lineups-away', slot: SLOT.moitieDroite, z: 20, opts: { side: 'away', large: true } },
     ],
   },
   {
     id: 'radar-plein',
     name: 'Radar plein écran',
-    cam: CAM.vignette,
+    cam: CAM.coin,
     camStyle: 'framed',
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'radar2d', slot: SLOT.panneauPlein, z: 20, opts: { large: true } },
+      { widget: 'radar2d', slot: SLOT.pleinPrincipal, z: 20, opts: { large: true } },
+      { widget: 'stats', slot: SLOT.pleinSecondaire, z: 20 },
       { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.vignette, z: 110 },
+      { widget: 'cam-frame', slot: CAM.coin, z: 110 },
     ],
   },
   {
     id: 'multiplex',
     name: 'Multiplex',
-    cam: CAM.vignette,
+    cam: CAM.coin,
     camStyle: 'framed',
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'multiplex', slot: SLOT.panneauPlein, z: 20, opts: { large: true } },
+      { widget: 'multiplex', slot: SLOT.pleinPrincipal, z: 20, opts: { large: true } },
+      { widget: 'standings', slot: SLOT.pleinSecondaire, z: 20 },
       { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.vignette, z: 110 },
+      { widget: 'cam-frame', slot: CAM.coin, z: 110 },
+    ],
+  },
+  {
+    id: 'feuille',
+    name: 'Feuille de match',
+    cam: CAM.coin,
+    camStyle: 'framed',
+    transition: FADE,
+    layers: [
+      { widget: 'backdrop', slot: SLOT.plein, z: 10 },
+      { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
+      { widget: 'sheet', slot: SLOT.pleinPrincipal, z: 20 },
+      { widget: 'momentum', slot: SLOT.pleinSecondaire, z: 20 },
+      { widget: 'social', slot: SLOT.social, z: 20 },
+      { widget: 'cam-frame', slot: CAM.coin, z: 110 },
     ],
   },
   {
@@ -297,6 +331,9 @@ export const SCENES: Scene[] = [
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
+      { widget: 'sheet', slot: SLOT.colonneGauche, z: 20 },
+      { widget: 'stats', slot: SLOT.colonneDroite, z: 20 },
+      { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
       { widget: 'score-recap', slot: SLOT.titreCentre, z: 120 },
       { widget: 'social', slot: SLOT.social, z: 20 },
       { widget: 'cam-frame', slot: CAM.grande, z: 110 },
@@ -311,6 +348,9 @@ export const SCENES: Scene[] = [
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
+      { widget: 'multiplex', slot: SLOT.colonneGauche, z: 20 },
+      { widget: 'standings', slot: SLOT.colonneDroite, z: 20 },
+      { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
       { widget: 'title', slot: SLOT.titreCentre, z: 120, opts: { text: 'Pause' } },
       { widget: 'social', slot: SLOT.social, z: 20 },
     ],

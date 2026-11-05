@@ -23,6 +23,7 @@ export const scoreBanner: WidgetFactory = (): Widget => {
   const scorersAway = h('div', { class: 'banner__scorers' });
   const clockMain = h('span', {}, ['0:00']);
   const clockAdded = h('span', { class: 'banner__added' });
+  const competition = h('div', { class: 'banner__comp t-caption' }, ['']);
   const liveDot = h('div', { class: 'banner__live', 'data-on': '0' }, [
     h('i'),
     h('span', { class: 't-caption' }, ['Direct']),
@@ -43,6 +44,7 @@ export const scoreBanner: WidgetFactory = (): Widget => {
       h('div', { class: 'banner__clock' }, [clockMain, clockAdded]),
       scorersAway,
     ]),
+    competition,
     liveDot,
   ]);
 
@@ -66,6 +68,7 @@ export const scoreBanner: WidgetFactory = (): Widget => {
       setText(clockMain, running ? label.main : PHASE_LABEL[state.phase].toUpperCase());
       setText(clockAdded, running ? (label.added ?? '') : '');
 
+      setText(competition, meta?.round ?? meta?.competition ?? '');
       setAttr(liveDot, 'data-on', state.phase !== 'pre' && state.phase !== 'full_time' ? '1' : '0');
 
       // Les buteurs ne bougent qu'au but : inutile de reconstruire 60 fois par seconde.

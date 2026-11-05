@@ -15,7 +15,9 @@ export const multiplex: WidgetFactory = (): Widget => {
   const list = h('div', { class: 'multiplex' });
   box.body.append(list);
 
-  let signature = '';
+  // `null` et non `''` : une liste vide produit la signature `''`, donc une
+  // sentinelle vide empêcherait le widget de dessiner son état vide.
+  let signature: string | null = null;
 
   return {
     el: box.el,
