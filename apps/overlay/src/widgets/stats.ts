@@ -78,9 +78,17 @@ export const stats: WidgetFactory = (ctx): Widget => {
   const wrap = h('div', { class: large ? 'stats stats--large' : 'stats' }, [ring, barsBox]);
   box.body.append(wrap);
 
+  /** Hauteur en dessous de laquelle l'anneau et les barres doivent maigrir. */
+  const DENSE_UNDER = 560;
+
   return {
     el: box.el,
-    update({ state }: WidgetContext) {
+    update({ state, box: slot }: WidgetContext) {
+      // Le widget connaît la taille de son créneau : il s'y adapte plutôt que
+      // de déborder. C'est au contenu de céder, jamais au cadre.
+      const dense = slot.h > 0 && slot.h < DENSE_UNDER ? '1' : '0';
+      if (wrap.dataset.dense !== dense) wrap.dataset.dense = dense;
+
       box.setCrests([state.meta?.home, state.meta?.away]);
 
       const [ph, pa] = state.stats.possession;

@@ -54,15 +54,15 @@
    Déclarée une fois, appliquée par classe. Aucune taille de police ne doit
    apparaître ailleurs que dans ce bloc. */
 
-.t-hero    { font-size: 56px; font-weight: 800; font-stretch: var(--width-display); letter-spacing: -0.012em; line-height: 1; text-transform: uppercase; }
-.t-score   { font-size: 58px; font-weight: 800; font-stretch: var(--width-display); font-variant-numeric: tabular-nums; line-height: 1; }
-.t-xl      { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
-.t-l       { font-size: 27px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.t-title   { font-size: 23px; font-weight: 700; letter-spacing: 0.07em; line-height: 1.15; text-transform: uppercase; }
-.t-body    { font-size: 19px; font-weight: 600; letter-spacing: 0.01em; line-height: 1.2; }
-.t-kicker  { font-size: 18px; font-weight: 400; line-height: 1.2; color: var(--ink-soft); }
-.t-label   { font-size: 16px; font-weight: 500; letter-spacing: 0.05em; line-height: 1.2; color: var(--ink-soft); }
-.t-caption { font-size: 14px; font-weight: 600; letter-spacing: 0.12em; line-height: 1.2; text-transform: uppercase; color: var(--ink-dim); }
+.t-hero    { font-size: 60px; font-weight: var(--weight-display); font-stretch: var(--width-display); letter-spacing: -0.022em; line-height: 0.96; text-transform: uppercase; }
+.t-score   { font-size: 60px; font-weight: var(--weight-display); font-stretch: 100%; font-variant-numeric: tabular-nums; line-height: 1; }
+.t-xl      { font-size: 36px; font-weight: 800; font-stretch: var(--width-display); font-variant-numeric: tabular-nums; line-height: 1; }
+.t-l       { font-size: 28px; font-weight: 800; font-stretch: var(--width-display); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.t-title   { font-size: 24px; font-weight: 800; font-stretch: var(--width-display); letter-spacing: 0.055em; line-height: 1.1; text-transform: uppercase; }
+.t-body    { font-size: 19px; font-weight: 700; letter-spacing: 0.01em; line-height: 1.2; }
+.t-kicker  { font-size: 17px; font-weight: 500; line-height: 1.2; color: var(--ink-soft); }
+.t-label   { font-size: 16px; font-weight: 600; letter-spacing: 0.045em; line-height: 1.2; color: var(--ink-soft); }
+.t-caption { font-size: 14px; font-weight: 700; letter-spacing: 0.12em; line-height: 1.2; text-transform: uppercase; color: var(--ink-dim); }
 
 /* ═══════════════════════════════ Le fond ═══════════════════════════════════ */
 
@@ -100,9 +100,9 @@
   display: flex;
   flex-direction: column;
   background: var(--panel);
-  border: 1px solid var(--panel-line);
+  border: 2px solid var(--panel-line);
   border-radius: var(--radius-panel);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), var(--panel-glow);
   overflow: hidden;
   backdrop-filter: blur(3px);
 }
@@ -111,7 +111,8 @@
   display: flex;
   align-items: center;
   gap: var(--s3);
-  padding: var(--s4) var(--s5) var(--s3);
+  height: 76px;
+  padding: 0 var(--s5);
   flex: none;
 }
 
@@ -213,12 +214,12 @@
   padding: 0 var(--s6);
   flex: 0 1 1180px;
   background: var(--panel);
-  border: 1px solid var(--panel-line);
+  border: 2px solid var(--panel-line);
   border-radius: var(--radius-panel);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), var(--panel-glow);
 }
 
-.banner__team { flex: 1; white-space: nowrap; overflow: hidden; }
+.banner__team { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; }
 .banner__team--home { text-align: right; }
 .banner__team--away { text-align: left; }
 
@@ -249,7 +250,7 @@
   max-width: 420px;
   padding: 0 var(--s5);
   background: var(--pill);
-  border: 1px solid var(--pill-line);
+  border: 2px solid var(--pill-line);
   border-radius: var(--radius-pill);
   font-size: 18px;
   font-weight: 400;
@@ -271,9 +272,9 @@
   min-width: 170px;
   padding: 0 var(--s5);
   background: var(--pill);
-  border: 1px solid var(--pill-line);
+  border: 2px solid var(--pill-line);
   border-radius: var(--radius-pill);
-  font-size: 29px;
+  font-size: 30px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -407,6 +408,17 @@
   align-content: space-evenly;
   gap: var(--s3) var(--s5);
 }
+
+/* Créneau court : tout maigrit plutôt que de déborder. */
+.stats[data-dense='1'] { gap: var(--s2); }
+.stats[data-dense='1'] .ring { padding: var(--s2) var(--s4); }
+.stats[data-dense='1'] .ring__dial { width: 84px; height: 84px; }
+.stats[data-dense='1'] .ring__label { max-width: 58px; font-size: 11px; letter-spacing: 0.06em; }
+.stats[data-dense='1'] .ring__value { font-size: 28px; }
+.stats[data-dense='1'] .bar__track { height: 32px; }
+.stats[data-dense='1'] .bar__num { font-size: 21px; }
+.stats[data-dense='1'] .bar__label { font-size: 14px; margin-bottom: 0; }
+.stats[data-dense='1'] .bars { gap: var(--s2); }
 
 /* En grand, l'anneau et les barres respirent : les proportions d'un panneau
    de colonne font maigre une fois étirées sur un demi-écran. */
@@ -749,8 +761,8 @@
   padding: var(--s4) 0;
   border-radius: var(--radius-panel);
   background: var(--panel);
-  border: 1px solid var(--panel-line);
-  box-shadow: var(--shadow);
+  border: 2px solid var(--panel-line);
+  box-shadow: var(--shadow), var(--panel-glow);
 }
 
 .radar__plate .crest { width: 48px; height: 50px; font-size: 15px; }
@@ -762,36 +774,106 @@
   border-radius: var(--radius-panel);
   overflow: hidden;
   background: var(--pitch);
-  border: 1px solid var(--panel-line);
-  box-shadow: var(--shadow);
+  border: 2px solid var(--panel-line);
+  box-shadow: var(--shadow), var(--panel-glow);
 }
 
 .radar__canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 
+/* Le cartouche d'état : en bas à gauche, dans la pelouse. Du texte posé au
+   milieu du terrain se perd sur les bandes de tonte. */
 .radar__state {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  left: var(--s4);
+  bottom: var(--s4);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--s2) var(--s4);
+  border-radius: var(--radius-card);
+  background: rgba(6, 9, 20, 0.72);
+  border: 2px solid var(--panel-line);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-base) var(--ease);
+}
+
+.radar__state[data-on='1'] { opacity: 1; transform: translate3d(0, 0, 0); }
+
+.radar__state[data-intensity='dangerous'] { border-color: var(--live); }
+
+.radar__state-what {
+  font-size: 26px;
+  font-weight: 800;
+  font-stretch: var(--width-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+
+.radar__state-team:empty { display: none; }
+
+.radar__state-team {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* L'envahissement sur un but : il prend tout le radar. */
+.radar__goal {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  text-align: center;
+  justify-content: center;
+  gap: var(--s2);
   pointer-events: none;
   opacity: 0;
-  transition: opacity var(--dur-base) var(--ease);
+  transform: scale(1.06);
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-slow) var(--ease);
 }
 
-.radar__state[data-on='1'] { opacity: 1; }
-.radar__state-team { font-size: 24px; font-weight: 700; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8); }
-.radar__state-what { font-size: 17px; color: var(--ink-soft); text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8); }
+.radar__goal[data-on='1'] { opacity: 1; transform: scale(1); }
 
-.radar__corner { position: absolute; width: 22px; height: 22px; border: 2px solid var(--accent); opacity: 0.5; }
-.radar__corner[data-at='tl'] { top: 11px; left: 11px; border-right: 0; border-bottom: 0; border-top-left-radius: var(--radius-chip); }
-.radar__corner[data-at='tr'] { top: 11px; right: 11px; border-left: 0; border-bottom: 0; border-top-right-radius: var(--radius-chip); }
-.radar__corner[data-at='bl'] { bottom: 11px; left: 11px; border-right: 0; border-top: 0; border-bottom-left-radius: var(--radius-chip); }
-.radar__corner[data-at='br'] { bottom: 11px; right: 11px; border-left: 0; border-top: 0; border-bottom-right-radius: var(--radius-chip); }
+.radar__goal-title {
+  font-size: 68px;
+  font-weight: var(--weight-display);
+  font-stretch: var(--width-display);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.55);
+}
+
+.radar__goal-team {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+}
+
+.radar__corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--accent);
+  opacity: 0.6;
+}
+
+.radar__corner[data-at='tl'] { top: 12px; left: 12px; border-right: 0; border-bottom: 0; border-top-left-radius: var(--radius-chip); }
+.radar__corner[data-at='tr'] { top: 12px; right: 12px; border-left: 0; border-bottom: 0; border-top-right-radius: var(--radius-chip); }
+.radar__corner[data-at='bl'] { bottom: 12px; left: 12px; border-right: 0; border-top: 0; border-bottom-left-radius: var(--radius-chip); }
+.radar__corner[data-at='br'] { bottom: 12px; right: 12px; border-left: 0; border-top: 0; border-bottom-right-radius: var(--radius-chip); }
 
 /* ════════════════════ Compteurs de direct et réseaux ══════════════════════ */
 
@@ -805,7 +887,7 @@
   gap: var(--s3);
   border-radius: var(--radius-card);
   background: var(--panel);
-  border: 1px solid var(--panel-line);
+  border: 2px solid var(--panel-line);
   font-size: 20px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -822,7 +904,7 @@
   padding: 0 var(--s5);
   border-radius: var(--radius-card);
   background: var(--panel);
-  border: 1px solid var(--panel-line);
+  border: 2px solid var(--panel-line);
   font-size: 21px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -856,8 +938,8 @@
   padding: 0 var(--s6);
   border-radius: var(--radius-panel);
   background: var(--panel);
-  border: 1px solid var(--panel-line);
-  box-shadow: var(--shadow);
+  border: 2px solid var(--panel-line);
+  box-shadow: var(--shadow), var(--panel-glow);
   text-align: center;
 }
 

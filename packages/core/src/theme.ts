@@ -18,7 +18,10 @@ export interface ThemeTokens {
   patternOpacity: string;
 
   panel: string;
+  /** Bordure des panneaux : VIVE et saturée, pas un trait blanc qui s'efface. */
   panelLine: string;
+  /** La lueur portée par cette bordure. C'est elle qui « remplit » le contour. */
+  panelGlow: string;
   pill: string;
   pillLine: string;
   /** Le pavé d'un chiffre de score, plus clair que la bannière. */
@@ -37,6 +40,10 @@ export interface ThemeTokens {
   pitch: string;
   pitchStripe: string;
   pitchLine: string;
+  /** Le ballon : ambre lumineux, il doit se détacher de la pelouse. */
+  ball: string;
+  /** L'envahissement sur un but. */
+  goalFlood: string;
 
   /**
    * UNE seule famille, partout. La hiérarchie se fait par la graisse et la
@@ -44,10 +51,15 @@ export interface ThemeTokens {
    * c'est ce qui donne l'unité d'un habillage de chaîne.
    */
   font: string;
-  /** Chasse élargie des grands titres d'antenne. */
+  /**
+   * Chasse des grands titres. LÉGÈREMENT RESSERRÉE : un titre d'antenne doit
+   * remplir sa bande. Élargir aère et sonne creux.
+   */
   widthDisplay: string;
-  /** Chasse resserrée des espaces contraints. */
+  /** Chasse très resserrée des espaces contraints. */
   widthTight: string;
+  /** Graisse des titres d'antenne. */
+  weightDisplay: string;
 
   /** L'échelle de rayons. Quatre valeurs, pas une de plus. */
   radiusPanel: string;
@@ -85,12 +97,13 @@ export interface Theme {
  */
 const SHAPE = {
   font: '"Archivo", system-ui, -apple-system, sans-serif',
-  widthDisplay: '112%',
-  widthTight: '88%',
+  widthDisplay: '96%',
+  widthTight: '84%',
+  weightDisplay: '900',
 
-  radiusPanel: '24px',
-  radiusCard: '16px',
-  radiusChip: '10px',
+  radiusPanel: '28px',
+  radiusCard: '18px',
+  radiusChip: '12px',
   radiusPill: '999px',
 
   s1: '4px',
@@ -142,13 +155,16 @@ export const THEMES: Theme[] = [
       pattern: DOTS,
       patternOpacity: '0.05',
       panel: 'rgba(14, 18, 54, 0.80)',
-      panelLine: 'rgba(255, 255, 255, 0.10)',
+      panelLine: 'rgba(150, 128, 255, 0.58)',
+      panelGlow: '0 0 0 1px rgba(150,128,255,0.18), 0 0 26px rgba(124,92,255,0.22)',
       pill: 'rgba(41, 48, 110, 0.78)',
       pillLine: 'rgba(255, 255, 255, 0.08)',
       slab: 'rgba(255, 255, 255, 0.10)',
-      pitch: '#141a4e',
-      pitchStripe: 'rgba(255, 255, 255, 0.035)',
-      pitchLine: 'rgba(255, 255, 255, 0.40)',
+      pitch: '#2440c8',
+      pitchStripe: 'rgba(255, 255, 255, 0.07)',
+      pitchLine: 'rgba(255, 255, 255, 0.62)',
+      ball: '#ffc93c',
+      goalFlood: '#b4209b',
     },
   },
   {
@@ -163,14 +179,17 @@ export const THEMES: Theme[] = [
       pattern: DOTS,
       patternOpacity: '0.06',
       panel: 'rgba(7, 15, 56, 0.82)',
-      panelLine: 'rgba(120, 170, 255, 0.16)',
+      panelLine: 'rgba(96, 170, 255, 0.62)',
+      panelGlow: '0 0 0 1px rgba(96,170,255,0.18), 0 0 26px rgba(66,153,255,0.26)',
       pill: 'rgba(22, 42, 108, 0.80)',
       pillLine: 'rgba(120, 170, 255, 0.14)',
       slab: 'rgba(130, 180, 255, 0.14)',
       accent: '#7fd0ff',
-      pitch: '#071034',
-      pitchStripe: 'rgba(255, 255, 255, 0.04)',
-      pitchLine: 'rgba(255, 255, 255, 0.42)',
+      pitch: '#1639b8',
+      pitchStripe: 'rgba(255, 255, 255, 0.075)',
+      pitchLine: 'rgba(255, 255, 255, 0.64)',
+      ball: '#ffd24a',
+      goalFlood: '#7b2fd0',
     },
   },
   {
@@ -185,14 +204,17 @@ export const THEMES: Theme[] = [
       pattern: DIAGONALS,
       patternOpacity: '0.05',
       panel: 'rgba(10, 15, 38, 0.84)',
-      panelLine: 'rgba(217, 255, 60, 0.14)',
+      panelLine: 'rgba(217, 255, 60, 0.46)',
+      panelGlow: '0 0 0 1px rgba(217,255,60,0.14), 0 0 24px rgba(217,255,60,0.16)',
       pill: 'rgba(24, 34, 74, 0.82)',
       pillLine: 'rgba(255, 255, 255, 0.08)',
       slab: 'rgba(217, 255, 60, 0.14)',
       accent: '#d9ff3c',
-      pitch: '#0a1028',
-      pitchStripe: 'rgba(217, 255, 60, 0.035)',
-      pitchLine: 'rgba(255, 255, 255, 0.38)',
+      pitch: '#15327e',
+      pitchStripe: 'rgba(217, 255, 60, 0.07)',
+      pitchLine: 'rgba(255, 255, 255, 0.6)',
+      ball: '#d9ff3c',
+      goalFlood: '#0b4f9e',
     },
   },
   {
@@ -207,14 +229,17 @@ export const THEMES: Theme[] = [
       pattern: CURTAIN,
       patternOpacity: '0.045',
       panel: 'rgba(26, 6, 48, 0.82)',
-      panelLine: 'rgba(255, 255, 255, 0.11)',
+      panelLine: 'rgba(0, 255, 135, 0.46)',
+      panelGlow: '0 0 0 1px rgba(0,255,135,0.14), 0 0 24px rgba(0,255,135,0.18)',
       pill: 'rgba(60, 16, 96, 0.80)',
       pillLine: 'rgba(255, 255, 255, 0.09)',
       slab: 'rgba(0, 255, 135, 0.14)',
       accent: '#00ff87',
-      pitch: '#1b0533',
-      pitchStripe: 'rgba(255, 255, 255, 0.035)',
-      pitchLine: 'rgba(255, 255, 255, 0.40)',
+      pitch: '#4a1370',
+      pitchStripe: 'rgba(255, 255, 255, 0.07)',
+      pitchLine: 'rgba(255, 255, 255, 0.62)',
+      ball: '#00ff87',
+      goalFlood: '#c2185b',
     },
   },
 ];

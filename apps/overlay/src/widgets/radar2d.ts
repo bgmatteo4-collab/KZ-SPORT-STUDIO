@@ -3,13 +3,22 @@
  *
  * Il consomme UNIQUEMENT `state.ball` et `state.attack`. Il ne sait pas si les
  * coordonnées viennent de Sportmonks ou d'une dérivation à partir des états
- * d'attaque — c'est tout le bénéfice de l'abstraction : le jour où l'on change
- * de palier ou de fournisseur, ce fichier ne bouge pas.
+ * d'attaque — le jour où l'on change de palier, ce fichier ne bouge pas.
  *
- * Les positions arrivent à 1 Hz, l'œil en veut soixante. L'interpolation est de
- * la présentation pure : elle a sa place ici et nulle part ailleurs.
+ * ── Ce qui fait qu'un radar se lit à l'antenne ────────────────────────────────
+ *
+ *  • Une pelouse VIVE. Sombre, elle se confond avec le fond du plateau.
+ *  • Une TRAÎNÉE EN SEGMENTS reliés par des nœuds, pas un dégradé de points :
+ *    on doit pouvoir suivre le chemin du ballon, pas deviner une direction.
+ *  • Un ballon qui brille, d'une couleur que rien d'autre ne porte.
+ *  • L'état du jeu en toutes lettres, dans un cartouche — pas du texte posé.
+ *  • Un but qui prend tout l'écran du radar : c'est le moment qu'on regarde.
+ *
+ * Les positions arrivent à 1 Hz, l'œil en veut soixante : l'interpolation est
+ * de la présentation pure, elle a sa place ici et nulle part ailleurs.
  */
 
+import type { ThemeTokens, Trigger } from '@kz/core';
 import { h, setAttr, setText } from '../dom.js';
 import { crestEl, paintCrest } from './crest.js';
 import type { Widget, WidgetContext, WidgetFactory } from './types.js';
@@ -17,8 +26,13 @@ import type { Widget, WidgetContext, WidgetFactory } from './types.js';
 const INTENSITY_LABEL = {
   attack: 'Attaque',
   dangerous: 'Attaque dangereuse',
-  none: '',
+  none: 'Jeu au milieu',
 } as const;
+
+/** Durée de l'envahissement sur un but. */
+const GOAL_HOLD = 4_600;
+/** Longueur de la traînée, en relevés. */
+const TRAIL = 16;
 
 export const radar2d: WidgetFactory = (): Widget => {
   const crestHome = crestEl();
@@ -27,43 +41,58 @@ export const radar2d: WidgetFactory = (): Widget => {
   const xgAway = h('div', { class: 'radar__xg' }, ['0.00']);
 
   const plate = (crest: HTMLElement, xg: HTMLElement) =>
-    h('div', { class: 'radar__plate' }, [
-      crest,
-      xg,
-      h('div', { class: 't-caption' }, ['xG']),
-    ]);
+    h('div', { class: 'radar__plate' }, [crest, xg, h('div', { class: 't-caption' }, ['xG'])]);
 
   const canvas = h('canvas', { class: 'radar__canvas' });
-  const stateTeam = h('div', { class: 'radar__state-team' }, ['']);
   const stateWhat = h('div', { class: 'radar__state-what' }, ['']);
-  const stateBox = h('div', { class: 'radar__state', 'data-on': '0' }, [stateTeam, stateWhat]);
+  const stateTeam = h('div', { class: 'radar__state-team' }, ['']);
+  const stateBox = h('div', { class: 'radar__state', 'data-on': '0' }, [stateWhat, stateTeam]);
+
+  const goalTitle = h('div', { class: 'radar__goal-title' }, ['But !']);
+  const goalTeam = h('div', { class: 'radar__goal-team' }, ['']);
+  const goalBox = h('div', { class: 'radar__goal', 'data-on': '0' }, [goalTitle, goalTeam]);
 
   const field = h('div', { class: 'radar__field' }, [
     canvas,
     stateBox,
+    goalBox,
     ...(['tl', 'tr', 'bl', 'br'] as const).map((at) =>
       h('i', { class: 'radar__corner', 'data-at': at }),
     ),
   ]);
 
-  const el = h('div', { class: 'radar' }, [
-    plate(crestHome, xgHome),
-    field,
-    plate(crestAway, xgAway),
-  ]);
+  const el = h('div', { class: 'radar' }, [plate(crestHome, xgHome), field, plate(crestAway, xgAway)]);
 
   let drawnX = 0.5;
   let drawnY = 0.5;
   const trail: { x: number; y: number }[] = [];
   let sized = '';
+  let goalUntil = 0;
 
   return {
     el,
-    update({ state, theme }: WidgetContext) {
+
+    trigger(trigger: Trigger, ctx: WidgetContext) {
+      // Un but prend tout le radar : c'est le moment que tout le monde regarde.
+      if (trigger.kind !== 'goal') return;
+      const team =
+        trigger.entry.side === 'home' ? ctx.state.meta?.home : ctx.state.meta?.away;
+      setText(goalTeam, team?.short ?? '');
+      setAttr(goalBox, 'data-on', '1');
+      goalUntil = ctx.now + GOAL_HOLD;
+    },
+
+    update({ state, theme, now }: WidgetContext) {
       paintCrest(crestHome, state.meta?.home);
       paintCrest(crestAway, state.meta?.away);
       setText(xgHome, state.stats.xg[0].toFixed(2));
       setText(xgAway, state.stats.xg[1].toFixed(2));
+
+      if (goalUntil !== 0 && now >= goalUntil) {
+        setAttr(goalBox, 'data-on', '0');
+        goalUntil = 0;
+      }
+      const celebrating = goalUntil !== 0;
 
       const intensity = state.attack.intensity;
       const team =
@@ -72,9 +101,11 @@ export const radar2d: WidgetFactory = (): Widget => {
           : state.attack.side === 'away'
             ? state.meta?.away.short
             : null;
-      setAttr(stateBox, 'data-on', team && intensity !== 'none' ? '1' : '0');
-      setText(stateTeam, team ?? '');
+      setAttr(stateBox, 'data-on', celebrating ? '0' : '1');
+      setAttr(stateBox, 'data-intensity', intensity);
       setText(stateWhat, INTENSITY_LABEL[intensity]);
+      // Pas de camp qui attaque : pas de ligne. Un tiret est du bruit.
+      setText(stateTeam, team ?? '');
 
       const context = canvas.getContext('2d');
       if (!context) return;
@@ -92,42 +123,24 @@ export const radar2d: WidgetFactory = (): Widget => {
       const w = canvas.width;
       const hgt = canvas.height;
 
-      drawnX += (state.ball.x - drawnX) * 0.14;
-      drawnY += (state.ball.y - drawnY) * 0.14;
-      trail.push({ x: drawnX, y: drawnY });
-      if (trail.length > 24) trail.shift();
+      drawnX += (state.ball.x - drawnX) * 0.12;
+      drawnY += (state.ball.y - drawnY) * 0.12;
+      // Un nœud par relevé, pas par image : la traînée doit dessiner le CHEMIN
+      // du ballon, pas une bouillie de soixante points par seconde.
+      const last = trail[trail.length - 1];
+      if (!last || Math.hypot(last.x - drawnX, last.y - drawnY) > 0.022) {
+        trail.push({ x: drawnX, y: drawnY });
+        if (trail.length > TRAIL) trail.shift();
+      }
 
       context.clearRect(0, 0, w, hgt);
-      drawPitch(context, w, hgt, theme.tokens.pitch, theme.tokens.pitchStripe, theme.tokens.pitchLine);
+      drawPitch(context, w, hgt, theme.tokens, celebrating);
 
-      if (state.attack.side && intensity !== 'none') {
-        const danger = intensity === 'dangerous';
-        const toRight = state.attack.side === 'home';
-        const gradient = context.createLinearGradient(toRight ? w * 0.4 : w * 0.6, 0, toRight ? w : 0, 0);
-        gradient.addColorStop(0, 'rgba(0,0,0,0)');
-        gradient.addColorStop(1, danger ? theme.tokens.live : theme.tokens.accent);
-        context.globalAlpha = danger ? 0.3 : 0.14;
-        context.fillStyle = gradient;
-        context.fillRect(0, 0, w, hgt);
-        context.globalAlpha = 1;
+      if (!celebrating) {
+        drawAttack(context, w, hgt, state.attack, theme.tokens);
+        drawTrail(context, w, hgt, trail, theme.tokens);
+        drawBall(context, w, hgt, drawnX, drawnY, theme.tokens);
       }
-
-      for (let i = 0; i < trail.length; i += 1) {
-        const point = trail[i]!;
-        context.beginPath();
-        context.arc(point.x * w, point.y * hgt, (hgt / 120) * (0.8 + i / trail.length), 0, Math.PI * 2);
-        context.fillStyle = `rgba(255,255,255,${((i / trail.length) * 0.35).toFixed(3)})`;
-        context.fill();
-      }
-
-      const radius = Math.max(4, hgt / 46);
-      context.beginPath();
-      context.arc(drawnX * w, drawnY * hgt, radius, 0, Math.PI * 2);
-      context.fillStyle = '#ffffff';
-      context.shadowColor = 'rgba(0,0,0,0.75)';
-      context.shadowBlur = radius * 1.6;
-      context.fill();
-      context.shadowBlur = 0;
     },
   };
 };
@@ -136,44 +149,131 @@ function drawPitch(
   c: CanvasRenderingContext2D,
   w: number,
   h: number,
-  turf: string,
-  stripe: string,
-  line: string,
+  t: ThemeTokens,
+  celebrating: boolean,
 ): void {
-  c.fillStyle = turf;
+  c.fillStyle = celebrating ? t.goalFlood : t.pitch;
   c.fillRect(0, 0, w, h);
 
-  // Bandes de tonte : trois lignes de code, et le terrain cesse d'être un aplat.
-  c.fillStyle = stripe;
-  for (let i = 0; i < 12; i += 2) c.fillRect((i / 12) * w, 0, w / 12, h);
+  // Bandes de tonte verticales, franches. C'est ce qui fait « pelouse » plutôt
+  // qu'« aplat de couleur ».
+  c.fillStyle = t.pitchStripe;
+  for (let i = 0; i < 14; i += 2) c.fillRect((i / 14) * w, 0, w / 14, h);
 
-  c.strokeStyle = line;
-  c.lineWidth = Math.max(1.2, h / 150);
+  // Un voile sombre en bas : le cartouche d'état doit rester lisible.
+  const veil = c.createLinearGradient(0, h * 0.55, 0, h);
+  veil.addColorStop(0, 'rgba(0,0,0,0)');
+  veil.addColorStop(1, 'rgba(0,0,0,0.38)');
+  c.fillStyle = veil;
+  c.fillRect(0, 0, w, h);
+
+  c.strokeStyle = t.pitchLine;
+  c.lineWidth = Math.max(1.6, h / 150);
   const pad = h * 0.07;
 
   c.strokeRect(pad, pad, w - pad * 2, h - pad * 2);
-
   c.beginPath();
   c.moveTo(w / 2, pad);
   c.lineTo(w / 2, h - pad);
   c.stroke();
-
   c.beginPath();
-  c.arc(w / 2, h / 2, h * 0.14, 0, Math.PI * 2);
+  c.arc(w / 2, h / 2, h * 0.15, 0, Math.PI * 2);
   c.stroke();
-
   c.beginPath();
-  c.arc(w / 2, h / 2, Math.max(1.5, h / 110), 0, Math.PI * 2);
-  c.fillStyle = line;
+  c.arc(w / 2, h / 2, Math.max(2, h / 100), 0, Math.PI * 2);
+  c.fillStyle = t.pitchLine;
   c.fill();
 
-  const boxH = h * 0.46;
+  const boxH = h * 0.48;
   const boxW = w * 0.13;
   c.strokeRect(pad, (h - boxH) / 2, boxW, boxH);
   c.strokeRect(w - pad - boxW, (h - boxH) / 2, boxW, boxH);
 
-  const sixH = h * 0.22;
+  const sixH = h * 0.23;
   const sixW = w * 0.05;
   c.strokeRect(pad, (h - sixH) / 2, sixW, sixH);
   c.strokeRect(w - pad - sixW, (h - sixH) / 2, sixW, sixH);
+}
+
+function drawAttack(
+  c: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  attack: { side: 'home' | 'away' | null; intensity: string },
+  t: ThemeTokens,
+): void {
+  if (!attack.side || attack.intensity === 'none') return;
+  const danger = attack.intensity === 'dangerous';
+  const toRight = attack.side === 'home';
+  const g = c.createLinearGradient(toRight ? w * 0.35 : w * 0.65, 0, toRight ? w : 0, 0);
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(1, danger ? t.live : t.accent);
+  c.globalAlpha = danger ? 0.34 : 0.16;
+  c.fillStyle = g;
+  c.fillRect(0, 0, w, h);
+  c.globalAlpha = 1;
+}
+
+function drawTrail(
+  c: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  trail: { x: number; y: number }[],
+  t: ThemeTokens,
+): void {
+  if (trail.length < 2) return;
+
+  c.beginPath();
+  trail.forEach((p, i) => (i === 0 ? c.moveTo(p.x * w, p.y * h) : c.lineTo(p.x * w, p.y * h)));
+  c.strokeStyle = 'rgba(255,255,255,0.75)';
+  c.lineWidth = Math.max(1.6, h / 190);
+  c.lineJoin = 'round';
+  c.lineCap = 'round';
+  c.stroke();
+
+  trail.forEach((p, i) => {
+    if (i === trail.length - 1) return;
+    c.beginPath();
+    c.arc(p.x * w, p.y * h, Math.max(2.4, h / 105), 0, Math.PI * 2);
+    c.fillStyle = t.ball;
+    c.globalAlpha = 0.35 + (i / trail.length) * 0.5;
+    c.fill();
+    c.globalAlpha = 1;
+  });
+}
+
+function drawBall(
+  c: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  x: number,
+  y: number,
+  t: ThemeTokens,
+): void {
+  const r = Math.max(5, h / 34);
+  const cx = x * w;
+  const cy = y * h;
+
+  // Halo
+  const halo = c.createRadialGradient(cx, cy, 0, cx, cy, r * 3.4);
+  halo.addColorStop(0, t.ball);
+  halo.addColorStop(1, 'rgba(0,0,0,0)');
+  c.globalAlpha = 0.4;
+  c.fillStyle = halo;
+  c.beginPath();
+  c.arc(cx, cy, r * 3.4, 0, Math.PI * 2);
+  c.fill();
+  c.globalAlpha = 1;
+
+  // Anneau blanc, puis le ballon
+  c.beginPath();
+  c.arc(cx, cy, r * 1.5, 0, Math.PI * 2);
+  c.strokeStyle = 'rgba(255,255,255,0.85)';
+  c.lineWidth = Math.max(1.6, h / 200);
+  c.stroke();
+
+  c.beginPath();
+  c.arc(cx, cy, r, 0, Math.PI * 2);
+  c.fillStyle = t.ball;
+  c.fill();
 }
