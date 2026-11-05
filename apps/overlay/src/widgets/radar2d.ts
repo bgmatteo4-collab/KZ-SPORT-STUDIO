@@ -70,6 +70,8 @@ export const radar2d: WidgetFactory = (): Widget => {
   let goalUntil = 0;
 
   return {
+    // Un canevas : il doit être repeint à chaque image.
+    animated: true,
     el,
 
     trigger(trigger: Trigger, ctx: WidgetContext) {
@@ -79,16 +81,17 @@ export const radar2d: WidgetFactory = (): Widget => {
         trigger.entry.side === 'home' ? ctx.state.meta?.home : ctx.state.meta?.away;
       setText(goalTeam, team?.short ?? '');
       setAttr(goalBox, 'data-on', '1');
-      goalUntil = ctx.now + GOAL_HOLD;
+      goalUntil = ctx.realNow + GOAL_HOLD;
     },
 
-    update({ state, theme, now }: WidgetContext) {
+    update({ state, theme, realNow }: WidgetContext) {
       paintCrest(crestHome, state.meta?.home);
       paintCrest(crestAway, state.meta?.away);
       setText(xgHome, state.stats.xg[0].toFixed(2));
       setText(xgAway, state.stats.xg[1].toFixed(2));
 
-      if (goalUntil !== 0 && now >= goalUntil) {
+      // Temps RÉEL, pour la même raison que le carton plein écran.
+      if (goalUntil !== 0 && realNow >= goalUntil) {
         setAttr(goalBox, 'data-on', '0');
         goalUntil = 0;
       }

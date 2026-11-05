@@ -62,6 +62,16 @@ interface Mounted {
   widget: Widget;
   host: HTMLElement;
   spec: SceneLayer;
+  /**
+   * Le contexte est RÉUTILISÉ d'une image à l'autre, pas réalloué.
+   *
+   * Dans OBS, chaque source navigateur est une instance de Chromium complète,
+   * et c'est la cause n°1 des « frames missed due to rendering lag ». Allouer
+   * neuf objets soixante fois par seconde pour rien est exactement le genre de
+   * dépense qu'on ne peut pas se permettre là-dedans. Un widget lit son
+   * contexte immédiatement dans `update` et n'en garde jamais de référence.
+   */
+  ctx: WidgetContext;
 }
 
 const mounted = new Map<string, Mounted>();
@@ -133,6 +143,8 @@ function syncScene(current: Scene): void {
         // évite le clignotement du scorebug à chaque changement de scène.
         existing.spec = spec;
         placeHost(existing.host, spec);
+        // Son créneau a pu changer de taille : le contexte doit suivre.
+        reseatContext(existing);
         continue;
       }
       // Les options sont lues à la CONSTRUCTION du widget. Si elles changent
@@ -155,12 +167,12 @@ function syncScene(current: Scene): void {
     host.dataset.anim = 'enter';
     placeHost(host, spec);
 
-    const context = buildContext(connection.cursor.at(connection.renderTime()), 0, spec);
-    const widget = factory(context);
+    const ctx = buildContext(connection.cursor.at(connection.renderTime()), 0, spec);
+    const widget = factory(ctx);
     host.append(widget.el);
     stage.append(host);
 
-    mounted.set(spec.widget, { widget, host, spec });
+    mounted.set(spec.widget, { widget, host, spec, ctx });
 
     // Une image d'attente avant d'animer : sinon la transition est avalée.
     requestAnimationFrame(() => {
@@ -202,9 +214,6 @@ function placeHost(host: HTMLElement, spec: SceneLayer): void {
 
 function buildContext(state: MatchState, clockMs: number, spec: SceneLayer): WidgetContext {
   const box = rectToPixels(spec.slot);
-  const cam = scene.cam
-    ? { ...rectToPixels(scene.cam), style: scene.camStyle }
-    : null;
   return {
     state,
     clockMs,
@@ -212,8 +221,36 @@ function buildContext(state: MatchState, clockMs: number, spec: SceneLayer): Wid
     opts: spec.opts ?? {},
     box: { w: box.w, h: box.h },
     now: state.t,
-    cam,
+    realNow: performance.now(),
+    cam: scene.cam ? { ...rectToPixels(scene.cam), style: scene.camStyle } : null,
   };
+}
+
+/**
+ * Remet à jour un contexte DÉJÀ construit, au lieu d'en allouer un neuf.
+ *
+ * Les champs qui dépendent de la scène — créneau, caméra, options — ne changent
+ * qu'au montage ou à la commutation, donc on ne les recalcule que là.
+ */
+function refreshContext(entry: Mounted, state: MatchState, clockMs: number): WidgetContext {
+  const ctx = entry.ctx;
+  ctx.state = state;
+  ctx.clockMs = clockMs;
+  ctx.theme = theme;
+  ctx.now = state.t;
+  ctx.realNow = performance.now();
+  return ctx;
+}
+
+/** À appeler quand la scène change : les géométries, elles, ont bougé. */
+function reseatContext(entry: Mounted): void {
+  const box = rectToPixels(entry.spec.slot);
+  entry.ctx.box.w = box.w;
+  entry.ctx.box.h = box.h;
+  entry.ctx.opts = entry.spec.opts ?? {};
+  entry.ctx.cam = scene.cam
+    ? { ...rectToPixels(scene.cam), style: scene.camStyle }
+    : null;
 }
 
 // ──────────────────────────────── Contrôle ───────────────────────────────────
@@ -244,8 +281,40 @@ syncScene(scene);
 
 function dispatch(trigger: Trigger, state: MatchState, clockMs: number): void {
   for (const entry of mounted.values()) {
-    entry.widget.trigger?.(trigger, buildContext(state, clockMs, entry.spec));
+    entry.widget.trigger?.(trigger, refreshContext(entry, state, clockMs));
   }
+}
+
+/**
+ * Le budget de rendu.
+ *
+ * Dans OBS, chaque source navigateur est une instance de Chromium complète :
+ * c'est la cause n°1 des images perdues au compositing. Or presque rien à
+ * l'écran ne change soixante fois par seconde — un score change quatre fois
+ * par match, une composition deux ou trois.
+ *
+ * Seuls les widgets qui DESSINENT (le radar, la courbe de momentum) tournent à
+ * chaque image. Les autres ne sont rafraîchis que lorsque quelque chose qu'ils
+ * peuvent afficher a bougé : un nouvel événement, une nouvelle seconde au
+ * chrono, ou un battement de cœur à 10 Hz pour les minuteries internes.
+ */
+const HEARTBEAT_MS = 100;
+let lastSeqSeen = -2;
+let lastSecondSeen = -1;
+let lastHeartbeat = 0;
+
+function shouldRefreshStatic(state: MatchState, clockMs: number, nowReal: number): boolean {
+  const second = Math.floor(clockMs / 1000);
+  const changed =
+    state.lastSeq !== lastSeqSeen ||
+    second !== lastSecondSeen ||
+    nowReal - lastHeartbeat >= HEARTBEAT_MS;
+  if (changed) {
+    lastSeqSeen = state.lastSeq;
+    lastSecondSeen = second;
+    lastHeartbeat = nowReal;
+  }
+  return changed;
 }
 
 function frame(): void {
@@ -268,8 +337,13 @@ function frame(): void {
 
   for (const trigger of watcher.poll(state)) dispatch(trigger, state, clockMs);
 
+  const refreshStatic = shouldRefreshStatic(state, clockMs, performance.now());
   for (const entry of mounted.values()) {
-    entry.widget.update(buildContext(state, clockMs, entry.spec));
+    // Un widget qui dessine tourne à chaque image ; les autres attendent qu'il
+    // y ait quelque chose à dire.
+    if (entry.widget.animated || refreshStatic) {
+      entry.widget.update(refreshContext(entry, state, clockMs));
+    }
   }
 
   if (DEBUG) renderDebug(state, now, clockMs);

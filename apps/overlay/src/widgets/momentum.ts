@@ -38,6 +38,8 @@ export const momentum: WidgetFactory = (): Widget => {
   let sized = '';
 
   return {
+    // Un canevas : il doit être repeint à chaque image.
+    animated: true,
     el: box.el,
     update({ state, theme }: WidgetContext) {
       setText(homeName, state.meta?.home.short ?? '—');

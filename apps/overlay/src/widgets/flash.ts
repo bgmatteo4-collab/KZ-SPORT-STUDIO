@@ -28,8 +28,10 @@ export const flash: WidgetFactory = (): Widget => {
 
   return {
     el,
-    update({ now }: WidgetContext) {
-      if (hideAt !== 0 && now >= hideAt) {
+    update({ realNow }: WidgetContext) {
+      // Temps RÉEL : un carton doit tenir cinq secondes à l'écran, pas cinq
+      // secondes de match — en rejeu accéléré ce serait un clignotement.
+      if (hideAt !== 0 && realNow >= hideAt) {
         setAttr(el, 'data-on', '0');
         hideAt = 0;
       }
@@ -44,7 +46,7 @@ export const flash: WidgetFactory = (): Widget => {
       setText(titleEl, content.title);
       setText(sub, content.sub);
       setAttr(el, 'data-on', '1');
-      hideAt = ctx.now + HOLD_MS;
+      hideAt = ctx.realNow + HOLD_MS;
     },
   };
 };

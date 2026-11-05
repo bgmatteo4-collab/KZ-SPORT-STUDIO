@@ -115,6 +115,7 @@ function buildContext(state: MatchState, clockMs: number, spec: SceneLayer): Wid
     opts: spec.opts ?? {},
     box: { w: box.w, h: box.h },
     now: state.t,
+    realNow: performance.now(),
     cam: scene.cam ? { ...rectToPixels(scene.cam), style: scene.camStyle } : null,
   };
 }
