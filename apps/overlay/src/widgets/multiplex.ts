@@ -28,13 +28,24 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
 
   let signature: string | null = null;
 
+  /** Hauteur d'un bloc de match, gouttière comprise. */
+  const BLOCK = 84;
+  /** Ce que mange l'en-tête du panneau. */
+  const CHROME = 76 + 24;
+
   return {
     el: box.el,
-    update({ state }: WidgetContext) {
+    update({ state, box: slot }: WidgetContext) {
       setAttr(live, 'data-on', state.otherMatches.some((m) => m.live) ? '1' : '0');
 
-      const matches = state.otherMatches;
-      const next = matches.map((m) => `${m.id}:${m.score[0]}-${m.score[1]}:${m.minute}`).join('|');
+      // Douze matchs écrasés dans une colonne ne se lisent plus : chaque bloc
+      // perd la séparation qui en fait un match distinct. On montre ce qui
+      // tient en gardant les blocs lisibles.
+      const perColumn =
+        slot.h > 0 ? Math.max(2, Math.floor((slot.h - CHROME) / BLOCK)) : state.otherMatches.length;
+      const capacity = large ? perColumn * 2 : perColumn;
+      const matches = state.otherMatches.slice(0, Math.min(capacity, state.otherMatches.length));
+      const next = `${matches.length}|${matches.map((m) => `${m.id}:${m.score[0]}-${m.score[1]}:${m.minute}`).join('|')}`;
       if (next === signature) return;
       signature = next;
 

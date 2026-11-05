@@ -1,9 +1,19 @@
 /**
  * La bannière de score : la pièce maîtresse du plateau.
  *
- * Structure observée sur le produit de référence :
- *   écu | NOM  [chiffre][chiffre]  NOM | écu        ← les écus sont HORS du bandeau
- *        buteurs · CHRONO · buteurs                  ← chrono souligné d'or
+ * Structure relevée sur le produit de référence — une SEULE bande, et tout
+ * vit dedans :
+ *
+ *   ┌──────────────────────────────────────────────────────────┬──────────┐
+ *   │  REAL MADRID  [écu]  0 │ 0  [écu]  MAN CITY              │ LIGUE DES│
+ *   └──────────────────────────────────────────────────────────┴──────────┘
+ *            buteurs  ·  CHRONO souligné d'or  ·  buteurs
+ *
+ * Les écus sont DANS le cadre, encadrant le score : trois pièces qui flottent
+ * séparément ne font pas un habillage, elles font un montage.
+ *
+ * Le cartouche de compétition est calé à l'extrémité droite, et une cale
+ * invisible de même largeur à gauche garde le score exactement au centre.
  */
 
 import { clockLabel, PHASE_LABEL } from '@kz/core';
@@ -19,32 +29,35 @@ export const scoreBanner: WidgetFactory = (): Widget => {
   const digitHome = h('div', { class: 'banner__digit t-score' }, ['0']);
   const digitAway = h('div', { class: 'banner__digit t-score' }, ['0']);
 
+  const compName = h('div', { class: 'banner__comp-name' }, ['']);
+  const compRound = h('div', { class: 'banner__comp-round' }, ['']);
+  const compCap = h('div', { class: 'banner__comp' }, [compName, compRound]);
+
   const scorersHome = h('div', { class: 'banner__scorers banner__scorers--home' });
   const scorersAway = h('div', { class: 'banner__scorers' });
   const clockMain = h('span', {}, ['0:00']);
   const clockAdded = h('span', { class: 'banner__added' });
-  const competition = h('div', { class: 'banner__comp t-caption' }, ['']);
   const liveDot = h('div', { class: 'banner__live', 'data-on': '0' }, [
     h('i'),
     h('span', { class: 't-caption' }, ['Direct']),
   ]);
 
   const el = h('div', { class: 'banner' }, [
-    h('div', { class: 'banner__main' }, [
+    h('div', { class: 'banner__plate' }, [
+      // La cale : même largeur que le cartouche, pour que le score reste centré.
+      h('div', { class: 'banner__shim' }),
+      nameHome,
       crestHome,
-      h('div', { class: 'banner__plate' }, [
-        nameHome,
-        h('div', { class: 'banner__score' }, [digitHome, digitAway]),
-        nameAway,
-      ]),
+      h('div', { class: 'banner__score' }, [digitHome, digitAway]),
       crestAway,
+      nameAway,
+      compCap,
     ]),
     h('div', { class: 'banner__strip' }, [
       scorersHome,
       h('div', { class: 'banner__clock' }, [clockMain, clockAdded]),
       scorersAway,
     ]),
-    competition,
     liveDot,
   ]);
 
@@ -61,17 +74,24 @@ export const scoreBanner: WidgetFactory = (): Widget => {
       setText(digitHome, String(state.score[0]));
       setText(digitAway, String(state.score[1]));
 
+      // « Ligue des Champions — Quart de finale » se coupe en deux lignes :
+      // la compétition au-dessus, le tour en dessous.
+      const [competition, round] = splitCompetition(meta?.competition, meta?.round);
+      setText(compName, competition);
+      setText(compRound, round);
+
       const label = clockLabel(clockMs, state.phase, state.clock.addedMinutes);
-      // Hors jeu courant, le chrono cède la place au nom de la période.
-      const running = state.phase === 'first_half' || state.phase === 'second_half' ||
-        state.phase === 'extra_first' || state.phase === 'extra_second';
+      const running =
+        state.phase === 'first_half' ||
+        state.phase === 'second_half' ||
+        state.phase === 'extra_first' ||
+        state.phase === 'extra_second';
       setText(clockMain, running ? label.main : PHASE_LABEL[state.phase].toUpperCase());
       setText(clockAdded, running ? (label.added ?? '') : '');
 
-      setText(competition, meta?.round ?? meta?.competition ?? '');
       setAttr(liveDot, 'data-on', state.phase !== 'pre' && state.phase !== 'full_time' ? '1' : '0');
 
-      // Les buteurs ne bougent qu'au but : inutile de reconstruire 60 fois par seconde.
+      // Les buteurs ne bougent qu'au but : inutile de reconstruire 60 fois/s.
       const latest = state.goals.length === 0 ? -1 : state.goals[state.goals.length - 1]!.seq;
       if (latest !== lastGoalSeq) {
         lastGoalSeq = latest;
@@ -82,13 +102,18 @@ export const scoreBanner: WidgetFactory = (): Widget => {
   };
 };
 
+function splitCompetition(competition?: string, round?: string): [string, string] {
+  if (!competition) return ['', ''];
+  const parts = competition.split(/\s+[—–-]\s+/);
+  if (parts.length > 1) return [parts[0]!, parts.slice(1).join(' — ')];
+  return [competition, round ?? ''];
+}
+
 function fillScorers(host: HTMLElement, state: WidgetContext['state'], side: 'home' | 'away'): void {
   host.replaceChildren();
   for (const goal of state.goals.filter((g) => g.side === side)) {
     const name = goal.ownGoal ? 'csc' : (goal.scorer?.short ?? 'But');
     const suffix = goal.penalty ? ' (sp)' : goal.ownGoal ? ' (csc)' : '';
-    host.append(
-      h('span', {}, [h('b', {}, [name.toUpperCase()]), ` ${goal.minute}'${suffix}`]),
-    );
+    host.append(h('span', {}, [h('b', {}, [name.toUpperCase()]), ` ${goal.minute}'${suffix}`]));
   }
 }

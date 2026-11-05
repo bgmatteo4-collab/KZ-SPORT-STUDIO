@@ -183,6 +183,10 @@
 }
 
 /* ═══════════════════════════ Bannière de score ════════════════════════════ */
+/*
+ * UNE seule bande, et tout vit dedans : écus compris. Trois pièces qui flottent
+ * séparément ne font pas un habillage, elles font un montage.
+ */
 
 .banner {
   position: absolute;
@@ -193,52 +197,110 @@
   gap: var(--s2);
 }
 
-.banner__main {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--s5);
-  width: 100%;
-  height: 94px;
-  flex: none;
-}
-
-.banner__crest { width: 86px; height: 90px; font-size: 26px; }
+.banner__main { display: none; }
 
 .banner__plate {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--s5);
-  height: 100%;
-  padding: 0 var(--s6);
-  flex: 0 1 1180px;
-  background: var(--panel);
+  width: 100%;
+  height: 98px;
+  flex: none;
+  padding: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 46%),
+    var(--panel);
   border: 2px solid var(--panel-line);
   border-radius: var(--radius-panel);
   box-shadow: var(--shadow), var(--panel-glow);
 }
 
-.banner__team { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; }
-.banner__team--home { text-align: right; }
-.banner__team--away { text-align: left; }
+/* Cale invisible, de la largeur du cartouche : sans elle le score se décale. */
+.banner__shim,
+.banner__comp {
+  width: 252px;
+  flex: none;
+  align-self: stretch;
+}
 
-.banner__score { display: flex; gap: var(--s1); flex: none; }
+.banner__team {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
 
-.banner__digit {
-  min-width: 70px;
-  padding: var(--s1) 0 var(--s2);
+.banner__team--home { text-align: right; padding-right: var(--s4); }
+.banner__team--away { text-align: left; padding-left: var(--s4); }
+
+.banner__crest {
+  width: 62px;
+  height: 65px;
+  font-size: 19px;
+  flex: none;
+}
+
+/* Les deux chiffres dans un seul pavé, séparés d'un trait : deux pavés isolés
+   font tableau de bord, un pavé fendu fait scorebug. */
+.banner__score {
+  display: flex;
+  flex: none;
+  margin: 0 var(--s3);
   border-radius: var(--radius-card);
   background: var(--slab);
+  overflow: hidden;
+}
+
+.banner__digit {
+  min-width: 78px;
+  padding: var(--s2) 0 var(--s3);
   text-align: center;
 }
 
+.banner__digit + .banner__digit { border-left: 2px solid rgba(0, 0, 0, 0.32); }
+
+/* Le cartouche de compétition, soudé à l'extrémité droite de la bande. */
+.banner__comp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 var(--s3);
+  text-align: center;
+  /* Un voile superposé plutôt que `color-mix` : celui-ci n'existe pas avant
+     Chrome 105, et OBS 30.0 embarque CEF 103. */
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.16) 0%, rgba(0, 0, 0, 0.3) 100%),
+    var(--accent);
+  color: #10131c;
+}
+
+.banner__comp-name {
+  font-size: 19px;
+  font-weight: 800;
+  font-stretch: var(--width-tight);
+  letter-spacing: 0.03em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.banner__comp-round {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.1;
+  opacity: 0.74;
+}
+
+.banner__comp-round:empty { display: none; }
+
+/* La rangée du dessous : buteurs, chrono, buteurs. */
 .banner__strip {
   display: flex;
   align-items: stretch;
   justify-content: center;
   gap: var(--s2);
-  height: 46px;
+  height: 44px;
   flex: none;
 }
 
@@ -275,15 +337,15 @@
   border: 2px solid var(--pill-line);
   border-radius: var(--radius-pill);
   font-size: 30px;
-  font-weight: 700;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
 .banner__clock::after {
   content: '';
   position: absolute;
-  left: 26%;
-  right: 26%;
+  left: 24%;
+  right: 24%;
   bottom: -3px;
   height: 3px;
   border-radius: 2px;
@@ -294,7 +356,7 @@
 
 .banner__live {
   position: absolute;
-  top: var(--s2);
+  top: 110px;
   right: var(--s3);
   display: flex;
   align-items: center;
@@ -311,17 +373,6 @@
 }
 
 .banner__live[data-on='0'] { opacity: 0; }
-
-/* Sous la bannière, à gauche : au-dessus, l'écu du domicile occupe la place. */
-.banner__comp {
-  position: absolute;
-  bottom: 0;
-  left: var(--s3);
-  max-width: 420px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* ═════════════════════════════ Statistiques ═══════════════════════════════ */
 
@@ -623,12 +674,13 @@
 .multiplex {
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
   gap: var(--s2);
   flex: 1;
   min-height: 0;
   overflow: hidden;
 }
+
+.multiplex > .mx { flex: 1; }
 
 /* En grand, deux colonnes : douze matchs l'un sous l'autre ne tiennent nulle
    part. `1fr` par rangée : les blocs OCCUPENT leur cellule, au lieu d'être
