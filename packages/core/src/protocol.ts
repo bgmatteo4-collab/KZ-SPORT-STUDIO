@@ -18,6 +18,16 @@ export interface ControlState {
   camMode: 'obs' | 'browser';
   live: boolean;
   /**
+   * La régie automatique. `auto` : elle décide. `off` : aucun insert, la scène
+   * reste telle quelle. Un direct n'est pas toujours le moment d'être surpris.
+   */
+  insertMode: 'auto' | 'off';
+  /**
+   * Un insert imposé par l'opérateur, qui prime sur la régie automatique.
+   * `null` : c'est elle qui choisit.
+   */
+  insertForce: string | null;
+  /**
    * Vitesse d'écoulement du temps du match. 1 en direct.
    * En rejeu accéléré, le client DOIT la connaître : sans ça son horloge
    * avance à 1x pendant que les événements arrivent à 20x, et tout se décale.
@@ -59,7 +69,9 @@ export type Command =
   | { name: 'set-theme'; themeId: string }
   | { name: 'set-cam-mode'; camMode: 'obs' | 'browser' }
   | { name: 'replay-seek'; matchMs: number }
-  | { name: 'replay-speed'; speed: number };
+  | { name: 'replay-speed'; speed: number }
+  | { name: 'set-insert-mode'; insertMode: 'auto' | 'off' }
+  | { name: 'force-insert'; insertId: string | null };
 
 export const DEFAULT_CONTROL: ControlState = {
   delayMs: 30_000,
@@ -67,5 +79,7 @@ export const DEFAULT_CONTROL: ControlState = {
   themeId: 'kztv',
   camMode: 'browser',
   live: false,
+  insertMode: 'auto',
+  insertForce: null,
   timeScale: 1,
 };

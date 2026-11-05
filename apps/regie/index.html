@@ -34,11 +34,34 @@
         <h2 class="head">Scènes <kbd>1</kbd>…<kbd>9</kbd></h2>
         <div class="switcher" id="scenes"></div>
 
-        <h2 class="head">Caméra</h2>
+        <h2 class="head">
+          Caméra
+          <span class="head__note" id="obs-etat">—</span>
+        </h2>
         <div class="seg" id="cam-mode">
           <button data-cam="browser">Navigateur</button>
           <button data-cam="obs">OBS</button>
         </div>
+
+        <!-- En mode OBS, la régie pilote ta vraie webcam : elle se déplace
+             avec tes filtres et ta correction couleur, au lieu d'être
+             recapturée par le navigateur. -->
+        <details class="obs" id="obs-panneau">
+          <summary>Lien OBS</summary>
+          <label>Adresse<input id="obs-adresse" type="text" placeholder="ws://127.0.0.1:4455" /></label>
+          <label>Mot de passe<input id="obs-mdp" type="password" placeholder="(vide si désactivé)" /></label>
+          <label>Scène OBS<input id="obs-scene" type="text" placeholder="Match" /></label>
+          <label>Source caméra<input id="obs-source" type="text" placeholder="Webcam" /></label>
+          <div class="seg">
+            <button id="obs-connecter">Connecter</button>
+            <button id="obs-deconnecter">Couper</button>
+          </div>
+          <p class="tip tip--inline">
+            Dans OBS : <strong>Outils → Paramètres du serveur WebSocket</strong>,
+            puis coche l'activation. Les noms doivent correspondre exactement à
+            ceux de ta liste de sources.
+          </p>
+        </details>
 
         <!-- L'aide-mémoire reste visible : on n'apprend pas des raccourcis
              pendant un match, on les lit. -->

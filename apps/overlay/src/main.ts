@@ -12,6 +12,9 @@
 
 import {
   applyTheme,
+  insertActif,
+  INSERTS,
+  type InsertActif,
   findScene,
   findTheme,
   layersFor,
@@ -44,6 +47,10 @@ let theme: Theme = findTheme('kztv');
 let scene: Scene = findScene('match');
 /** Un saut de temps est survenu : réarmer sans rien rejouer. */
 let needsPrime = true;
+/** L'insert actuellement à l'antenne, choisi par la régie automatique. */
+let insertEnCours: string | null = null;
+/** Son motif, pour le moniteur de débogage. */
+let motifInsert = '';
 
 // ───────────────────── Mise à l'échelle du plateau 1920×1080 ──────────────────
 // Dans OBS la source fait exactement 1920×1080, donc l'échelle vaut 1. Ailleurs,
@@ -111,6 +118,27 @@ async function ensureCamStream(): Promise<void> {
  */
 function wantedLayers(current: Scene): SceneLayer[] {
   const list = layersFor(current, LAYER);
+
+  // La régie automatique : le panneau qui occupe le créneau d'insert cède
+  // temporairement la place. Le choix de l'insert est déterministe, donc les
+  // deux sources navigateur substituent exactement le même widget au même
+  // instant — sans quoi l'une montrerait les stats et l'autre le classement.
+  if (current.insertSlot && insertEnCours) {
+    const spec = INSERTS.find((i) => i.id === insertEnCours);
+    const creneau = current.insertSlot;
+    const index = list.findIndex(
+      (l) => l.slot.x === creneau.x && l.slot.y === creneau.y && l.slot.w === creneau.w,
+    );
+    if (spec && index !== -1) {
+      list[index] = {
+        widget: spec.widget,
+        slot: creneau,
+        z: list[index]!.z,
+        ...(spec.opts ? { opts: spec.opts } : {}),
+      };
+    }
+  }
+
   if (LAYER === 'fg') {
     list.push({ widget: 'flash', slot: { x: 0, y: 0, w: 1, h: 1 }, z: 999 });
   }
@@ -317,6 +345,26 @@ function shouldRefreshStatic(state: MatchState, clockMs: number, nowReal: number
   return changed;
 }
 
+/**
+ * L'insert à l'antenne, intention de l'opérateur comprise.
+ *
+ * Il peut couper la régie automatique, ou imposer un panneau. Les deux couches
+ * lisent le même état de contrôle, donc elles restent d'accord quoi qu'il
+ * choisisse.
+ */
+function choisirInsert(state: MatchState, now: number): InsertActif | null {
+  const control = connection.control;
+  if (control.insertMode === 'off') return null;
+
+  if (control.insertForce) {
+    const spec = INSERTS.find((i) => i.id === control.insertForce);
+    if (spec) {
+      return { spec, from: now, to: now + spec.holdMs, motif: 'imposé en régie' };
+    }
+  }
+  return insertActif(state, now);
+}
+
 function frame(): void {
   // L'instant à rendre : le temps du serveur MOINS le décalage anti-spoiler.
   // C'est toute l'idée du projet, et elle tient en une ligne.
@@ -337,6 +385,16 @@ function frame(): void {
 
   for (const trigger of watcher.poll(state)) dispatch(trigger, state, clockMs);
 
+  // La régie automatique. Fonction pure de l'état : la réévaluer à chaque
+  // image ne coûte rien et garantit que les deux couches restent d'accord.
+  const insert = choisirInsert(state, now);
+  const idInsert = insert?.spec.id ?? null;
+  if (idInsert !== insertEnCours) {
+    insertEnCours = idInsert;
+    motifInsert = insert?.motif ?? '';
+    syncScene(scene);
+  }
+
   const refreshStatic = shouldRefreshStatic(state, clockMs, performance.now());
   for (const entry of mounted.values()) {
     // Un widget qui dessine tourne à chaque image ; les autres attendent qu'il
@@ -355,6 +413,7 @@ function renderDebug(state: MatchState, now: number, clockMs: number): void {
   const lines = [
     `couche      ${LAYER}`,
     `scène       ${scene.id}`,
+    `insert      ${insertEnCours ?? '—'}${motifInsert ? `  (${motifInsert})` : ''}`,
     `thème       ${theme.id}`,
     `lien        ${connection.connected ? 'ouvert' : 'coupé'}`,
     `source      ${connection.provider.name} ${connection.provider.connected ? '✓' : '✗'}`,

@@ -104,6 +104,10 @@ function commandFromPath(parts: string[]): Command | null {
   if (head === 'theme' && a) return { name: 'set-theme', themeId: a };
   if (head === 'cam' && (a === 'obs' || a === 'browser')) return { name: 'set-cam-mode', camMode: a };
   if (head === 'speed' && a) return { name: 'replay-speed', speed: Number(a) };
+  if (head === 'inserts' && (a === 'auto' || a === 'off')) {
+    return { name: 'set-insert-mode', insertMode: a };
+  }
+  if (head === 'insert' && a) return { name: 'force-insert', insertId: a === 'auto' ? null : a };
   if (head === 'delay') {
     if (a === 'nudge' && b) return { name: 'nudge-delay', deltaMs: Number(b) };
     if (a) return { name: 'set-delay', delayMs: Number(a) };

@@ -20,6 +20,22 @@
   box-sizing: border-box;
 }
 
+/*
+ * La transparence du document, déclarée explicitement.
+ *
+ * Sans `color-scheme`, le navigateur compose le document sur une base OPAQUE
+ * BLANCHE : l'overlay recouvre alors tout ce qui est en dessous — la couche de
+ * fond, et dans OBS le flux lui-même. Un corps transparent ne suffit pas, il
+ * faut dire au navigateur quel fond il doit supposer.
+ *
+ * Trouvé en empilant les deux couches : l'avant-plan peignait du blanc sur
+ * l'arrière-plan, alors que chacune était parfaite isolément.
+ */
+html {
+  background: transparent;
+  color-scheme: dark;
+}
+
 .overlay-body {
   width: 1920px;
   height: 1080px;

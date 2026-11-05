@@ -125,6 +125,19 @@ export class Hub {
         this.control = { ...this.control, camMode: command.camMode };
         break;
       }
+      case 'set-insert-mode': {
+        this.control = { ...this.control, insertMode: command.insertMode };
+        break;
+      }
+      case 'force-insert': {
+        // Imposer un insert implique de vouloir des inserts.
+        this.control = {
+          ...this.control,
+          insertForce: command.insertId,
+          insertMode: command.insertId ? 'auto' : this.control.insertMode,
+        };
+        break;
+      }
       case 'replay-speed': {
         const speed = Math.min(60, Math.max(0.25, command.speed));
         this.clock.setScale(speed);

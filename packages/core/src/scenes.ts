@@ -52,6 +52,15 @@ export interface Scene {
   cam: Rect | null;
   camStyle: CamStyle;
   layers: SceneLayer[];
+  /**
+   * Le créneau où la régie automatique glisse ses inserts.
+   *
+   * Pendant le match, le panneau qui occupe ce créneau cède temporairement la
+   * place aux statistiques, au classement ou au momentum — comme un
+   * réalisateur télé insère une carte puis rend l'antenne. `undefined` : la
+   * scène ne reçoit aucun insert.
+   */
+  insertSlot?: Rect;
   transition: { kind: TransitionKind; ms: number };
 }
 
@@ -154,25 +163,6 @@ const SLIDE = { kind: 'slide', ms: 420 } as const;
  */
 export const SCENES: Scene[] = [
   {
-    id: 'attente',
-    name: 'Attente',
-    cam: CAM.case,
-    camStyle: 'framed',
-    transition: FADE,
-    layers: [
-      { widget: 'backdrop', slot: SLOT.plein, z: 10 },
-      { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      // L'affiche à gauche : avant le coup d'envoi, c'est ELLE l'information.
-      { widget: 'prematch', slot: SLOT.colonneGauche, z: 20 },
-      { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
-      { widget: 'title', slot: SLOT.radar, z: 20, opts: { text: 'On démarre dans un instant' } },
-      { widget: 'multiplex', slot: SLOT.colonneDroite, z: 20 },
-      { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
-      { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.case, z: 110 },
-    ],
-  },
-  {
     id: 'avant-match',
     name: 'Avant-match',
     cam: CAM.centreHaut,
@@ -194,47 +184,14 @@ export const SCENES: Scene[] = [
     name: 'Match',
     cam: CAM.case,
     camStyle: 'framed',
+    // Le multiplex tient la colonne de gauche, et la cède aux inserts de la
+    // régie automatique : statistiques, classement, momentum.
+    insertSlot: SLOT.colonneGauche,
     transition: SLIDE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
       { widget: 'multiplex', slot: SLOT.colonneGauche, z: 20 },
-      { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
-      { widget: 'radar2d', slot: SLOT.radar, z: 20 },
-      { widget: 'lineups', slot: SLOT.colonneDroite, z: 20 },
-      { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
-      { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.case, z: 110 },
-    ],
-  },
-  {
-    id: 'stats',
-    name: 'Stats',
-    cam: CAM.case,
-    camStyle: 'framed',
-    transition: SLIDE,
-    layers: [
-      { widget: 'backdrop', slot: SLOT.plein, z: 10 },
-      { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'stats', slot: SLOT.colonneGauche, z: 20 },
-      { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
-      { widget: 'radar2d', slot: SLOT.radar, z: 20 },
-      { widget: 'lineups', slot: SLOT.colonneDroite, z: 20 },
-      { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
-      { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.case, z: 110 },
-    ],
-  },
-  {
-    id: 'classement',
-    name: 'Classement',
-    cam: CAM.case,
-    camStyle: 'framed',
-    transition: SLIDE,
-    layers: [
-      { widget: 'backdrop', slot: SLOT.plein, z: 10 },
-      { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'standings', slot: SLOT.colonneGauche, z: 20 },
       { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
       { widget: 'radar2d', slot: SLOT.radar, z: 20 },
       { widget: 'lineups', slot: SLOT.colonneDroite, z: 20 },
@@ -250,21 +207,6 @@ export const SCENES: Scene[] = [
     camStyle: 'full',
     transition: FADE,
     layers: [{ widget: 'score-banner', slot: SLOT.banniere, z: 120 }],
-  },
-  {
-    id: 'stats-plein',
-    name: 'Stats plein écran',
-    cam: CAM.coin,
-    camStyle: 'framed',
-    transition: FADE,
-    layers: [
-      { widget: 'backdrop', slot: SLOT.plein, z: 10 },
-      { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'stats', slot: SLOT.pleinPrincipal, z: 20, opts: { large: true } },
-      { widget: 'momentum', slot: SLOT.pleinSecondaire, z: 20 },
-      { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.coin, z: 110 },
-    ],
   },
   {
     id: 'compos',
@@ -322,24 +264,6 @@ export const SCENES: Scene[] = [
       { widget: 'momentum', slot: SLOT.pleinSecondaire, z: 20 },
       { widget: 'social', slot: SLOT.social, z: 20 },
       { widget: 'cam-frame', slot: CAM.coin, z: 110 },
-    ],
-  },
-  {
-    id: 'debrief',
-    name: 'Débrief',
-    cam: CAM.grande,
-    camStyle: 'framed',
-    transition: FADE,
-    layers: [
-      { widget: 'backdrop', slot: SLOT.plein, z: 10 },
-      { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'sheet', slot: SLOT.colonneGauche, z: 20 },
-      { widget: 'stats', slot: SLOT.colonneDroite, z: 20 },
-      { widget: 'standings', slot: SLOT.colonneDroiteBas, z: 20 },
-      { widget: 'score-recap', slot: SLOT.titreCentre, z: 120 },
-      { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
-      { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.grande, z: 110 },
     ],
   },
   {
