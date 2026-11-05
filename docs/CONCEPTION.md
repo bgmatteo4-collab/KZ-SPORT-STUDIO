@@ -16,6 +16,7 @@ réel d'un match **décalé pour coller à ton stream**.
 | Ce n'est pas | C'est |
 |---|---|
 | Un site web | Un moteur de rendu temps réel à canevas fixe 1920×1080 |
+| Un diffuseur d'images de match | Un plateau qui raconte le match **par la donnée** |
 | Une collection de widgets flottants | Un **compositeur de scènes** où la webcam est une couche à part entière |
 | Un tableau de bord qui affiche des données | Du netcode : serveur autoritaire, client qui interpole |
 | Un outil qui court après le direct | Un lecteur qui lit volontairement dans le passé |
@@ -25,6 +26,8 @@ réel d'un match **décalé pour coller à ton stream**.
 | Sujet | Décision |
 |---|---|
 | Sport | **Football uniquement.** Rien d'autre. |
+| Images du match | **On ne les diffuse jamais.** C'est la raison d'être d'un watchalong et la seule position tenable vis-à-vis des droits. Le plateau raconte la rencontre par la donnée. |
+| Case centrale | **Toujours la caméra.** Aucune scène n'y place autre chose. |
 | Locataires | **Mono-chaîne** (KZ TV). La config est néanmoins séparée du moteur pour qu'une ouverture future ne soit pas une réécriture. |
 | Fournisseur de données | **Sportmonks** (seul à documenter publiquement `ballCoordinates`). Derrière une interface `Provider` : on doit pouvoir en changer sans toucher au rendu. |
 | Latence | **Le retard est une fonctionnalité, pas un problème.** On ne cherche jamais le temps réel. |

@@ -50,13 +50,6 @@ export interface Scene {
   /** Rectangle cible de la webcam. `null` = caméra masquée sur cette scène. */
   cam: Rect | null;
   camStyle: CamStyle;
-  /**
-   * Rectangle cible du flux du match (ta capture d'écran ou ton décodeur).
-   * `null` = masqué — c'est le cas normal d'un watchalong, où l'on ne diffuse
-   * pas les images. Deux médias distincts, parce qu'une scène peut montrer la
-   * caméra en grand ET le match en vignette, ou l'inverse.
-   */
-  feed: Rect | null;
   layers: SceneLayer[];
   transition: { kind: TransitionKind; ms: number };
 }
@@ -96,7 +89,7 @@ const SLOT = {
   /** Vues et likes, sous la colonne de gauche. */
   compteurs: { x: 0.008, y: 0.902, w: 0.236, h: 0.058 },
 
-  /** La case centrale : le flux du match, ou la caméra. */
+  /** La case centrale : la caméra. Jamais les images du match. */
   caseCentrale: { x: 0.258, y: 0.158, w: 0.484, h: 0.472 },
   /** Le radar, sous la case centrale. */
   radar: { x: 0.272, y: 0.648, w: 0.456, h: 0.322 },
@@ -116,6 +109,11 @@ const SLOT = {
 
 // Les emplacements de la caméra. Elle est LOGÉE dans le plateau, jamais posée
 // dessus : c'est ce qui distingue un habillage de télévision d'un bandeau.
+//
+// DÉCISION VERROUILLÉE : la case centrale est TOUJOURS la caméra. On ne
+// diffuse jamais les images du match — c'est la raison d'être d'un watchalong,
+// et la seule façon de rester dans les clous des droits de diffusion. Le
+// plateau raconte le match par la donnée : score, radar, stats, compositions.
 const CAM = {
   /** La case centrale du plateau : la position de match. */
   case: SLOT.caseCentrale,
@@ -125,8 +123,6 @@ const CAM = {
   grande: { x: 0.265, y: 0.13, w: 0.47, h: 0.56 },
   /** Vignette, quand un panneau prend le centre. */
   vignette: { x: 0.772, y: 0.33, w: 0.216, h: 0.246 },
-  /** Incrustation dans l'image du match, en bas à droite de la case centrale. */
-  pip: { x: 0.598, y: 0.452, w: 0.13, h: 0.162 },
   /** Deux invités côte à côte dans la case centrale. */
   duoGauche: { x: 0.258, y: 0.158, w: 0.238, h: 0.472 },
 } as const satisfies Record<string, Rect>;
@@ -148,7 +144,6 @@ export const SCENES: Scene[] = [
     name: 'Attente',
     cam: CAM.grande,
     camStyle: 'framed',
-    feed: null,
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
@@ -162,7 +157,6 @@ export const SCENES: Scene[] = [
     name: 'Avant-match',
     cam: CAM.case,
     camStyle: 'framed',
-    feed: null,
     transition: SLIDE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
@@ -180,7 +174,6 @@ export const SCENES: Scene[] = [
     name: 'Match',
     cam: CAM.case,
     camStyle: 'framed',
-    feed: null,
     transition: SLIDE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
@@ -199,7 +192,6 @@ export const SCENES: Scene[] = [
     name: 'Stats',
     cam: CAM.case,
     camStyle: 'framed',
-    feed: null,
     transition: SLIDE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
@@ -218,7 +210,6 @@ export const SCENES: Scene[] = [
     name: 'Classement',
     cam: CAM.case,
     camStyle: 'framed',
-    feed: null,
     transition: SLIDE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
@@ -233,31 +224,10 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'match-flux',
-    name: 'Match à l’image',
-    cam: CAM.pip,
-    camStyle: 'framed',
-    feed: SLOT.caseCentrale,
-    transition: SLIDE,
-    layers: [
-      { widget: 'backdrop', slot: SLOT.plein, z: 10 },
-      { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'multiplex', slot: SLOT.colonneGauche, z: 20 },
-      { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
-      { widget: 'radar2d', slot: SLOT.radar, z: 20 },
-      { widget: 'lineups', slot: SLOT.colonneDroite, z: 20 },
-      { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
-      { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'feed-frame', slot: SLOT.caseCentrale, z: 105 },
-      { widget: 'cam-frame', slot: CAM.pip, z: 115 },
-    ],
-  },
-  {
     id: 'plein-cadre',
     name: 'Plein cadre',
     cam: CAM.plein,
     camStyle: 'full',
-    feed: null,
     transition: FADE,
     layers: [{ widget: 'score-banner', slot: SLOT.banniere, z: 120 }],
   },
@@ -266,7 +236,6 @@ export const SCENES: Scene[] = [
     name: 'Stats plein écran',
     cam: CAM.vignette,
     camStyle: 'framed',
-    feed: null,
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
@@ -281,7 +250,6 @@ export const SCENES: Scene[] = [
     name: 'Compositions',
     cam: CAM.vignette,
     camStyle: 'framed',
-    feed: null,
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
@@ -296,7 +264,6 @@ export const SCENES: Scene[] = [
     name: 'Radar plein écran',
     cam: CAM.vignette,
     camStyle: 'framed',
-    feed: null,
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
@@ -311,7 +278,6 @@ export const SCENES: Scene[] = [
     name: 'Multiplex',
     cam: CAM.vignette,
     camStyle: 'framed',
-    feed: null,
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
@@ -326,7 +292,6 @@ export const SCENES: Scene[] = [
     name: 'Débrief',
     cam: CAM.grande,
     camStyle: 'framed',
-    feed: null,
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
@@ -341,7 +306,6 @@ export const SCENES: Scene[] = [
     name: 'Pause',
     cam: null,
     camStyle: 'full',
-    feed: null,
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },

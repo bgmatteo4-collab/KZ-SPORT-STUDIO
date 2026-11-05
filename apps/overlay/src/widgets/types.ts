@@ -19,8 +19,6 @@ export interface WidgetContext {
   now: number;
   /** Position de la caméra sur la scène courante, si elle est visible. */
   cam: { x: number; y: number; w: number; h: number; style: string } | null;
-  /** Position du flux du match, si la scène le montre. */
-  feed: { x: number; y: number; w: number; h: number } | null;
 }
 
 export interface Widget {

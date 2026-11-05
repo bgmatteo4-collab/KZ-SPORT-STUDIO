@@ -7,7 +7,7 @@
  */
 
 import { h } from '../dom.js';
-import { backdrop, camFrame, feedFrame, scoreRecap, social, streamCounters, title } from './chrome.js';
+import { backdrop, camFrame, scoreRecap, social, streamCounters, title } from './chrome.js';
 import { flash } from './flash.js';
 import { lineups } from './lineups.js';
 import { multiplex } from './multiplex.js';
@@ -32,7 +32,6 @@ export const REGISTRY: Record<string, WidgetFactory> = {
   backdrop,
   'score-banner': scoreBanner,
   'cam-frame': camFrame,
-  'feed-frame': feedFrame,
   'stream-counters': streamCounters,
   social,
   title,

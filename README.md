@@ -34,11 +34,14 @@ deux** dans la liste des sources :
 Source navigateur   http://localhost:4000/overlay/?layer=fg
 Ta webcam                      ← la scène décide où elle se place
 Source navigateur   http://localhost:4000/overlay/?layer=bg
-Ta capture du match            ← quand la scène la montre
 ```
 
 C'est cet empilement qui permet à la caméra d'être **logée dans le plateau**
 plutôt que posée dessus.
+
+Il n'y a rien d'autre dans la pile : **on ne diffuse jamais les images du
+match**. C'est la raison d'être d'un watchalong, et le plateau raconte la
+rencontre par la donnée — score, radar, stats, compositions, multiplex.
 
 ## Le réglage qui compte
 

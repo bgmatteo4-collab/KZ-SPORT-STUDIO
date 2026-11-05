@@ -191,7 +191,6 @@ function buildContext(state: MatchState, clockMs: number, spec: SceneLayer): Wid
   const cam = scene.cam
     ? { ...rectToPixels(scene.cam), style: scene.camStyle }
     : null;
-  const feed = scene.feed ? rectToPixels(scene.feed) : null;
   return {
     state,
     clockMs,
@@ -200,7 +199,6 @@ function buildContext(state: MatchState, clockMs: number, spec: SceneLayer): Wid
     box: { w: box.w, h: box.h },
     now: state.t,
     cam,
-    feed,
   };
 }
 

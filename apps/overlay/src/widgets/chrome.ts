@@ -70,17 +70,6 @@ export const camFrame: WidgetFactory = (): Widget => {
   };
 };
 
-/** Le cadre du flux du match. Même principe que celui de la caméra. */
-export const feedFrame: WidgetFactory = (): Widget => {
-  const el = h('div', { class: 'cam-frame', 'data-style': 'framed' });
-  return {
-    el,
-    update({ feed }: WidgetContext) {
-      el.style.opacity = feed ? '1' : '0';
-    },
-  };
-};
-
 function icon(paths: string[]): SVGElement {
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');

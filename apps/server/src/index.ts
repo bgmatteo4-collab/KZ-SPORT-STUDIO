@@ -124,8 +124,8 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
 
   const parts = url.pathname.slice('/api/'.length).split('/').filter(Boolean);
 
-  // Les rectangles de la scène courante, en pixels du plateau. C'est ce que la
-  // régie enverra à OBS pour animer la vraie webcam et la capture du match.
+  // Le rectangle de la caméra sur la scène courante, en pixels du plateau.
+  // C'est ce que la régie enverra à OBS pour animer ta vraie webcam.
   // `parts.length === 1` est essentiel : sinon `/api/scene/radar-2d`, qui est
   // une COMMANDE Stream Deck, serait avalé ici au lieu de changer de scène.
   if (parts[0] === 'scene' && parts.length === 1) {
@@ -136,7 +136,6 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
       camStyle: scene.camStyle,
       transition: scene.transition,
       cam: scene.cam ? rectToPixels(scene.cam) : null,
-      feed: scene.feed ? rectToPixels(scene.feed) : null,
     });
     return;
   }

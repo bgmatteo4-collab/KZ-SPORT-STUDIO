@@ -9,8 +9,11 @@
 ## 1. Le principe qu'il ne faut pas rater
 
 **L'habillage n'est pas un bandeau posé sur une image de match. C'est un plateau
-de télévision qui occupe les 1920×1080, et le flux du match — ou la webcam — est
-une case de ce plateau.**
+de télévision qui occupe les 1920×1080, et la webcam est une case de ce plateau.**
+
+Et on ne diffuse **jamais** les images du match. C'est la raison d'être d'un
+watchalong, et la seule position tenable sur les droits : le plateau raconte la
+rencontre par la donnée — score, radar, stats, compositions, multiplex.
 
 Conséquence directe : la caméra ne flotte pas au-dessus du décor, elle est
 **logée** dedans. Changer de scène, c'est redessiner le plateau et reloger la
@@ -28,7 +31,7 @@ fondations.
 │                              ‾‾‾‾‾‾‾  ← soulignement or              │
 │ ╭────────────────╮   ╭──────────────────────╮   ╭──────────────────╮ │
 │ │ EN DIRECT      │   │                      │   │ DOMICILE         │ │
-│ │ MATCHS         │   │   MÉDIA / CAMÉRA     │   │ COMPOSITIONS     │ │
+│ │ MATCHS         │   │      TA CAMÉRA       │   │ COMPOSITIONS     │ │
 │ │  (multiplex)   │   │   (case centrale)    │   │   maillots       │ │
 │ │                │   ╰──────────────────────╯   │   + noms         │ │
 │ │                │   ╭──────────────────────╮   ╰──────────────────╯ │
