@@ -11,7 +11,8 @@
  *     Source navigateur  ?layer=fg   couches de z > CAM_Z   (devant toi)
  *     Ta webcam                      ← pilotée par `Scene.cam`
  *     Source navigateur  ?layer=bg   couches de z < CAM_Z   (derrière toi)
- *     Le flux du match
+ *
+ * Et rien en dessous : on ne diffuse jamais les images du match.
  *
  * Quand la régie commute une scène, les deux overlays animent leurs couches et
  * la régie envoie le rectangle `cam` à OBS, qui anime TA VRAIE webcam — avec tes
