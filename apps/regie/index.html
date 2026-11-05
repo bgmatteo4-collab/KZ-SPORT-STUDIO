@@ -63,6 +63,18 @@
           </p>
         </details>
 
+        <!-- La régie automatique : les panneaux secondaires viennent seuls
+             pendant le match. L'opérateur peut la couper ou imposer. -->
+        <h2 class="head">
+          Inserts
+          <span class="head__note" id="insert-motif">—</span>
+        </h2>
+        <div class="seg" id="insert-mode">
+          <button data-mode="auto">Automatiques</button>
+          <button data-mode="off">Coupés</button>
+        </div>
+        <div class="chips" id="insert-force"></div>
+
         <!-- L'aide-mémoire reste visible : on n'apprend pas des raccourcis
              pendant un match, on les lit. -->
         <h2 class="head">Raccourcis</h2>
@@ -84,9 +96,10 @@
           À l'antenne
           <span class="head__note" id="scene-name">—</span>
         </h2>
+        <!-- Une seule couche : un moniteur n'a pas à imiter l'empilement
+             d'OBS, et deux sources navigateur coûtent deux Chromium. -->
         <div class="monitor" id="monitor">
-          <iframe id="mon-bg" src="/overlay/?layer=bg" allow="camera"></iframe>
-          <iframe id="mon-fg" src="/overlay/?layer=fg" allow="camera"></iframe>
+          <iframe id="mon" src="/overlay/?layer=all" allow="camera"></iframe>
         </div>
 
         <h2 class="head">Faits de jeu</h2>

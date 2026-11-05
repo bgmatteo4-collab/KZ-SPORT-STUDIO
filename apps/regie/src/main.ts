@@ -18,6 +18,8 @@
 import {
   clockLabel,
   findScene,
+  insertActif,
+  INSERTS,
   PHASE_LABEL,
   SCENES,
   StateCursor,
@@ -51,6 +53,9 @@ const scenesBox = el('scenes');
 const themesBox = el('themes');
 const camBox = el('cam-mode');
 const speedBox = el('speed');
+const insertModeBox = el('insert-mode');
+const insertForceBox = el('insert-force');
+const insertMotif = el('insert-motif');
 const feedBox = el('feed');
 const delayInput = el<HTMLInputElement>('delay');
 const delayValue = el<HTMLOutputElement>('delay-value');
@@ -89,6 +94,23 @@ for (const theme of THEMES) {
   button.dataset.theme = theme.id;
   button.addEventListener('click', () => send({ name: 'set-theme', themeId: theme.id }));
   themesBox.append(button);
+}
+
+for (const button of insertModeBox.querySelectorAll<HTMLButtonElement>('[data-mode]')) {
+  button.addEventListener('click', () =>
+    send({ name: 'set-insert-mode', insertMode: button.dataset.mode as 'auto' | 'off' }),
+  );
+}
+
+// « Auto » rend la main à la régie automatique ; les autres imposent un panneau.
+for (const spec of [{ id: '', label: 'Auto' }, ...INSERTS.map((i) => ({ id: i.id, label: i.id }))]) {
+  const button = document.createElement('button');
+  button.textContent = spec.label;
+  button.dataset.force = spec.id;
+  button.addEventListener('click', () =>
+    send({ name: 'force-insert', insertId: spec.id === '' ? null : spec.id }),
+  );
+  insertForceBox.append(button);
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-nudge]')) {
@@ -271,6 +293,8 @@ function applyControl(next: ControlState): void {
   mark(themesBox, 'theme', next.themeId);
   mark(camBox, 'cam', next.camMode);
   mark(speedBox, 'speed', String(next.timeScale));
+  mark(insertModeBox, 'mode', next.insertMode);
+  mark(insertForceBox, 'force', next.insertForce ?? '');
   sceneName.textContent = findScene(next.sceneId).name;
 }
 
@@ -310,6 +334,19 @@ function refresh(): void {
   nowPhase.textContent = PHASE_LABEL[state.phase];
 
   sourceDetail.textContent = provider.detail ?? provider.name;
+
+  // Ce que la régie automatique montre en ce moment — et sa raison. Sans le
+  // motif, un panneau qui surgit ressemble à un défaut.
+  if (control.insertMode === 'off') {
+    insertMotif.textContent = 'coupés';
+  } else if (control.insertForce) {
+    insertMotif.textContent = `${control.insertForce} · imposé`;
+  } else {
+    const actif = findScene(control.sceneId).insertSlot
+      ? insertActif(state, sync.now() - control.delayMs)
+      : null;
+    insertMotif.textContent = actif ? `${actif.spec.id} · ${actif.motif}` : 'rien à l’antenne';
+  }
 
   renderFeed(state);
   requestAnimationFrame(refresh);

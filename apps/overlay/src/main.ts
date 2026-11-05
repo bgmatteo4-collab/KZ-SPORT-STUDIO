@@ -32,7 +32,10 @@ import { Connection } from './connection.js';
 import { REGISTRY, type Widget, type WidgetContext } from './widgets/index.js';
 
 const params = new URLSearchParams(location.search);
-const LAYER: OverlayLayer = params.get('layer') === 'bg' ? 'bg' : 'fg';
+const demande = params.get('layer');
+const LAYER: OverlayLayer = demande === 'bg' ? 'bg' : demande === 'all' ? 'all' : 'fg';
+/** Cette couche porte-t-elle l'image de la caméra ? */
+const PORTE_CAMERA = LAYER === 'bg' || LAYER === 'all';
 const DEBUG = params.get('debug') === '1';
 
 const stage = document.getElementById('stage')!;
@@ -139,7 +142,7 @@ function wantedLayers(current: Scene): SceneLayer[] {
     }
   }
 
-  if (LAYER === 'fg') {
+  if (LAYER === 'fg' || LAYER === 'all') {
     list.push({ widget: 'flash', slot: { x: 0, y: 0, w: 1, h: 1 }, z: 999 });
   }
   return list;
@@ -211,7 +214,7 @@ function syncScene(current: Scene): void {
   }
 
   // L'image de la caméra, en mode navigateur et sur la couche de fond.
-  const wantsCam = LAYER === 'bg' && connection.control.camMode === 'browser' && current.cam !== null;
+  const wantsCam = PORTE_CAMERA && connection.control.camMode === 'browser' && current.cam !== null;
   if (wantsCam && current.cam) {
     void ensureCamStream();
     const box = rectToPixels(current.cam);

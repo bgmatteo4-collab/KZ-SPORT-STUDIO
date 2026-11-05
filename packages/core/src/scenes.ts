@@ -64,12 +64,18 @@ export interface Scene {
   transition: { kind: TransitionKind; ms: number };
 }
 
-export type OverlayLayer = 'bg' | 'fg';
+/**
+ * `bg` et `fg` sont les deux sources d'OBS, avec la caméra en sandwich.
+ * `all` rend tout dans un seul document : c'est ce qu'il faut pour un MONITEUR,
+ * qui n'a pas à imiter l'empilement — et qui épargne ainsi une instance de
+ * navigateur complète.
+ */
+export type OverlayLayer = 'bg' | 'fg' | 'all';
 
 /** Les couches qui reviennent à une source navigateur donnée. */
 export function layersFor(scene: Scene, layer: OverlayLayer): SceneLayer[] {
   return scene.layers
-    .filter((l) => (layer === 'bg' ? l.z < CAM_Z : l.z > CAM_Z))
+    .filter((l) => (layer === 'all' ? true : layer === 'bg' ? l.z < CAM_Z : l.z > CAM_Z))
     .sort((a, b) => a.z - b.z);
 }
 

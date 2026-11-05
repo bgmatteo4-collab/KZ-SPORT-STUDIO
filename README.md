@@ -21,9 +21,33 @@ Trois pages :
 
 | Page | Adresse | À quoi ça sert |
 |---|---|---|
-| Prévisualisation | http://localhost:4000/preview/ | Voir le résultat final sans ouvrir OBS |
-| Régie | http://localhost:4000/regie/ | Piloter : scènes, délai, habillage |
+| Banc d'essai | http://localhost:4000/preview/ | Voir et piloter le plateau, **en plein écran** (`F`) |
+| Régie | http://localhost:4000/regie/ | Piloter : scènes, délai, habillage, inserts |
 | Overlay | http://localhost:4000/overlay/?layer=fg | Ce qu'on colle dans OBS |
+
+Le banc d'essai se pilote entièrement au clavier : <kbd>F</kbd> plein écran,
+<kbd>1</kbd> à <kbd>8</kbd> les scènes, <kbd>←</kbd><kbd>→</kbd> le délai,
+<kbd>I</kbd> les inserts. On ne peut pas regarder l'antenne sur un écran et
+chercher un bouton sur l'autre.
+
+## Les huit scènes, et la régie automatique
+
+Huit scènes seulement, chacune correspondant à un moment d'émission :
+avant-match, match, plein cadre, compositions, radar plein écran, multiplex,
+feuille de match, pause.
+
+Les statistiques, le classement et le momentum ne sont **pas** des scènes : ils
+viennent tout seuls pendant le match, dans la colonne de gauche, et rendent la
+place. Un streamer seul ne peut pas commenter et piloter un mélangeur.
+
+Cette régie automatique obéit à deux règles. Elle est **déterministe** — pas de
+tirage au sort, sans quoi les deux sources navigateur d'OBS afficheraient deux
+panneaux différents et un rechargement changerait l'écran. Et elle est
+**motivée** : après un but on montre le classement, après un carton rouge le
+momentum, dans un temps mort les statistiques. Un panneau au hasard juste après
+un but passerait pour une panne.
+
+L'opérateur garde la main : inserts coupés, ou panneau imposé.
 
 ## Voir à quoi ça ressemble sans rien installer
 
