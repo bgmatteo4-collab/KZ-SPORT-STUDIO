@@ -131,7 +131,8 @@ const META: MatchMeta = {
   venue: 'Santiago Bernabéu',
   home: HOME,
   away: AWAY,
-  kickoff: 0,
+  // 21 h 00, heure de Paris : l'heure d'un match de coupe d'Europe.
+  kickoff: Date.UTC(2026, 3, 14, 19, 0, 0),
 };
 
 // ───────────────────────── Le scénario des temps forts ────────────────────────
@@ -254,9 +255,10 @@ const STANDINGS: StandingRow[] = TABLE.map(([abbr, short, color, alt, diff, poin
 function oddsAt(score: Pair, matchMs: number): Odds {
   const lead = score[0] - score[1];
   const left = Math.max(0.05, 1 - matchMs / (95 * MIN));
-  const home = Math.max(1.01, 2.4 - lead * 0.9 + (1 - left) * (lead > 0 ? -0.9 : 2.2));
-  const away = Math.max(1.01, 2.4 + lead * 0.9 + (1 - left) * (lead < 0 ? -0.9 : 2.2));
-  const draw = Math.max(1.01, 3.2 + Math.abs(lead) * 1.6 - left * 0.4);
+  // Le Real reçoit : favori à l'ouverture, autour de 2,05 contre 3,40.
+  const home = Math.max(1.01, 2.05 - lead * 0.85 + (1 - left) * (lead > 0 ? -0.75 : 2.4));
+  const away = Math.max(1.01, 3.4 + lead * 1.1 + (1 - left) * (lead < 0 ? -1.4 : 2.6));
+  const draw = Math.max(1.01, 3.3 + Math.abs(lead) * 1.7 - left * 0.3);
   return {
     home: Number(home.toFixed(2)),
     draw: Number(draw.toFixed(2)),

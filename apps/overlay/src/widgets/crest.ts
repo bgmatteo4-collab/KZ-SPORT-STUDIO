@@ -34,75 +34,104 @@ export function paintCrest(el: HTMLElement, team: AnyTeam | undefined | null): v
   if (el.textContent !== team.abbr) el.textContent = team.abbr;
 }
 
-/** Un maillot : rayé si l'équipe a deux couleurs, uni sinon. */
+/**
+ * Un maillot.
+ *
+ * Pas un pictogramme : une silhouette avec col, manches et ombrage, dans les
+ * couleurs du club, avec un écu sur la poitrine. Le gardien porte une autre
+ * couleur et son numéro — c'est la convention d'antenne, et c'est ce qui fait
+ * qu'on lit une composition au lieu de déchiffrer une grille d'icônes.
+ */
 export function jerseyEl(team: AnyTeam | undefined, keeper = false, number?: number): HTMLElement {
   const wrap = h('div', { class: 'jersey' });
   const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 40 36');
+  svg.setAttribute('viewBox', '0 0 48 46');
 
-  const base = keeper ? '#e8b45c' : (team?.color ?? '#6b7280');
-  const stripe = keeper ? '#c08c2e' : (team?.colorAlt ?? shade(base, -34));
+  const base = keeper ? '#2fd07a' : (team?.color ?? '#6b7280');
+  const second = keeper ? '#1a9b55' : (team?.colorAlt ?? shade(base, -38));
+  const kit = keeper ? 'plain' : (team?.kit ?? 'plain');
+  const id = Math.random().toString(36).slice(2, 8);
 
-  const id = `j${Math.random().toString(36).slice(2, 8)}`;
-  const clip = document.createElementNS(NS, 'clipPath');
-  clip.setAttribute('id', id);
+  // Corps : épaules, manches courtes, buste, et l'échancrure du col.
+  const SHIRT =
+    'M17 4 L11 6 L3 11 L8 20 L14 16.5 L14 43 L34 43 L34 16.5 L40 20 L45 11 L37 6 L31 4 ' +
+    'C29.5 8.5 18.5 8.5 17 4 Z';
 
   const shape = () => {
-    const p = document.createElementNS(NS, 'path');
-    // Épaules, manches, corps. Volontairement simple : à 40 px, le détail est du bruit.
-    p.setAttribute(
-      'd',
-      'M14 3 L20 1 L26 3 L35 7 L31.5 15 L28 13 L28 34 L12 34 L12 13 L8.5 15 L5 7 Z',
-    );
-    return p;
+    const path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', SHIRT);
+    return path;
   };
+
+  const clip = document.createElementNS(NS, 'clipPath');
+  clip.setAttribute('id', `k${id}`);
+  clip.append(shape());
 
   const body = shape();
   body.setAttribute('fill', base);
-  clip.append(shape());
 
-  const stripes = document.createElementNS(NS, 'g');
-  stripes.setAttribute('clip-path', `url(#${id})`);
-  const kit = keeper ? 'plain' : (team?.kit ?? 'plain');
-
+  const motif = document.createElementNS(NS, 'g');
+  motif.setAttribute('clip-path', `url(#k${id})`);
   if (kit === 'striped') {
-    for (let x = 12; x < 32; x += 8) {
-      stripes.append(bar(x, 0, 4, 36, stripe));
-    }
+    for (let x = 14; x < 34; x += 7) motif.append(bar(x, 0, 3.5, 46, second));
   } else if (kit === 'hoops') {
-    for (let y = 6; y < 34; y += 9) {
-      stripes.append(bar(0, y, 40, 4, stripe));
-    }
-  } else if (!keeper) {
-    // Uni : juste les manches dans la seconde couleur. Suffit à identifier
-    // l'équipe sans inventer un maillot qui n'existe pas.
-    stripes.append(bar(5, 3, 8, 13, stripe));
-    stripes.append(bar(27, 3, 8, 13, stripe));
+    for (let y = 10; y < 44; y += 8) motif.append(bar(0, y, 48, 4, second));
+  } else {
+    // Uni : manches dans la seconde couleur. Suffit à identifier l'équipe sans
+    // inventer un maillot qui n'existe pas.
+    motif.append(bar(2, 4, 12, 18, second), bar(34, 4, 12, 18, second));
   }
+
+  // Ombrage : un dégradé sombre vers le bas, c'est ce qui donne le volume.
+  const grad = document.createElementNS(NS, 'linearGradient');
+  grad.setAttribute('id', `g${id}`);
+  grad.setAttribute('x1', '0');
+  grad.setAttribute('y1', '0');
+  grad.setAttribute('x2', '0');
+  grad.setAttribute('y2', '1');
+  for (const [offset, color, opacity] of [
+    ['0%', '#ffffff', '0.26'],
+    ['46%', '#ffffff', '0'],
+    ['100%', '#000000', '0.3'],
+  ] as const) {
+    const stop = document.createElementNS(NS, 'stop');
+    stop.setAttribute('offset', offset);
+    stop.setAttribute('stop-color', color);
+    stop.setAttribute('stop-opacity', opacity);
+    grad.append(stop);
+  }
+  const shade_ = shape();
+  shade_.setAttribute('fill', `url(#g${id})`);
 
   const outline = shape();
   outline.setAttribute('fill', 'none');
-  outline.setAttribute('stroke', 'rgba(0,0,0,0.45)');
+  outline.setAttribute('stroke', 'rgba(0,0,0,0.5)');
   outline.setAttribute('stroke-width', '1.4');
+  outline.setAttribute('stroke-linejoin', 'round');
 
-  svg.append(clip, body, stripes, outline);
+  svg.append(grad, clip, body, motif, shade_, outline);
 
-  // Le numéro, s'il tient. En dessous de 40 px de maillot il devient illisible
-  // et on l'omet plutôt que de livrer une tache.
-  if (number !== undefined) {
+  // L'écu sur la poitrine. Le gardien porte son numéro à la place.
+  if (keeper && number !== undefined) {
     const text = document.createElementNS(NS, 'text');
-    text.setAttribute('x', '20');
-    text.setAttribute('y', '26');
+    text.setAttribute('x', '24');
+    text.setAttribute('y', '30');
     text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('font-size', '13');
+    text.setAttribute('font-size', '15');
     text.setAttribute('font-weight', '800');
     text.setAttribute('font-family', 'Archivo, sans-serif');
-    text.setAttribute('fill', readable(keeper ? '#e8b45c' : base));
-    text.setAttribute('paint-order', 'stroke');
-    text.setAttribute('stroke', 'rgba(0,0,0,0.35)');
-    text.setAttribute('stroke-width', '2.5');
+    text.setAttribute('fill', readable(base));
     text.textContent = String(number);
     svg.append(text);
+  } else {
+    const badge = document.createElementNS(NS, 'circle');
+    badge.setAttribute('cx', '24');
+    badge.setAttribute('cy', '24');
+    badge.setAttribute('r', '3.6');
+    badge.setAttribute('fill', 'rgba(255,255,255,0.82)');
+    badge.setAttribute('stroke', 'rgba(0,0,0,0.3)');
+    badge.setAttribute('stroke-width', '0.8');
+    svg.append(badge);
   }
 
   wrap.append(svg);

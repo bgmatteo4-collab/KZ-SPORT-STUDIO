@@ -99,12 +99,17 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: var(--panel);
-  border: 2px solid var(--panel-line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, transparent 38%),
+    var(--panel);
+  border: 0;
   border-radius: var(--radius-panel);
-  box-shadow: var(--shadow), var(--panel-glow);
+  /* Une arête de lumière en haut plutôt qu'un filet tout autour : c'est ce qui
+     fait une surface posée, et non une carte détourée. */
+  box-shadow:
+    var(--shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: hidden;
-  backdrop-filter: blur(3px);
 }
 
 .panel__head {
@@ -210,9 +215,9 @@
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 46%),
     var(--panel);
-  border: 2px solid var(--panel-line);
+  border: 0;
   border-radius: var(--radius-panel);
-  box-shadow: var(--shadow), var(--panel-glow);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Cale invisible, de la largeur du cartouche : sans elle le score se décale. */
@@ -312,7 +317,7 @@
   max-width: 420px;
   padding: 0 var(--s5);
   background: var(--pill);
-  border: 2px solid var(--pill-line);
+  border: 0;
   border-radius: var(--radius-pill);
   font-size: 18px;
   font-weight: 400;
@@ -334,7 +339,7 @@
   min-width: 170px;
   padding: 0 var(--s5);
   background: var(--pill);
-  border: 2px solid var(--pill-line);
+  border: 0;
   border-radius: var(--radius-pill);
   font-size: 30px;
   font-weight: 800;
@@ -481,45 +486,88 @@
 
 /* ═══════════════════════════ Compositions ═════════════════════════════════ */
 
-.lineup { position: relative; flex: 1; min-height: 0; }
+.lineup {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: var(--radius-card);
+  background: rgba(0, 0, 0, 0.16);
+}
 
 .lineup__pitch {
   position: absolute;
   inset: 0;
-  border-radius: var(--radius-card);
-  border: 1px solid var(--panel-line);
-  background: linear-gradient(180deg, transparent 0%, var(--slab) 100%);
-  opacity: 0.4;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 0.7;
 }
+
+.lineup__pitch .lineup__spot { fill: rgba(255, 255, 255, 0.16); stroke: none; }
 
 .lineup__man {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s1);
+  gap: 0;
   transform: translate(-50%, -50%);
 }
 
-.jersey { position: relative; width: 42px; height: 38px; }
-.jersey svg { width: 100%; height: 100%; filter: drop-shadow(var(--shadow-soft)); }
+/* La taille vient du widget : elle suit la largeur du panneau. */
+.lineup { --jersey: 50px; }
 
+.jersey {
+  position: relative;
+  width: var(--jersey);
+  height: calc(var(--jersey) * 0.92);
+}
+.jersey svg { width: 100%; height: 100%; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45)); }
+
+/* La pastille de nom est LARGE et chevauche le bas du maillot : c'est ce qui
+   la rattache au joueur au lieu de la faire flotter dessous. */
 .lineup__name {
-  padding: 2px var(--s2);
+  margin-top: calc(var(--jersey) * -0.12);
+  padding: 3px var(--s3);
   border-radius: var(--radius-pill);
-  background: var(--pill);
-  border: 1px solid var(--pill-line);
-  font-size: 15px;
-  font-weight: 700;
+  background: rgba(8, 11, 24, 0.86);
+  font-size: clamp(14px, calc(var(--jersey) * 0.22), 23px);
+  font-weight: 800;
   font-stretch: var(--width-tight);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+/* Les marqueurs : des pointes aux coins du maillot, comme à l'antenne. */
+.lineup__mark { position: absolute; top: 6px; }
+
+.lineup__mark--yellow,
+.lineup__mark--red {
+  right: -2px;
+  width: calc(var(--jersey) * 0.17);
+  height: calc(var(--jersey) * 0.23);
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.lineup__mark--yellow { background: #ffd43b; }
+.lineup__mark--red { background: var(--lose); }
+
+.lineup__mark--sub {
+  left: -2px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 8px solid var(--lose);
 }
 
 /* Un joueur sorti s'efface : l'information reste lisible sans le faire croire
    encore sur le terrain. */
-.lineup__man[data-out='1'] { opacity: 0.45; }
+.lineup__man[data-out='1'] { opacity: 0.42; }
 
 .lineup__coach {
   display: flex;
@@ -529,7 +577,7 @@
   padding-top: var(--s3);
 }
 
-.lineup__coach-name { font-size: 18px; font-weight: 700; }
+.lineup__coach-name { font-size: 18px; font-weight: 800; }
 
 .bench__wrap {
   display: flex;
@@ -538,7 +586,7 @@
   flex: none;
   padding-top: var(--s3);
   margin-top: var(--s3);
-  border-top: 1px solid var(--panel-line);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .bench { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s2); }
@@ -551,24 +599,11 @@
   border-radius: var(--radius-pill);
   background: var(--slab);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   font-stretch: var(--width-tight);
 }
 
-.bench__man b { color: var(--ink-soft); font-weight: 700; font-variant-numeric: tabular-nums; }
-
-.lineup__mark { position: absolute; top: 2px; width: 8px; height: 11px; border-radius: 2px; }
-.lineup__mark--yellow { right: -4px; background: #ffd43b; }
-.lineup__mark--red { right: -4px; background: var(--lose); }
-.lineup__mark--sub {
-  left: -4px;
-  width: 0;
-  height: 0;
-  border-radius: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-bottom: 8px solid var(--win);
-}
+.bench__man b { color: var(--ink-soft); font-weight: 800; font-variant-numeric: tabular-nums; }
 
 /* ═════════════════════════════ Momentum ══════════════════════════════════ */
 
@@ -847,6 +882,95 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ══════════════════════════════ Avant-match ═══════════════════════════════ */
+
+.pm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  flex: 1;
+  min-height: 0;
+}
+
+.pm__affiche {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  flex: 1;
+  min-height: 0;
+  padding: var(--s4) var(--s3);
+  border-radius: var(--radius-card);
+  background: var(--slab);
+}
+
+.pm__side { display: flex; flex-direction: column; align-items: center; gap: var(--s2); flex: 1; min-width: 0; }
+.pm__crest { width: 72px; height: 76px; font-size: 22px; }
+
+.pm__team {
+  font-size: 19px;
+  font-weight: 800;
+  font-stretch: var(--width-tight);
+  letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.pm__vs {
+  flex: none;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.pm__odds { display: flex; flex-direction: column; gap: var(--s2); }
+
+.pm__bar {
+  display: flex;
+  height: 16px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--pill);
+}
+
+.pm__fill { flex: 1; transform-origin: left center; transition: transform var(--dur-base) var(--ease); }
+.pm__fill--home { background: var(--accent); }
+.pm__fill--draw { background: var(--ink-dim); }
+.pm__fill--away { background: var(--live); }
+
+.pm__legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.pm__fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius-chip);
+  background: var(--slab);
+}
+
+.pm__fact-value {
+  font-size: 17px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ═══════════════════════════════ Cotes ════════════════════════════════════ */
 
 .odds { display: flex; gap: var(--s2); flex: 1; align-items: stretch; }
@@ -890,8 +1014,8 @@
   padding: var(--s4) 0;
   border-radius: var(--radius-panel);
   background: var(--panel);
-  border: 2px solid var(--panel-line);
-  box-shadow: var(--shadow), var(--panel-glow);
+  border: 0;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .radar__plate .crest { width: 48px; height: 50px; font-size: 15px; }
@@ -1016,7 +1140,7 @@
   gap: var(--s3);
   border-radius: var(--radius-card);
   background: var(--panel);
-  border: 2px solid var(--panel-line);
+  border: 0;
   font-size: 20px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -1033,7 +1157,7 @@
   padding: 0 var(--s5);
   border-radius: var(--radius-card);
   background: var(--panel);
-  border: 2px solid var(--panel-line);
+  border: 0;
   font-size: 21px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -1067,8 +1191,8 @@
   padding: 0 var(--s6);
   border-radius: var(--radius-panel);
   background: var(--panel);
-  border: 2px solid var(--panel-line);
-  box-shadow: var(--shadow), var(--panel-glow);
+  border: 0;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   text-align: center;
 }
 

@@ -15,6 +15,34 @@ import { jerseyEl } from './crest.js';
 import { panel } from './panel.js';
 import type { Widget, WidgetContext, WidgetFactory } from './types.js';
 
+const NS = 'http://www.w3.org/2000/svg';
+
+/**
+ * Le demi-terrain, vu depuis la ligne de but : surface de réparation en bas,
+ * rond central entamé en haut. Sans tracé, onze maillots alignés ne sont
+ * qu'une grille ; avec, c'est une composition.
+ */
+function pitchSvg(): SVGElement {
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'lineup__pitch');
+  svg.setAttribute('viewBox', '0 0 100 150');
+  svg.setAttribute('preserveAspectRatio', 'none');
+
+  const add = (tag: string, attrs: Record<string, string>) => {
+    const node = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    svg.append(node);
+  };
+
+  add('rect', { x: '2', y: '2', width: '96', height: '146', rx: '3' });
+  add('rect', { x: '26', y: '112', width: '48', height: '36' });
+  add('rect', { x: '39', y: '131', width: '22', height: '17' });
+  add('circle', { cx: '50', cy: '126', r: '1.1', class: 'lineup__spot' });
+  add('path', { d: 'M36.5 112 A17 17 0 0 0 63.5 112' });
+  add('path', { d: 'M30 2 A22 22 0 0 0 70 2' });
+  return svg;
+}
+
 /** « 4-3-3 » → les rangées, du gardien vers l'attaque. */
 function parseFormation(formation: string): number[] {
   const rows = formation
@@ -27,10 +55,10 @@ function parseFormation(formation: string): number[] {
 /** Place chaque titulaire en coordonnées normalisées du terrain. */
 function positions(formation: string, count: number): { x: number; y: number }[] {
   const rows = parseFormation(formation);
-  const out: { x: number; y: number }[] = [{ x: 0.5, y: 0.88 }]; // le gardien
+  const out: { x: number; y: number }[] = [{ x: 0.5, y: 0.885 }]; // le gardien, dans sa surface
 
-  const top = 0.06;
-  const bottom = 0.7;
+  const top = 0.1;
+  const bottom = 0.72;
   rows.forEach((n, rowIndex) => {
     const y = bottom - ((bottom - top) * rowIndex) / Math.max(1, rows.length - 1);
     for (let i = 0; i < n; i += 1) {
@@ -58,7 +86,7 @@ export const lineups: WidgetFactory = (ctx): Widget => {
   const formation = h('span', { class: 'odds__badge' }, ['—']);
   box.el.querySelector('.panel__aside')?.prepend(formation);
 
-  const pitch = h('div', { class: 'lineup' }, [h('div', { class: 'lineup__pitch' })]);
+  const pitch = h('div', { class: 'lineup' }, [pitchSvg()]);
   const coach = h('div', { class: 'lineup__coach' }, [
     h('span', { class: 't-caption' }, ['Entraîneur']),
     h('span', { class: 'lineup__coach-name' }, ['—']),
@@ -78,7 +106,16 @@ export const lineups: WidgetFactory = (ctx): Widget => {
 
   return {
     el: box.el,
-    update({ state }: WidgetContext) {
+    update({ state, box: slot }: WidgetContext) {
+      // Les maillots grandissent avec le panneau. À taille fixe, onze maillots
+      // de 50 px dans un panneau de 900 font une composition qui flotte.
+      if (slot.w > 0) {
+        const size = Math.round(Math.min(118, Math.max(46, slot.w * 0.105)));
+        if (pitch.style.getPropertyValue('--jersey') !== `${size}px`) {
+          pitch.style.setProperty('--jersey', `${size}px`);
+        }
+      }
+
       const team = side === 'home' ? state.meta?.home : state.meta?.away;
       box.setCrests([team]);
       box.setHead(
@@ -97,7 +134,7 @@ export const lineups: WidgetFactory = (ctx): Widget => {
       if (next === signature) return;
       signature = next;
 
-      pitch.replaceChildren(h('div', { class: 'lineup__pitch' }));
+      pitch.replaceChildren(pitchSvg());
       bench.replaceChildren();
       if (!lineup) return;
 
