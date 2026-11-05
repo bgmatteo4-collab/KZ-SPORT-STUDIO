@@ -19,11 +19,10 @@ js_file = DIST / 'showcase.js'
 if not css_file.exists() or not js_file.exists():
     sys.exit("Lance d'abord `vite build --config vite.showcase.config.ts`.")
 
+# La police est embarquée dans la feuille construite : aucun lien externe, donc
+# la page s'affiche juste même hors ligne.
 HEAD = '''<title>KZ Studio</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
 '''
 
 BODY = (ROOT / 'apps/showcase/page.html').read_text()

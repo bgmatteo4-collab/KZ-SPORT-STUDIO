@@ -35,11 +35,11 @@ function pitchSvg(): SVGElement {
   };
 
   add('rect', { x: '2', y: '2', width: '96', height: '146', rx: '3' });
-  add('rect', { x: '26', y: '112', width: '48', height: '36' });
-  add('rect', { x: '39', y: '131', width: '22', height: '17' });
-  add('circle', { cx: '50', cy: '126', r: '1.1', class: 'lineup__spot' });
-  add('path', { d: 'M36.5 112 A17 17 0 0 0 63.5 112' });
-  add('path', { d: 'M30 2 A22 22 0 0 0 70 2' });
+  add('rect', { x: '24', y: '108', width: '52', height: '40' });
+  add('rect', { x: '38', y: '129', width: '24', height: '19' });
+  add('circle', { cx: '50', cy: '124', r: '1.2', class: 'lineup__spot' });
+  add('path', { d: 'M35 108 A18 18 0 0 0 65 108' });
+  add('path', { d: 'M27 2 A25 25 0 0 0 73 2' });
   return svg;
 }
 
@@ -57,7 +57,7 @@ function positions(formation: string, count: number): { x: number; y: number }[]
   const rows = parseFormation(formation);
   const out: { x: number; y: number }[] = [{ x: 0.5, y: 0.885 }]; // le gardien, dans sa surface
 
-  const top = 0.1;
+  const top = 0.19;
   const bottom = 0.72;
   rows.forEach((n, rowIndex) => {
     const y = bottom - ((bottom - top) * rowIndex) / Math.max(1, rows.length - 1);
