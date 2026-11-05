@@ -1,0 +1,28 @@
+{
+  "name": "kz-studio",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Moteur d'habillage broadcast pour watchalongs football",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n serveur,web -c cyan,magenta \"pnpm dev:server\" \"pnpm dev:web\"",
+    "dev:server": "tsx watch apps/server/src/index.ts",
+    "dev:web": "vite",
+    "build": "tsc -b && vite build",
+    "check": "tsc -b --noEmit false --emitDeclarationOnly false || tsc -b",
+    "fixture": "tsx packages/providers/src/generate-fixture.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/ws": "^8.5.13",
+    "concurrently": "^9.1.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "@kz/core": "workspace:*",
+    "@kz/providers": "workspace:*"
+  }
+}

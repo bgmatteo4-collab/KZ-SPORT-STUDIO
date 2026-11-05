@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>KZ Studio — Prévisualisation</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        background: #06080c;
+        color: #8b97ab;
+        font-family: 'Inter', system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        padding: 20px;
+        min-height: 100vh;
+      }
+      /*
+       * On empile EXACTEMENT comme OBS le fera :
+       *   flux du match  →  couche bg (+ webcam)  →  couche fg
+       * Si c'est juste ici, c'est juste à l'antenne.
+       */
+      .tv {
+        position: relative;
+        width: min(96vw, 1920px);
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border-radius: 10px;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7);
+        background: #0d1117;
+      }
+      /* La case centrale du plateau : SLOT.caseCentrale dans packages/core.
+         Dans OBS, c'est là que tu poses ta capture du match ou ta webcam,
+         ENTRE les deux sources navigateur. */
+      /* Position donnée par la scène, lue sur /api/scene. Dans OBS, c'est ce
+         même rectangle que la régie enverra à ta source de capture. */
+      .feed {
+        position: absolute;
+        border-radius: 12px;
+        overflow: hidden;
+        opacity: 0;
+        transition: all 620ms cubic-bezier(0.22, 1, 0.36, 1);
+        background:
+          repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 60px, transparent 60px 120px),
+          radial-gradient(70% 90% at 50% 30%, #1d6b3a 0%, #0c3a1f 60%, #06180d 100%);
+      }
+      .feed::after {
+        content: 'FLUX DU MATCH';
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-size: 1.4vw;
+        letter-spacing: 0.3em;
+        color: rgba(255, 255, 255, 0.35);
+      }
+      iframe {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        border: 0;
+        transform-origin: top left;
+        background: transparent;
+      }
+      .bar { display: flex; gap: 10px; align-items: center; font-size: 13px; }
+      a { color: #e8b058; }
+    </style>
+  </head>
+  <body>
+    <div class="tv" id="tv">
+      <iframe id="bg" src="/overlay/?layer=bg" allow="camera"></iframe>
+      <div class="feed"></div>
+      <iframe id="fg" src="/overlay/?layer=fg" allow="camera"></iframe>
+    </div>
+    <div class="bar">
+      Empilement réel d'OBS — couche bg, puis ton flux ou ta webcam, puis couche fg.
+      <a href="/regie/">Ouvrir la régie</a>
+    </div>
+    <script>
+      // Les iframes font 1920×1080 ; on les met à l'échelle du cadre.
+      const tv = document.getElementById('tv');
+      function fit() {
+        const scale = tv.clientWidth / 1920;
+        for (const frame of document.querySelectorAll('iframe')) {
+          frame.style.transform = `scale(${scale})`;
+        }
+      }
+      new ResizeObserver(fit).observe(tv);
+      fit();
+
+      // Le flux du match suit la scène, comme le ferait ta capture dans OBS.
+      const feed = document.querySelector('.feed');
+      async function followScene() {
+        try {
+          const scene = await (await fetch('/api/scene')).json();
+          if (scene.feed) {
+            feed.style.opacity = '1';
+            feed.style.left = `${(scene.feed.x / 1920) * 100}%`;
+            feed.style.top = `${(scene.feed.y / 1080) * 100}%`;
+            feed.style.width = `${(scene.feed.w / 1920) * 100}%`;
+            feed.style.height = `${(scene.feed.h / 1080) * 100}%`;
+          } else {
+            feed.style.opacity = '0';
+          }
+        } catch {}
+      }
+      followScene();
+      setInterval(followScene, 500);
+    </script>
+  </body>
+</html>

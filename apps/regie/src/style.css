@@ -1,0 +1,245 @@
+:root {
+  --ink: #e8edf5;
+  --ink-soft: #8b97ab;
+  --bg: #0a0d13;
+  --surface: #121722;
+  --surface-alt: #1a2130;
+  --line: #242d3f;
+  --accent: #e8b058;
+  --live: #3ddc84;
+  --dead: #ef4444;
+  --radius: 10px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  padding: 20px clamp(16px, 4vw, 40px) 60px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 22px;
+}
+
+h1 {
+  font-family: 'Archivo', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+h1 span {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.lamps {
+  display: flex;
+  gap: 18px;
+}
+
+.lamp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.lamp i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dead);
+  box-shadow: 0 0 10px currentColor;
+  transition: background 200ms ease;
+}
+
+.lamp[data-on='1'] i {
+  background: var(--live);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px 20px;
+}
+
+.panel--wide {
+  grid-column: 1 / -1;
+}
+
+h2 {
+  font-family: 'Archivo', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+h2.spaced {
+  margin-top: 22px;
+}
+
+.hint {
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+
+.hint strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.delay {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+output {
+  font-family: 'Archivo', sans-serif;
+  font-size: 44px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.nudges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+button {
+  font: inherit;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 90ms ease;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button[data-on='1'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #15181f;
+  font-weight: 600;
+}
+
+.scenes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.themes,
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.monitor {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #7dd3fc;
+  white-space: pre-wrap;
+  background: #080b11;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+}
+
+.urls {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.urls li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.urls b {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  min-width: 9em;
+}
+
+.urls code {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--accent);
+  user-select: all;
+}
+
+.between {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-style: italic;
+}

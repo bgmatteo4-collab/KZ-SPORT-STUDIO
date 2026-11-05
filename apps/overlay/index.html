@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>KZ Studio — Overlay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body class="overlay-body">
+    <!-- Le plateau fait TOUJOURS 1920x1080. Il est mis à l'échelle par
+         transform pour qu'on puisse le prévisualiser dans une petite fenêtre ;
+         dans OBS, l'échelle vaut exactement 1. -->
+    <div id="stage" class="stage"></div>
+    <div id="debug" class="debug" hidden></div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KZ Studio — Régie</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <h1>KZ Studio <span>Régie</span></h1>
+      <div class="lamps">
+        <span class="lamp" id="lamp-link"><i></i>Lien</span>
+        <span class="lamp" id="lamp-source"><i></i>Source</span>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="panel panel--wide">
+        <h2>Décalage anti-spoiler</h2>
+        <p class="hint">
+          Ton stream a 20 à 60 secondes de retard sur le direct. Règle ce curseur
+          pour que l'habillage colle à ce que tes spectateurs voient. Compare le
+          chrono affiché à celui de ton propre stream : c'est le seul réglage qui
+          demande ton œil.
+        </p>
+        <div class="delay">
+          <output id="delay-value">30,0 s</output>
+          <input id="delay" type="range" min="0" max="120000" step="250" value="30000" />
+        </div>
+        <div class="nudges">
+          <button data-nudge="-5000">−5 s</button>
+          <button data-nudge="-1000">−1 s</button>
+          <button data-nudge="-250">−0,25 s</button>
+          <button data-nudge="250">+0,25 s</button>
+          <button data-nudge="1000">+1 s</button>
+          <button data-nudge="5000">+5 s</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Scènes</h2>
+        <div class="scenes" id="scenes"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Habillage</h2>
+        <div class="themes" id="themes"></div>
+        <h2 class="spaced">Caméra</h2>
+        <div class="segmented" id="cam-mode">
+          <button data-cam="browser">Navigateur</button>
+          <button data-cam="obs">OBS</button>
+        </div>
+        <p class="hint">
+          <strong>OBS</strong> : la scène envoie la position à OBS, qui anime ta
+          vraie webcam avec tes filtres. <strong>Navigateur</strong> : l'overlay
+          capture la caméra lui-même, aucune configuration.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>Rejeu</h2>
+        <div class="segmented" id="speed">
+          <button data-speed="1">x1</button>
+          <button data-speed="4">x4</button>
+          <button data-speed="10">x10</button>
+          <button data-speed="20">x20</button>
+        </div>
+        <p class="hint">
+          En rejeu, l'accéléré fait défiler un match complet en quelques minutes
+          sans décaler le chrono. C'est comme ça qu'on répète.
+        </p>
+      </section>
+
+      <section class="panel panel--wide">
+        <h2>Moniteur</h2>
+        <pre id="monitor" class="monitor">connexion…</pre>
+      </section>
+
+      <section class="panel panel--wide">
+        <h2>Sources à coller dans OBS</h2>
+        <p class="hint">
+          Deux sources navigateur, 1920×1080, fond transparent, ta webcam entre
+          les deux dans la liste des sources.
+        </p>
+        <ul class="urls">
+          <li><b>Avant-plan</b><code id="url-fg"></code></li>
+          <li><b>Webcam</b><span class="between">↕ ta webcam se place ici ↕</span></li>
+          <li><b>Arrière-plan</b><code id="url-bg"></code></li>
+        </ul>
+      </section>
+    </main>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
