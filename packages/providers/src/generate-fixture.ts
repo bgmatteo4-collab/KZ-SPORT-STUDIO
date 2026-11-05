@@ -181,7 +181,13 @@ const MULTIPLEX_TEAMS: [TeamBrief, TeamBrief][] = [
   [BRIEF('NAP', 'Naples', '#12a0d7'), BRIEF('QAR', 'Qarabag', '#164c9b')],
   [BRIEF('BOD', 'Bodø/Glimt', '#fdd500', '#000000'), BRIEF('JUV', 'Juventus', '#101010', '#ffffff')],
   [BRIEF('DOR', 'Dortmund', '#fde100', '#101010'), BRIEF('VIL', 'Villarreal', '#ffe667')],
-  [BRIEF('SLA', 'Slavia Prague', '#d7141a', '#ffffff')!, BRIEF('ATH', 'Athletic Club', '#ee2523', '#ffffff')],
+  [BRIEF('SLA', 'Slavia Prague', '#d7141a', '#ffffff'), BRIEF('ATH', 'Athletic Club', '#ee2523', '#ffffff')],
+  [BRIEF('INT', 'Inter', '#0068a8', '#010e80'), BRIEF('ARS', 'Arsenal', '#ef0107', '#ffffff')],
+  [BRIEF('BAR', 'Barcelone', '#a50044', '#004d98'), BRIEF('BRU', 'Bruges', '#1e4ba0', '#000000')],
+  [BRIEF('BAY', 'Bayern', '#dc052d', '#ffffff'), BRIEF('SPO', 'Sporting', '#008057', '#ffffff')],
+  [BRIEF('ATM', 'Atlético', '#cb3524', '#ffffff'), BRIEF('PSV', 'PSV', '#ed1c24', '#ffffff')],
+  [BRIEF('BEN', 'Benfica', '#e00000', '#ffffff'), BRIEF('MON', 'Monaco', '#e63946', '#ffffff')],
+  [BRIEF('GAL', 'Galatasaray', '#a90432', '#fdb913'), BRIEF('AJX', 'Ajax', '#d2122e', '#ffffff')],
 ];
 
 const multiplexScores = MULTIPLEX_TEAMS.map(() => [0, 0] as [number, number]);
@@ -207,14 +213,42 @@ function multiplexAt(matchMs: number): OtherMatch[] {
   });
 }
 
-const STANDINGS: StandingRow[] = [
-  { rank: 1, team: BRIEF('RMA', 'Real Madrid', '#ffffff', '#1b2d6b'), played: 6, diff: 11, points: 15, zone: 'win' },
-  { rank: 2, team: BRIEF('MCI', 'Man City', '#6cabdd'), played: 6, diff: 9, points: 14, zone: 'win' },
-  { rank: 3, team: BRIEF('BAY', 'Bayern', '#dc052d'), played: 6, diff: 8, points: 13, zone: 'win' },
-  { rank: 4, team: BRIEF('ARS', 'Arsenal', '#ef0107', '#ffffff'), played: 6, diff: 6, points: 12, zone: 'win' },
-  { rank: 23, team: BRIEF('PSV', 'PSV', '#ed1c24', '#ffffff'), played: 6, diff: -5, points: 5, zone: null },
-  { rank: 24, team: BRIEF('CEL', 'Celtic', '#018749', '#ffffff'), played: 6, diff: -7, points: 4, zone: 'lose' },
+/**
+ * Un vrai classement, sur vingt lignes : la mise en page d'antenne est à deux
+ * colonnes, donc six lignes ne prouvent rien.
+ */
+const TABLE: [string, string, string, string | undefined, number, number][] = [
+  ['MCI', 'Man City', '#6cabdd', undefined, 11, 18],
+  ['ARS', 'Arsenal', '#ef0107', '#ffffff', 5, 15],
+  ['BHA', 'Brighton', '#0057b8', '#ffffff', 13, 13],
+  ['BRE', 'Brentford', '#e30613', '#ffffff', 6, 10],
+  ['EVE', 'Everton', '#003399', undefined, 3, 10],
+  ['CHE', 'Chelsea', '#034694', undefined, 2, 10],
+  ['LEE', 'Leeds', '#ffcd00', '#1d428a', 3, 9],
+  ['HUL', 'Hull City', '#f5a12d', '#000000', -1, 9],
+  ['LIV', 'Liverpool', '#c8102e', undefined, -2, 9],
+  ['IPS', 'Ipswich', '#1b4ea1', '#ffffff', -4, 9],
+  ['NEW', 'Newcastle', '#241f20', '#ffffff', 0, 8],
+  ['CRY', 'Crystal Palace', '#1b458f', '#c4122e', -3, 7],
+  ['MUN', 'Man United', '#da020e', '#000000', 0, 6],
+  ['NFO', 'Nottingham', '#dd0000', '#ffffff', -3, 5],
+  ['AVL', 'Aston Villa', '#670e36', '#95bfe5', -5, 5],
+  ['SUN', 'Sunderland', '#eb172b', '#ffffff', -6, 4],
+  ['BOU', 'Bournemouth', '#da291c', '#000000', -6, 3],
+  ['TOT', 'Tottenham', '#132257', '#ffffff', -7, 3],
+  ['COV', 'Coventry', '#78d2eb', '#000000', -9, 3],
+  ['FUL', 'Fulham', '#000000', '#ffffff', -11, 2],
 ];
+
+const STANDINGS: StandingRow[] = TABLE.map(([abbr, short, color, alt, diff, points], i) => ({
+  rank: i + 1,
+  team: BRIEF(abbr, short, color, alt),
+  played: 6,
+  diff,
+  points,
+  // Quatre qualifiés, un barragiste, trois relégables : les zones habituelles.
+  zone: i < 4 ? 'win' : i === 4 ? 'play' : i >= 17 ? 'lose' : null,
+}));
 
 /** Les cotes bougent avec le score : c'est tout l'intérêt d'une cote « live ». */
 function oddsAt(score: Pair, matchMs: number): Odds {

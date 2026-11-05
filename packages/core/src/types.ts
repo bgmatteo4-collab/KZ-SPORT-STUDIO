@@ -215,8 +215,11 @@ export interface StandingRow {
   played: number;
   diff: number;
   points: number;
-  /** Zone de qualification ou de relégation, pour la pastille de rang. */
-  zone: 'win' | 'lose' | null;
+  /**
+   * Zone de qualification, de barrage ou de relégation, pour le bloc de rang.
+   * `win` qualifié, `play` barragiste, `lose` relégable.
+   */
+  zone: 'win' | 'play' | 'lose' | null;
 }
 
 /** Cotes 1N2. */
