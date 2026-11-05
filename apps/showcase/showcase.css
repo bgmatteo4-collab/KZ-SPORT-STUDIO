@@ -1,0 +1,30 @@
+/* La vitrine : le cadre autour du plateau. Volontairement sobre — c'est
+   l'habillage qu'on vient voir, pas la page qui le contient. */
+
+.cam-hole {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0 14px, transparent 14px 28px),
+    rgba(0, 0, 0, 0.55);
+  border-radius: var(--radius-panel);
+  transition:
+    transform var(--dur-slow) var(--ease),
+    width var(--dur-slow) var(--ease),
+    height var(--dur-slow) var(--ease);
+}
+
+.cam-hole[data-style='circle'] { border-radius: var(--radius-pill); }
+.cam-hole[data-style='full'] { border-radius: 0; }
+
+.cam-hole span {
+  font-family: var(--font);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}

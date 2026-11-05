@@ -25,6 +25,17 @@ Trois pages :
 | Régie | http://localhost:4000/regie/ | Piloter : scènes, délai, habillage |
 | Overlay | http://localhost:4000/overlay/?layer=fg | Ce qu'on colle dans OBS |
 
+## Voir à quoi ça ressemble sans rien installer
+
+```sh
+pnpm showcase
+```
+
+Construit une page autonome dans `dist-showcase/` : le plateau complet qui
+rejoue un vrai match enregistré, entièrement dans le navigateur. Aucun serveur,
+aucun réseau une fois la page chargée. Pratique pour montrer le résultat ou
+vérifier un habillage sur un téléphone.
+
 ## Dans OBS
 
 Deux sources navigateur, 1920×1080, fond transparent, **ta webcam entre les

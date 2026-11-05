@@ -10,7 +10,8 @@
     "dev:web": "vite",
     "build": "tsc -b && vite build",
     "check": "tsc -b --noEmit false --emitDeclarationOnly false || tsc -b",
-    "fixture": "tsx packages/providers/src/generate-fixture.ts"
+    "fixture": "tsx packages/providers/src/generate-fixture.ts",
+    "showcase": "vite build --config vite.showcase.config.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
