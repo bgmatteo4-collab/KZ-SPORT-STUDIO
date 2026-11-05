@@ -40,12 +40,24 @@ async function json<T>(u: URL): Promise<T> {
   const r = await fetch(u, { headers: { accept: 'application/json' } });
   const texte = await r.text();
   if (!r.ok) {
+    // Les deux messages de 401 ne disent PAS la même chose, et la différence
+    // est le diagnostic : « No token » = rien n'est parti ; « Invalid token »
+    // = quelque chose est parti et Sportmonks le refuse. Dans le second cas,
+    // le coupable le plus fréquent n'est pas le jeton mais sa mise en forme :
+    // Sportmonks veut le jeton BRUT dans « Authorization », sans « Bearer ».
     const indice =
-      r.status === 401 || r.status === 403
-        ? "\n  → jeton absent, invalide, ou palier sans accès à cette donnée"
-        : r.status === 429
-          ? '\n  → quota horaire dépassé'
-          : '';
+      r.status === 401
+        ? texte.includes('No token')
+          ? '\n  → aucun jeton n’est parti : ni SPORTMONKS_TOKEN, ni en-tête injecté'
+          : '\n  → un jeton est bien parti, Sportmonks le refuse.' +
+            '\n    Sportmonks attend le jeton BRUT dans « Authorization » :' +
+            '\n    un préfixe « Bearer » devient partie du jeton et l’invalide.' +
+            '\n    Vérifie aussi qu’il a été copié en entier.'
+        : r.status === 403
+          ? '\n  → ce palier ne donne pas accès à cette donnée'
+          : r.status === 429
+            ? '\n  → quota horaire dépassé'
+            : '';
     throw new Error(`Sportmonks ${r.status} : ${texte.slice(0, 200)}${indice}`);
   }
   return JSON.parse(texte) as T;
@@ -257,9 +269,9 @@ const aide = `
 `;
 
 if (!TOKEN && commande !== 'convert') {
-  console.log('SPORTMONKS_TOKEN absent de l’environnement.');
-  console.log('Les requêtes partiront sans jeton : elles échoueront, sauf si un');
-  console.log('mandataire réseau injecte l’en-tête « Authorization » pour toi.\n');
+  console.log('SPORTMONKS_TOKEN absent : les requêtes partent sans paramètre');
+  console.log('« api_token ». C’est normal si un mandataire réseau signe les appels');
+  console.log('vers api.sportmonks.com à ta place ; sinon elles répondront 401.\n');
 }
 
 try {

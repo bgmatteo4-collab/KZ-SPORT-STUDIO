@@ -151,6 +151,13 @@ export class SportmonksProvider implements Provider {
     if (reponse.status === 429) {
       throw new Error('quota horaire dépassé (429) — espacer les appels');
     }
+    if (reponse.status === 401) {
+      // Le jeton est parti mais a été refusé. Sportmonks lit « Authorization »
+      // BRUT : un préfixe « Bearer » fait partie du jeton et l'invalide.
+      throw new Error(
+        '401 — jeton refusé (brut attendu dans « Authorization », sans « Bearer »)',
+      );
+    }
     if (reponse.status === 403) {
       throw new Error('403 — ce palier ne donne pas accès à cette donnée');
     }
