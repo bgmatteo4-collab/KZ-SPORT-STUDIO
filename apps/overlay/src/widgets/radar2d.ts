@@ -30,7 +30,7 @@ export const radar2d: WidgetFactory = (): Widget => {
     h('div', { class: 'radar__plate' }, [
       crest,
       xg,
-      h('div', { class: 'radar__xg-label' }, ['xG']),
+      h('div', { class: 't-caption' }, ['xG']),
     ]);
 
   const canvas = h('canvas', { class: 'radar__canvas' });

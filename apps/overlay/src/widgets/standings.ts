@@ -8,7 +8,7 @@ import type { Widget, WidgetContext, WidgetFactory } from './types.js';
 export const standings: WidgetFactory = (): Widget => {
   const box = panel({ icon: 'table', kicker: 'Championnat', title: 'Classement' });
   const table = h('div', { class: 'table' }, [
-    h('div', { class: 'table__head' }, [
+    h('div', { class: 'table__head t-caption' }, [
       h('span', {}, ['#']),
       h('span', {}, ['']),
       h('span', {}, ['Équipe']),

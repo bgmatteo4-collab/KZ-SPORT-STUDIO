@@ -14,10 +14,10 @@ import type { Widget, WidgetContext, WidgetFactory } from './types.js';
 export const scoreBanner: WidgetFactory = (): Widget => {
   const crestHome = crestEl('banner__crest');
   const crestAway = crestEl('banner__crest');
-  const nameHome = h('div', { class: 'banner__team banner__team--home' }, ['—']);
-  const nameAway = h('div', { class: 'banner__team banner__team--away' }, ['—']);
-  const digitHome = h('div', { class: 'banner__digit' }, ['0']);
-  const digitAway = h('div', { class: 'banner__digit' }, ['0']);
+  const nameHome = h('div', { class: 'banner__team banner__team--home t-hero' }, ['—']);
+  const nameAway = h('div', { class: 'banner__team banner__team--away t-hero' }, ['—']);
+  const digitHome = h('div', { class: 'banner__digit t-score' }, ['0']);
+  const digitAway = h('div', { class: 'banner__digit t-score' }, ['0']);
 
   const scorersHome = h('div', { class: 'banner__scorers banner__scorers--home' });
   const scorersAway = h('div', { class: 'banner__scorers' });
@@ -25,7 +25,7 @@ export const scoreBanner: WidgetFactory = (): Widget => {
   const clockAdded = h('span', { class: 'banner__added' });
   const liveDot = h('div', { class: 'banner__live', 'data-on': '0' }, [
     h('i'),
-    h('span', {}, ['Direct']),
+    h('span', { class: 't-caption' }, ['Direct']),
   ]);
 
   const el = h('div', { class: 'banner' }, [

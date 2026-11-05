@@ -27,8 +27,8 @@ const ROWS: Row[] = [
 export const stats: WidgetFactory = (): Widget => {
   const box = panel({ icon: 'stats', kicker: 'En direct', title: 'Statistiques', crests: 2 });
 
-  const possHome = h('div', { class: 'ring__value' }, ['50%']);
-  const possAway = h('div', { class: 'ring__value' }, ['50%']);
+  const possHome = h('div', { class: 'ring__value t-xl' }, ['50%']);
+  const possAway = h('div', { class: 'ring__value t-xl' }, ['50%']);
 
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', '0 0 108 108');
@@ -50,11 +50,11 @@ export const stats: WidgetFactory = (): Widget => {
   const ring = h('div', { class: 'ring' }, [possHome, dial, possAway]);
 
   const built = ROWS.map((row) => {
-    const home = h('span', { class: 'bar__num' }, ['0']);
-    const away = h('span', { class: 'bar__num bar__num--away' }, ['0']);
+    const home = h('span', { class: 'bar__num t-l' }, ['0']);
+    const away = h('span', { class: 'bar__num bar__num--away t-l' }, ['0']);
     const fill = h('i', { class: 'bar__fill' });
     const node = h('div', { class: 'bar' }, [
-      h('span', { class: 'bar__label' }, [row.label]),
+      h('span', { class: 'bar__label t-label' }, [row.label]),
       h('div', { class: 'bar__track' }, [fill, home, away]),
     ]);
     return { row, home, away, fill, node };

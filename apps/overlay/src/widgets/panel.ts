@@ -49,8 +49,8 @@ export function panel(options: {
   title: string;
   crests?: number;
 }): Panel {
-  const kickerEl = h('div', { class: 'panel__kicker' }, [options.kicker]);
-  const titleEl = h('div', { class: 'panel__title' }, [options.title]);
+  const kickerEl = h('div', { class: 'panel__kicker t-kicker' }, [options.kicker]);
+  const titleEl = h('div', { class: 'panel__title t-title' }, [options.title]);
   const aside = h('div', { class: 'panel__aside' });
 
   const crests: HTMLElement[] = [];

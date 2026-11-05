@@ -1,37 +1,60 @@
 /**
- * La régie. Elle n'affiche pas l'habillage : elle le pilote.
+ * La régie.
  *
- * Règle n°1 : elle envoie des INTENTIONS. Le serveur décide, borne les valeurs
- * et rediffuse l'état à tout le monde. Deux régies ouvertes restent donc
- * toujours d'accord, et l'overlay ne peut pas se désynchroniser d'elles.
+ * Elle n'affiche pas l'habillage : elle le pilote. Règle n°1 du projet — elle
+ * envoie des INTENTIONS, le serveur décide, borne les valeurs et rediffuse à
+ * tout le monde. Deux régies ouvertes restent donc toujours d'accord, et
+ * l'overlay ne peut pas se désynchroniser d'elles.
+ *
+ * Trois partis pris qui en font un outil de direct plutôt qu'un formulaire :
+ *
+ *   • TOUT TIENT SUR UN ÉCRAN. Rien ne défile.
+ *   • ON VOIT CE QUI EST À L'ANTENNE. Le moniteur est le vrai overlay, pas une
+ *     description de l'overlay.
+ *   • LE CLAVIER D'ABORD. 1 à 9 pour les scènes, flèches pour le décalage.
+ *     En plein match, on ne vise pas un bouton à la souris.
  */
 
 import {
   clockLabel,
   findScene,
+  PHASE_LABEL,
   SCENES,
   StateCursor,
   THEMES,
   ClockSync,
   DEFAULT_CONTROL,
+  type CardEntry,
   type ClientMessage,
   type Command,
   type ControlState,
+  type GoalEntry,
+  type MatchState,
   type ProviderStatus,
   type ServerMessage,
+  type SubEntry,
 } from '@kz/core';
 
 const el = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
 const lampLink = el('lamp-link');
 const lampSource = el('lamp-source');
-const delayInput = el<HTMLInputElement>('delay');
-const delayValue = el<HTMLOutputElement>('delay-value');
+const lampLive = el('lamp-live');
+const nowHome = el('now-home');
+const nowAway = el('now-away');
+const nowScore = el('now-score');
+const nowClock = el('now-clock');
+const nowPhase = el('now-phase');
+const sceneName = el('scene-name');
+const sourceDetail = el('source-detail');
 const scenesBox = el('scenes');
 const themesBox = el('themes');
 const camBox = el('cam-mode');
 const speedBox = el('speed');
-const monitor = el('monitor');
+const feedBox = el('feed');
+const delayInput = el<HTMLInputElement>('delay');
+const delayValue = el<HTMLOutputElement>('delay-value');
+const toast = el('toast');
 
 const cursor = new StateCursor();
 const sync = new ClockSync();
@@ -39,18 +62,26 @@ let control: ControlState = { ...DEFAULT_CONTROL };
 let provider: ProviderStatus = { name: '…', connected: false, lastEventAt: null };
 let socket: WebSocket | null = null;
 let connected = false;
-/** Le curseur est-il en train d'être manipulé ? Si oui, on ne l'écrase pas. */
+/** Le curseur est-il saisi ? Si oui, on ne l'écrase pas sous les doigts. */
 let draggingDelay = false;
 
-// ────────────────────────────────── Boutons ───────────────────────────────────
+// ───────────────────────────── Pupitre de scènes ──────────────────────────────
 
-for (const scene of SCENES) {
+SCENES.forEach((scene, index) => {
   const button = document.createElement('button');
-  button.textContent = scene.name;
+  button.className = 'scene';
   button.dataset.scene = scene.id;
+  const key = index < 9 ? String(index + 1) : index === 9 ? '0' : '';
+  button.append(
+    Object.assign(document.createElement('span'), {
+      className: 'scene__key',
+      textContent: key || '—',
+    }),
+    Object.assign(document.createElement('span'), { textContent: scene.name }),
+  );
   button.addEventListener('click', () => send({ name: 'set-scene', sceneId: scene.id }));
   scenesBox.append(button);
-}
+});
 
 for (const theme of THEMES) {
   const button = document.createElement('button');
@@ -78,22 +109,95 @@ for (const button of speedBox.querySelectorAll<HTMLButtonElement>('[data-speed]'
   );
 }
 
-delayInput.addEventListener('pointerdown', () => {
-  draggingDelay = true;
-});
-delayInput.addEventListener('pointerup', () => {
-  draggingDelay = false;
-});
+delayInput.addEventListener('pointerdown', () => { draggingDelay = true; });
+delayInput.addEventListener('pointerup', () => { draggingDelay = false; });
 delayInput.addEventListener('input', () => {
   const ms = Number(delayInput.value);
   delayValue.textContent = formatDelay(ms);
   send({ name: 'set-delay', delayMs: ms });
 });
 
-el('url-fg').textContent = `${location.origin}/overlay/?layer=fg`;
-el('url-bg').textContent = `${location.origin}/overlay/?layer=bg`;
+// ──────────────────────────── Sources OBS ────────────────────────────────────
 
-// ─────────────────────────────── Connexion ────────────────────────────────────
+const urls = {
+  fg: `${location.origin}/overlay/?layer=fg`,
+  bg: `${location.origin}/overlay/?layer=bg`,
+};
+el('url-fg').textContent = urls.fg;
+el('url-bg').textContent = urls.bg;
+
+for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
+  button.addEventListener('click', async () => {
+    const which = button.dataset.copy as 'fg' | 'bg';
+    try {
+      await navigator.clipboard.writeText(urls[which]);
+      flash('Adresse copiée');
+    } catch {
+      // Presse-papiers refusé (page non sécurisée) : on sélectionne pour que
+      // l'utilisateur puisse copier à la main plutôt que de rester sans rien.
+      const code = button.querySelector('code');
+      if (code) {
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        getSelection()?.removeAllRanges();
+        getSelection()?.addRange(range);
+      }
+      flash('Sélectionné — Ctrl+C');
+    }
+  });
+}
+
+let toastTimer = 0;
+function flash(message: string): void {
+  toast.textContent = message;
+  toast.dataset.on = '1';
+  window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => { toast.dataset.on = '0'; }, 1600);
+}
+
+// ─────────────────────────────── Le clavier ──────────────────────────────────
+// En plein match, on ne vise pas un bouton à la souris.
+
+document.addEventListener('keydown', (event) => {
+  if (event.target instanceof HTMLInputElement) return;
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+  if (event.key >= '1' && event.key <= '9') {
+    const scene = SCENES[Number(event.key) - 1];
+    if (scene) {
+      send({ name: 'set-scene', sceneId: scene.id });
+      event.preventDefault();
+    }
+    return;
+  }
+  if (event.key === '0' && SCENES[9]) {
+    send({ name: 'set-scene', sceneId: SCENES[9].id });
+    event.preventDefault();
+    return;
+  }
+
+  // Flèches : le décalage, finement. Avec Maj, par seconde entière.
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    const step = event.shiftKey ? 1000 : 250;
+    send({ name: 'nudge-delay', deltaMs: event.key === 'ArrowLeft' ? -step : step });
+    event.preventDefault();
+  }
+});
+
+// ─────────────────────── Le moniteur : le vrai overlay ───────────────────────
+// Pas une description de ce qui est à l'antenne : ce qui est à l'antenne.
+
+const monitor = el('monitor');
+function fitMonitor(): void {
+  const scale = monitor.clientWidth / 1920;
+  for (const frame of monitor.querySelectorAll('iframe')) {
+    frame.style.transform = `scale(${scale})`;
+  }
+}
+new ResizeObserver(fitMonitor).observe(monitor);
+fitMonitor();
+
+// ─────────────────────────────── Connexion ───────────────────────────────────
 
 function connect(): void {
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -103,7 +207,6 @@ function connect(): void {
   ws.addEventListener('open', () => {
     connected = true;
     ping();
-    window.setInterval(ping, 5_000);
   });
 
   ws.addEventListener('message', (event) => {
@@ -141,6 +244,8 @@ function connect(): void {
   });
 }
 
+window.setInterval(ping, 5_000);
+
 function ping(): void {
   sendRaw({ type: 'ping', sent: Date.now() });
 }
@@ -166,6 +271,7 @@ function applyControl(next: ControlState): void {
   mark(themesBox, 'theme', next.themeId);
   mark(camBox, 'cam', next.camMode);
   mark(speedBox, 'speed', String(next.timeScale));
+  sceneName.textContent = findScene(next.sceneId).name;
 }
 
 function mark(box: HTMLElement, attribute: string, value: string): void {
@@ -178,53 +284,95 @@ function formatDelay(ms: number): string {
   return `${(ms / 1000).toFixed(1).replace('.', ',')} s`;
 }
 
-// ──────────────────────────────── Moniteur ────────────────────────────────────
+// ────────────────────────────── Rafraîchissement ─────────────────────────────
+
+type FeedItem =
+  | { t: number; kind: 'goal'; entry: GoalEntry }
+  | { t: number; kind: 'card'; entry: CardEntry }
+  | { t: number; kind: 'sub'; entry: SubEntry };
+
+let feedSignature = '';
 
 function refresh(): void {
+  const state = cursor.at(sync.now() - control.delayMs);
+
   lampLink.dataset.on = connected ? '1' : '0';
   lampSource.dataset.on = provider.connected ? '1' : '0';
+  const onAir = state.phase !== 'pre' && state.phase !== 'full_time';
+  lampLive.dataset.on = onAir ? '1' : '0';
 
-  const renderTime = sync.now() - control.delayMs;
-  const state = cursor.at(renderTime);
+  nowHome.textContent = state.meta?.home.abbr ?? '—';
+  nowAway.textContent = state.meta?.away.abbr ?? '—';
+  nowScore.textContent = `${state.score[0]}–${state.score[1]}`;
+
   const label = clockLabel(state.clockMs, state.phase, state.clock.addedMinutes);
-  const scene = findScene(control.sceneId);
+  nowClock.textContent = onAir ? `${label.main}${label.added ?? ''}` : '—';
+  nowPhase.textContent = PHASE_LABEL[state.phase];
 
-  const lines = [
-    state.meta
-      ? `${state.meta.home.short}  ${state.score[0]} – ${state.score[1]}  ${state.meta.away.short}`
-      : 'aucun match',
-    state.meta ? `${state.meta.competition}` : '',
-    '',
-    `chrono d'antenne   ${label.main}${label.added ?? ''}   (${state.phase})`,
-    `scène              ${scene.name}   caméra ${scene.cam ? 'visible' : 'masquée'}`,
-    `décalage           ${formatDelay(control.delayMs)}`,
-    `vitesse            x${control.timeScale}`,
-    `source             ${provider.name}${provider.detail ? `  —  ${provider.detail}` : ''}`,
-    `timeline           ${cursor.size} événements   seq ${state.lastSeq}`,
-    `écart d'horloge    ${sync.currentOffset.toFixed(0)} ms  (${sync.samples} mesures)`,
-    '',
-    `pression           ${state.meta?.home.abbr ?? 'DOM'} ${state.pressure.home.toFixed(1)}  /  ${state.pressure.away.toFixed(1)} ${state.meta?.away.abbr ?? 'EXT'}`,
-    `ballon             x ${state.ball.x.toFixed(2)}   y ${state.ball.y.toFixed(2)}   ${state.attack.side ?? '—'} ${state.attack.intensity}`,
-    '',
-    'buts',
-    ...(state.goals.length === 0
-      ? ['   aucun']
-      : state.goals.map(
-          (g) =>
-            `   ${g.minute.padStart(5)}'  ${(g.scorer?.short ?? 'csc').padEnd(16)} ${g.side === 'home' ? '◀' : '▶'}  ${g.score[0]}-${g.score[1]}`,
-        )),
-    '',
-    'cartons',
-    ...(state.cards.length === 0
-      ? ['   aucun']
-      : state.cards.map(
-          (c) =>
-            `   ${c.minute.padStart(5)}'  ${(c.player?.short ?? '—').padEnd(16)} ${c.card}`,
-        )),
-  ];
+  sourceDetail.textContent = provider.detail ?? provider.name;
 
-  monitor.textContent = lines.join('\n');
+  renderFeed(state);
   requestAnimationFrame(refresh);
+}
+
+function renderFeed(state: MatchState): void {
+  const items: FeedItem[] = [
+    ...state.goals.map((entry) => ({ t: entry.t, kind: 'goal' as const, entry })),
+    ...state.cards.map((entry) => ({ t: entry.t, kind: 'card' as const, entry })),
+    ...state.subs.map((entry) => ({ t: entry.t, kind: 'sub' as const, entry })),
+  ].sort((a, b) => b.t - a.t);
+
+  const signature = items.map((i) => `${i.kind}${i.entry.seq}`).join(',');
+  if (signature === feedSignature) return;
+  feedSignature = signature;
+
+  feedBox.replaceChildren();
+  if (items.length === 0) {
+    const empty = document.createElement('li');
+    empty.className = 'feed__empty';
+    empty.textContent = 'Rien encore.';
+    feedBox.append(empty);
+    return;
+  }
+
+  for (const item of items) {
+    const side = item.entry.side === 'home' ? state.meta?.home.abbr : state.meta?.away.abbr;
+    const row = document.createElement('li');
+    row.className = 'ev';
+
+    const minute = document.createElement('span');
+    minute.className = 'ev__minute';
+    minute.textContent = `${item.entry.minute}'`;
+
+    const mark = document.createElement('i');
+    mark.className = 'ev__mark';
+    mark.dataset.kind =
+      item.kind === 'card' && item.entry.card !== 'yellow' ? 'card-red' : item.kind;
+
+    const name = document.createElement('span');
+    name.className = 'ev__name';
+    name.textContent = describe(item);
+
+    const team = document.createElement('span');
+    team.className = 'ev__side';
+    team.textContent = side ?? '';
+
+    row.append(minute, mark, name, team);
+    feedBox.append(row);
+  }
+}
+
+function describe(item: FeedItem): string {
+  switch (item.kind) {
+    case 'goal':
+      return `${item.entry.scorer?.short ?? 'But'}${item.entry.penalty ? ' (sp)' : ''}${
+        item.entry.ownGoal ? ' (csc)' : ''
+      }`;
+    case 'card':
+      return item.entry.player?.short ?? 'Carton';
+    case 'sub':
+      return `${item.entry.in?.short ?? '?'} ↔ ${item.entry.out?.short ?? '?'}`;
+  }
 }
 
 connect();

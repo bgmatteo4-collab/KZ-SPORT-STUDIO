@@ -38,13 +38,33 @@ export interface ThemeTokens {
   pitchStripe: string;
   pitchLine: string;
 
-  fontDisplay: string;
-  fontBody: string;
+  /**
+   * UNE seule famille, partout. La hiérarchie se fait par la graisse et la
+   * chasse (axe `wdth` de la variable), jamais par un second caractère :
+   * c'est ce qui donne l'unité d'un habillage de chaîne.
+   */
+  font: string;
+  /** Chasse élargie des grands titres d'antenne. */
+  widthDisplay: string;
+  /** Chasse resserrée des espaces contraints. */
+  widthTight: string;
 
-  radius: string;
-  radiusLarge: string;
+  /** L'échelle de rayons. Quatre valeurs, pas une de plus. */
+  radiusPanel: string;
+  radiusCard: string;
+  radiusChip: string;
   radiusPill: string;
+
+  /** L'échelle d'espacement, base 4. Aucune marge en dur ailleurs. */
+  s1: string;
+  s2: string;
+  s3: string;
+  s4: string;
+  s5: string;
+  s6: string;
+
   shadow: string;
+  shadowSoft: string;
 
   durFast: string;
   durBase: string;
@@ -58,13 +78,31 @@ export interface Theme {
   tokens: ThemeTokens;
 }
 
-const TYPO = {
-  fontDisplay: '"Archivo", "Inter", system-ui, sans-serif',
-  fontBody: '"Inter", system-ui, sans-serif',
-  radius: '18px',
-  radiusLarge: '26px',
+/**
+ * La FORME. Commune à tous les habillages : une compétition change les
+ * couleurs et le motif de fond, jamais la géométrie. C'est ce qui fait qu'on
+ * reconnaît la chaîne sous l'habillage.
+ */
+const SHAPE = {
+  font: '"Archivo", system-ui, -apple-system, sans-serif',
+  widthDisplay: '112%',
+  widthTight: '88%',
+
+  radiusPanel: '24px',
+  radiusCard: '16px',
+  radiusChip: '10px',
   radiusPill: '999px',
-  shadow: '0 18px 50px rgba(0, 0, 0, 0.45)',
+
+  s1: '4px',
+  s2: '8px',
+  s3: '12px',
+  s4: '16px',
+  s5: '24px',
+  s6: '32px',
+
+  shadow: '0 20px 56px rgba(0, 0, 0, 0.48)',
+  shadowSoft: '0 6px 20px rgba(0, 0, 0, 0.28)',
+
   durFast: '160ms',
   durBase: '320ms',
   durSlow: '620ms',
@@ -96,7 +134,7 @@ export const THEMES: Theme[] = [
     id: 'kztv',
     name: 'KZ TV',
     tokens: {
-      ...TYPO,
+      ...SHAPE,
       ...NEUTRAL,
       bgDeep: '#2a1a63',
       bgMid: '#141a4e',
@@ -117,7 +155,7 @@ export const THEMES: Theme[] = [
     id: 'ucl',
     name: 'Ligue des Champions',
     tokens: {
-      ...TYPO,
+      ...SHAPE,
       ...NEUTRAL,
       bgDeep: '#0d1b5c',
       bgMid: '#061034',
@@ -133,15 +171,13 @@ export const THEMES: Theme[] = [
       pitch: '#071034',
       pitchStripe: 'rgba(255, 255, 255, 0.04)',
       pitchLine: 'rgba(255, 255, 255, 0.42)',
-      radius: '12px',
-      radiusLarge: '16px',
     },
   },
   {
     id: 'ligue1',
     name: 'Ligue 1',
     tokens: {
-      ...TYPO,
+      ...SHAPE,
       ...NEUTRAL,
       bgDeep: '#111a3d',
       bgMid: '#070b1d',
@@ -163,7 +199,7 @@ export const THEMES: Theme[] = [
     id: 'premier',
     name: 'Premier League',
     tokens: {
-      ...TYPO,
+      ...SHAPE,
       ...NEUTRAL,
       bgDeep: '#3d0a52',
       bgMid: '#1a0430',
