@@ -31,6 +31,9 @@ export class Hub {
     lastEventAt: null,
   };
 
+  /** Appelé à chaque changement de l'état de contrôle, pour l'enregistrer. */
+  onControlChange: ((control: ControlState) => void) | null = null;
+
   constructor(
     private readonly clock: ServerClock,
     private readonly broadcast: Broadcast,
@@ -136,6 +139,7 @@ export class Hub {
 
     if (shallowEqual(before, this.control)) return false;
     this.broadcast({ type: 'control', control: this.control });
+    this.onControlChange?.(this.control);
     return true;
   }
 }

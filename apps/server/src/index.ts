@@ -22,6 +22,7 @@ import {
 import { SimulatorProvider, SportmonksProvider, type Provider } from '@kz/providers';
 import { ServerClock } from './clock.js';
 import { Hub } from './hub.js';
+import { ControlStore } from './persist.js';
 
 const PORT = Number(process.env.KZ_PORT ?? 4100);
 const PROVIDER_NAME = process.env.KZ_PROVIDER ?? 'simulator';
@@ -40,7 +41,13 @@ function broadcast(message: ServerMessage): void {
   }
 }
 
-const hub = new Hub(clock, broadcast, { timeScale: SPEED });
+// Ce que la régie avait réglé la dernière fois. Un redémarrage en pleine
+// seconde mi-temps ne doit pas ramener le décalage anti-spoiler à trente
+// secondes sans prévenir.
+const store = new ControlStore();
+const retenu = store.read();
+const hub = new Hub(clock, broadcast, { ...retenu, timeScale: SPEED });
+hub.onControlChange = (control) => store.write(control);
 
 // ───────────────────────────────── Fournisseur ────────────────────────────────
 
@@ -232,13 +239,16 @@ server.listen(PORT, () => {
   console.log(`▶ KZ Studio — serveur sur http://localhost:${PORT}`);
   console.log(`  fournisseur : ${provider.name}`);
   console.log(`  vitesse     : x${clock.scale}`);
-  console.log(`  délai       : ${hub.controlState.delayMs} ms`);
+  console.log(`  délai       : ${hub.controlState.delayMs} ms${Object.keys(retenu).length ? ' (repris)' : ''}`);
+  console.log(`  scène       : ${hub.controlState.sceneId}`);
   console.log(`  overlay     : http://localhost:4000/overlay/?layer=fg`);
   console.log(`  régie       : http://localhost:4000/regie/`);
 });
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => {
+    // Ne rien perdre de ce que la régie venait de régler.
+    store.flush();
     void provider.stop().then(() => {
       server.close();
       process.exit(0);

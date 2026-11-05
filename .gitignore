@@ -6,3 +6,6 @@ dist/
 .DS_Store
 recordings/
 dist-showcase/
+
+# État de la régie, propre à une installation
+.kz/
