@@ -57,13 +57,23 @@ let simulator: SimulatorProvider | null = null;
 if (PROVIDER_NAME === 'sportmonks') {
   const token = process.env.SPORTMONKS_TOKEN;
   const fixtureId = Number(process.env.SPORTMONKS_FIXTURE_ID ?? 0);
-  if (!token || !fixtureId) {
-    console.error(
-      '✗ KZ_PROVIDER=sportmonks exige SPORTMONKS_TOKEN et SPORTMONKS_FIXTURE_ID dans .env',
-    );
+  if (!fixtureId) {
+    console.error('✗ KZ_PROVIDER=sportmonks exige SPORTMONKS_FIXTURE_ID dans .env');
     process.exit(1);
   }
-  provider = new SportmonksProvider({ token, fixtureId, withBall: true });
+  if (!token) {
+    // Pas d'erreur : un mandataire réseau peut injecter l'en-tête
+    // `Authorization` à notre place, ce qui évite d'écrire le jeton quelque part.
+    console.log('  jeton       : absent du .env — on compte sur l’en-tête injectée');
+  }
+  provider = new SportmonksProvider({
+    fixtureId,
+    ...(token ? { token } : {}),
+    withBall: process.env.KZ_BALL !== '0',
+    // Enregistrer pendant qu'on diffuse ne coûte rien et sauve la soirée
+    // suivante : chaque match réel devient une fixture rejouable.
+    ...(process.env.KZ_RECORD ? { recordTo: process.env.KZ_RECORD } : {}),
+  });
 } else {
   simulator = new SimulatorProvider({ fixturePath: FIXTURE, startAtMs: START_AT });
   provider = simulator;
