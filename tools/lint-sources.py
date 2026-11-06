@@ -24,6 +24,13 @@ SUFFIXES = (".js", ".jsx", ".d.ts", ".tsbuildinfo")
 
 def intrus() -> list[Path]:
     trouves: list[Path] = []
+
+    # La racine aussi : `tsc -b` y dépose son `tsconfig.tsbuildinfo`, et un
+    # fichier d'état de compilation commité fait diverger les machines.
+    for chemin in RACINE.glob("*.tsbuildinfo"):
+        if chemin.is_file():
+            trouves.append(chemin)
+
     for dossier in DOSSIERS:
         base = RACINE / dossier
         if not base.is_dir():
