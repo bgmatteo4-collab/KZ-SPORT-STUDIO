@@ -14,7 +14,8 @@
     "showcase": "vite build --config vite.showcase.config.ts && python3 tools/assemble-showcase.py",
     "test": "tsx --test \"packages/**/*.test.ts\"",
     "verify": "tsc --noEmit -p tsconfig.json && pnpm test && python3 tools/lint-obs-css.py",
-    "sportmonks": "tsx tools/sportmonks.ts"
+    "sportmonks": "tsx tools/sportmonks.ts",
+    "espn": "tsx tools/espn.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

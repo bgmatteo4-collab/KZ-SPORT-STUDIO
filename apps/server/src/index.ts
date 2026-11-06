@@ -19,7 +19,7 @@ import {
   type Command,
   type ServerMessage,
 } from '@kz/core';
-import { SimulatorProvider, SportmonksProvider, type Provider } from '@kz/providers';
+import { EspnProvider, SimulatorProvider, SportmonksProvider, type Provider } from '@kz/providers';
 import { ServerClock } from './clock.js';
 import { Hub } from './hub.js';
 import { ControlStore } from './persist.js';
@@ -70,6 +70,25 @@ if (PROVIDER_NAME === 'sportmonks') {
     fixtureId,
     ...(token ? { token } : {}),
     withBall: process.env.KZ_BALL !== '0',
+    // Enregistrer pendant qu'on diffuse ne coûte rien et sauve la soirée
+    // suivante : chaque match réel devient une fixture rejouable.
+    ...(process.env.KZ_RECORD ? { recordTo: process.env.KZ_RECORD } : {}),
+  });
+} else if (PROVIDER_NAME === 'espn') {
+  // ESPN ne demande aucun jeton. C'est le seul fournisseur avec lequel on peut
+  // diffuser la Ligue des Champions et la Ligue 1 aujourd'hui — le palier
+  // gratuit de Sportmonks n'ouvre que quatre championnats, aucun des nôtres.
+  const ligue = process.env.ESPN_LEAGUE ?? 'uefa.champions';
+  const eventId = process.env.ESPN_EVENT_ID;
+  console.log(
+    `  championnat : ${ligue}${eventId ? ` · match ${eventId}` : ' · premier match en cours'}`,
+  );
+  provider = new EspnProvider({
+    ligue,
+    // Sans match désigné, le fournisseur prend le premier en cours : c'est ce
+    // qu'on veut neuf fois sur dix en lançant pendant une soirée.
+    ...(eventId ? { eventId } : {}),
+    avecMultiplex: process.env.KZ_MULTIPLEX !== '0',
     // Enregistrer pendant qu'on diffuse ne coûte rien et sauve la soirée
     // suivante : chaque match réel devient une fixture rejouable.
     ...(process.env.KZ_RECORD ? { recordTo: process.env.KZ_RECORD } : {}),

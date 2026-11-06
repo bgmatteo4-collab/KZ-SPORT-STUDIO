@@ -1,0 +1,2166 @@
+{
+ "ligue": "uefa.champions",
+ "event": {
+  "id": "401915383",
+  "date": "2026-11-04T17:45Z",
+  "name": "Real Madrid at AEK Athens",
+  "shortName": "RMA @ AEK",
+  "status": {
+   "clock": 5400,
+   "displayClock": "90'+4'",
+   "period": 2,
+   "type": {
+    "id": "28",
+    "name": "STATUS_FULL_TIME",
+    "state": "post",
+    "completed": true,
+    "detail": "FT"
+   }
+  },
+  "venue": {},
+  "competitions": [
+   {
+    "id": "401915383",
+    "competitors": [
+     {
+      "id": "887",
+      "homeAway": "home",
+      "score": "2",
+      "team": {
+       "id": "887",
+       "displayName": "AEK Athens",
+       "shortDisplayName": "AEK Athens",
+       "name": "AEK Athens",
+       "abbreviation": "AEK",
+       "color": "ffff00",
+       "alternateColor": "000000"
+      }
+     },
+     {
+      "id": "86",
+      "homeAway": "away",
+      "score": "3",
+      "team": {
+       "id": "86",
+       "displayName": "Real Madrid",
+       "shortDisplayName": "Real Madrid",
+       "name": "Real Madrid",
+       "abbreviation": "RMA",
+       "color": "ffffff",
+       "alternateColor": "1B4D3E"
+      }
+     }
+    ],
+    "details": [
+     {
+      "type": {
+       "id": "70",
+       "text": "Goal"
+      },
+      "clock": {
+       "value": 671,
+       "displayValue": "12'"
+      },
+      "team": {
+       "id": "887"
+      },
+      "scoreValue": 1,
+      "scoringPlay": true,
+      "redCard": false,
+      "yellowCard": false,
+      "penaltyKick": false,
+      "ownGoal": false,
+      "athletesInvolved": [
+       {
+        "id": "260026",
+        "displayName": "Aboubakary Koita",
+        "shortName": "A. Koita",
+        "fullName": "Aboubakary Koita",
+        "jersey": "11",
+        "position": "RM"
+       }
+      ]
+     },
+     {
+      "type": {
+       "id": "70",
+       "text": "Goal"
+      },
+      "clock": {
+       "value": 1914,
+       "displayValue": "32'"
+      },
+      "team": {
+       "id": "86"
+      },
+      "scoreValue": 1,
+      "scoringPlay": true,
+      "redCard": false,
+      "yellowCard": false,
+      "penaltyKick": false,
+      "ownGoal": false,
+      "athletesInvolved": [
+       {
+        "id": "291281",
+        "displayName": "Jude Bellingham",
+        "shortName": "J. Bellingham",
+        "fullName": "Jude Bellingham",
+        "jersey": "5",
+        "position": "AM"
+       }
+      ]
+     },
+     {
+      "type": {
+       "id": "94",
+       "text": "Yellow Card"
+      },
+      "clock": {
+       "value": 2000,
+       "displayValue": "34'"
+      },
+      "team": {
+       "id": "887"
+      },
+      "scoreValue": 0,
+      "scoringPlay": false,
+      "redCard": false,
+      "yellowCard": true,
+      "penaltyKick": false,
+      "ownGoal": false,
+      "athletesInvolved": [
+       {
+        "id": "260554",
+        "displayName": "Kervin Arriaga",
+        "shortName": "K. Arriaga",
+        "fullName": "Kervin Arriaga",
+        "jersey": "16",
+        "position": "CM-R"
+       }
+      ]
+     },
+     {
+      "type": {
+       "id": "94",
+       "text": "Yellow Card"
+      },
+      "clock": {
+       "value": 3896,
+       "displayValue": "65'"
+      },
+      "team": {
+       "id": "86"
+      },
+      "scoreValue": 0,
+      "scoringPlay": false,
+      "redCard": false,
+      "yellowCard": true,
+      "penaltyKick": false,
+      "ownGoal": false,
+      "athletesInvolved": [
+       {
+        "id": "259910",
+        "displayName": "Marc Cucurella",
+        "shortName": "M. Cucurella",
+        "fullName": "Marc Cucurella",
+        "jersey": "17",
+        "position": "LB"
+       }
+      ]
+     },
+     {
+      "type": {
+       "id": "70",
+       "text": "Goal"
+      },
+      "clock": {
+       "value": 4468,
+       "displayValue": "75'"
+      },
+      "team": {
+       "id": "887"
+      },
+      "scoreValue": 1,
+      "scoringPlay": true,
+      "redCard": false,
+      "yellowCard": false,
+      "penaltyKick": false,
+      "ownGoal": false,
+      "athletesInvolved": [
+       {
+        "id": "285427",
+        "displayName": "Stavros Pilios",
+        "shortName": "S. Pilios",
+        "fullName": "Stavros Pilios",
+        "jersey": "3",
+        "position": "LB"
+       }
+      ]
+     },
+     {
+      "type": {
+       "id": "70",
+       "text": "Goal"
+      },
+      "clock": {
+       "value": 4628,
+       "displayValue": "78'"
+      },
+      "team": {
+       "id": "86"
+      },
+      "scoreValue": 1,
+      "scoringPlay": true,
+      "redCard": false,
+      "yellowCard": false,
+      "penaltyKick": false,
+      "ownGoal": false,
+      "athletesInvolved": [
+       {
+        "id": "231388",
+        "displayName": "Kylian Mbappé",
+        "shortName": "K. Mbappé",
+        "fullName": "Kylian Mbappé",
+        "jersey": "10",
+        "position": "F"
+       }
+      ]
+     },
+     {
+      "type": {
+       "id": "70",
+       "text": "Goal"
+      },
+      "clock": {
+       "value": 5400,
+       "displayValue": "90'+2'"
+      },
+      "team": {
+       "id": "86"
+      },
+      "scoreValue": 1,
+      "scoringPlay": true,
+      "redCard": false,
+      "yellowCard": false,
+      "penaltyKick": false,
+      "ownGoal": false,
+      "athletesInvolved": [
+       {
+        "id": "235818",
+        "displayName": "Federico Valverde",
+        "shortName": "F. Valverde",
+        "fullName": "Federico Valverde",
+        "jersey": "8",
+        "position": "SUB"
+       }
+      ]
+     },
+     {
+      "type": {
+       "id": "93",
+       "text": "Red Card"
+      },
+      "clock": {
+       "value": 5400,
+       "displayValue": "90'+5'"
+      },
+      "team": {
+       "id": "887"
+      },
+      "scoreValue": 0,
+      "scoringPlay": false,
+      "redCard": true,
+      "yellowCard": false,
+      "penaltyKick": false,
+      "ownGoal": false,
+      "athletesInvolved": [
+       {
+        "id": "260026",
+        "displayName": "Aboubakary Koita",
+        "shortName": "A. Koita",
+        "fullName": "Aboubakary Koita",
+        "jersey": "11",
+        "position": "RM"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "summary": {
+  "boxscore": {
+   "teams": [
+    {
+     "homeAway": "home",
+     "team": {
+      "id": "887",
+      "displayName": "AEK Athens",
+      "shortDisplayName": "AEK Athens",
+      "name": "AEK Athens",
+      "abbreviation": "AEK",
+      "color": "ffff00",
+      "alternateColor": "000000"
+     },
+     "statistics": [
+      {
+       "name": "foulsCommitted",
+       "displayValue": "9",
+       "label": "Fouls"
+      },
+      {
+       "name": "yellowCards",
+       "displayValue": "1",
+       "label": "Yellow Cards"
+      },
+      {
+       "name": "redCards",
+       "displayValue": "1",
+       "label": "Red Cards"
+      },
+      {
+       "name": "offsides",
+       "displayValue": "0",
+       "label": "Offsides"
+      },
+      {
+       "name": "wonCorners",
+       "displayValue": "0",
+       "label": "Corner Kicks"
+      },
+      {
+       "name": "saves",
+       "displayValue": "5",
+       "label": "Saves"
+      },
+      {
+       "name": "possessionPct",
+       "displayValue": "30.4",
+       "label": "Possession"
+      },
+      {
+       "name": "totalShots",
+       "displayValue": "9",
+       "label": "SHOTS"
+      },
+      {
+       "name": "shotsOnTarget",
+       "displayValue": "5",
+       "label": "ON GOAL"
+      },
+      {
+       "name": "shotPct",
+       "displayValue": "0.6",
+       "label": "On Target %"
+      },
+      {
+       "name": "penaltyKickGoals",
+       "displayValue": "0",
+       "label": "Penalty Goals"
+      },
+      {
+       "name": "penaltyKickShots",
+       "displayValue": "0",
+       "label": "Penalty Kicks Taken"
+      },
+      {
+       "name": "accuratePasses",
+       "displayValue": "233",
+       "label": "Accurate Passes"
+      },
+      {
+       "name": "totalPasses",
+       "displayValue": "274",
+       "label": "Passes"
+      },
+      {
+       "name": "passPct",
+       "displayValue": "0.9",
+       "label": "Pass Completion %"
+      },
+      {
+       "name": "accurateCrosses",
+       "displayValue": "2",
+       "label": "Accurate Crosses"
+      },
+      {
+       "name": "totalCrosses",
+       "displayValue": "6",
+       "label": "Crosses"
+      },
+      {
+       "name": "crossPct",
+       "displayValue": "0.3",
+       "label": "Cross %"
+      },
+      {
+       "name": "totalLongBalls",
+       "displayValue": "53",
+       "label": "Long Balls"
+      },
+      {
+       "name": "accurateLongBalls",
+       "displayValue": "36",
+       "label": "Accurate Long Balls"
+      },
+      {
+       "name": "longballPct",
+       "displayValue": "0.7",
+       "label": "Long Balls %"
+      },
+      {
+       "name": "blockedShots",
+       "displayValue": "2",
+       "label": "Blocked Shots"
+      },
+      {
+       "name": "effectiveTackles",
+       "displayValue": "11",
+       "label": "Effective Tackles"
+      },
+      {
+       "name": "totalTackles",
+       "displayValue": "17",
+       "label": "Tackles"
+      },
+      {
+       "name": "tacklePct",
+       "displayValue": "0.6",
+       "label": "Tackle %"
+      },
+      {
+       "name": "interceptions",
+       "displayValue": "12",
+       "label": "Interceptions"
+      },
+      {
+       "name": "effectiveClearance",
+       "displayValue": "33",
+       "label": "Effective Clearances"
+      },
+      {
+       "name": "totalClearance",
+       "displayValue": "33",
+       "label": "Clearances"
+      }
+     ]
+    },
+    {
+     "homeAway": "away",
+     "team": {
+      "id": "86",
+      "displayName": "Real Madrid",
+      "shortDisplayName": "Real Madrid",
+      "name": "Real Madrid",
+      "abbreviation": "RMA",
+      "color": "ffffff",
+      "alternateColor": "1B4D3E"
+     },
+     "statistics": [
+      {
+       "name": "foulsCommitted",
+       "displayValue": "16",
+       "label": "Fouls"
+      },
+      {
+       "name": "yellowCards",
+       "displayValue": "1",
+       "label": "Yellow Cards"
+      },
+      {
+       "name": "redCards",
+       "displayValue": "0",
+       "label": "Red Cards"
+      },
+      {
+       "name": "offsides",
+       "displayValue": "2",
+       "label": "Offsides"
+      },
+      {
+       "name": "wonCorners",
+       "displayValue": "7",
+       "label": "Corner Kicks"
+      },
+      {
+       "name": "saves",
+       "displayValue": "3",
+       "label": "Saves"
+      },
+      {
+       "name": "possessionPct",
+       "displayValue": "69.6",
+       "label": "Possession"
+      },
+      {
+       "name": "totalShots",
+       "displayValue": "24",
+       "label": "SHOTS"
+      },
+      {
+       "name": "shotsOnTarget",
+       "displayValue": "8",
+       "label": "ON GOAL"
+      },
+      {
+       "name": "shotPct",
+       "displayValue": "0.3",
+       "label": "On Target %"
+      },
+      {
+       "name": "penaltyKickGoals",
+       "displayValue": "0",
+       "label": "Penalty Goals"
+      },
+      {
+       "name": "penaltyKickShots",
+       "displayValue": "0",
+       "label": "Penalty Kicks Taken"
+      },
+      {
+       "name": "accuratePasses",
+       "displayValue": "580",
+       "label": "Accurate Passes"
+      },
+      {
+       "name": "totalPasses",
+       "displayValue": "629",
+       "label": "Passes"
+      },
+      {
+       "name": "passPct",
+       "displayValue": "0.9",
+       "label": "Pass Completion %"
+      },
+      {
+       "name": "accurateCrosses",
+       "displayValue": "4",
+       "label": "Accurate Crosses"
+      },
+      {
+       "name": "totalCrosses",
+       "displayValue": "23",
+       "label": "Crosses"
+      },
+      {
+       "name": "crossPct",
+       "displayValue": "0.2",
+       "label": "Cross %"
+      },
+      {
+       "name": "totalLongBalls",
+       "displayValue": "30",
+       "label": "Long Balls"
+      },
+      {
+       "name": "accurateLongBalls",
+       "displayValue": "23",
+       "label": "Accurate Long Balls"
+      },
+      {
+       "name": "longballPct",
+       "displayValue": "0.8",
+       "label": "Long Balls %"
+      },
+      {
+       "name": "blockedShots",
+       "displayValue": "7",
+       "label": "Blocked Shots"
+      },
+      {
+       "name": "effectiveTackles",
+       "displayValue": "19",
+       "label": "Effective Tackles"
+      },
+      {
+       "name": "totalTackles",
+       "displayValue": "22",
+       "label": "Tackles"
+      },
+      {
+       "name": "tacklePct",
+       "displayValue": "0.9",
+       "label": "Tackle %"
+      },
+      {
+       "name": "interceptions",
+       "displayValue": "3",
+       "label": "Interceptions"
+      },
+      {
+       "name": "effectiveClearance",
+       "displayValue": "13",
+       "label": "Effective Clearances"
+      },
+      {
+       "name": "totalClearance",
+       "displayValue": "13",
+       "label": "Clearances"
+      }
+     ]
+    }
+   ]
+  },
+  "rosters": [
+   {
+    "homeAway": "home",
+    "formation": "4-4-2",
+    "uniform": {
+     "type": "home",
+     "color": "fcdd39",
+     "alternateColor": "000000"
+    },
+    "team": {
+     "id": "887",
+     "displayName": "AEK Athens",
+     "abbreviation": "AEK",
+     "color": "ffff00",
+     "alternateColor": "000000"
+    },
+    "roster": [
+     {
+      "starter": true,
+      "jersey": "91",
+      "formationPlace": "1",
+      "position": {
+       "abbreviation": "G",
+       "name": "Goalkeeper"
+      },
+      "athlete": {
+       "id": "175264",
+       "displayName": "Alberto Brignoli",
+       "shortName": "A. Brignoli",
+       "fullName": "Alberto Brignoli",
+       "lastName": "Brignoli"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "44",
+      "formationPlace": "6",
+      "position": {
+       "abbreviation": "CD-L",
+       "name": "Center Left Defender"
+      },
+      "athlete": {
+       "id": "324593",
+       "displayName": "Filipe Relvas",
+       "shortName": "Filipe Relvas",
+       "fullName": "Filipe Relvas"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "2",
+      "formationPlace": "5",
+      "position": {
+       "abbreviation": "CD-R",
+       "name": "Center Right Defender"
+      },
+      "athlete": {
+       "id": "218951",
+       "displayName": "Harold Moukoudi",
+       "shortName": "H. Moukoudi",
+       "fullName": "Harold Moukoudi",
+       "lastName": "Moukoudi"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "3",
+      "formationPlace": "3",
+      "position": {
+       "abbreviation": "LB",
+       "name": "Left Back"
+      },
+      "athlete": {
+       "id": "285427",
+       "displayName": "Stavros Pilios",
+       "shortName": "S. Pilios",
+       "fullName": "Stavros Pilios",
+       "lastName": "Pilios"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "12",
+      "formationPlace": "2",
+      "position": {
+       "abbreviation": "RB",
+       "name": "Right Back"
+      },
+      "athlete": {
+       "id": "302487",
+       "displayName": "Lazaros Rota",
+       "shortName": "L. Rota",
+       "fullName": "Lazaros Rota",
+       "lastName": "Rota"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "6",
+      "formationPlace": "8",
+      "position": {
+       "abbreviation": "CM-L",
+       "name": "Center Left Midfielder"
+      },
+      "athlete": {
+       "id": "235669",
+       "displayName": "Kaan Kairinen",
+       "shortName": "K. Kairinen",
+       "fullName": "Kaan Kairinen",
+       "lastName": "Kairinen"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "16",
+      "formationPlace": "4",
+      "position": {
+       "abbreviation": "CM-R",
+       "name": "Center Right Midfielder"
+      },
+      "athlete": {
+       "id": "260554",
+       "displayName": "Kervin Arriaga",
+       "shortName": "K. Arriaga",
+       "fullName": "Kervin Arriaga",
+       "lastName": "Arriaga"
+      }
+     }
+    ]
+   },
+   {
+    "homeAway": "away",
+    "formation": "4-2-3-1",
+    "uniform": {
+     "type": "home",
+     "color": "ffffff"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid",
+     "abbreviation": "RMA",
+     "color": "ffffff",
+     "alternateColor": "1B4D3E"
+    },
+    "roster": [
+     {
+      "starter": true,
+      "jersey": "1",
+      "formationPlace": "1",
+      "position": {
+       "abbreviation": "G",
+       "name": "Goalkeeper"
+      },
+      "athlete": {
+       "id": "134283",
+       "displayName": "Thibaut Courtois",
+       "shortName": "T. Courtois",
+       "fullName": "Thibaut Courtois",
+       "lastName": "Courtois"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "22",
+      "formationPlace": "6",
+      "position": {
+       "abbreviation": "CD-L",
+       "name": "Center Left Defender"
+      },
+      "athlete": {
+       "id": "169438",
+       "displayName": "Antonio Rüdiger",
+       "shortName": "A. Rüdiger",
+       "fullName": "Antonio Rüdiger",
+       "lastName": "Rüdiger"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "3",
+      "formationPlace": "5",
+      "position": {
+       "abbreviation": "CD-R",
+       "name": "Center Right Defender"
+      },
+      "athlete": {
+       "id": "228402",
+       "displayName": "Éder Militão",
+       "shortName": "É. Militão",
+       "fullName": "Éder Militão",
+       "lastName": "Militão"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "17",
+      "formationPlace": "3",
+      "position": {
+       "abbreviation": "LB",
+       "name": "Left Back"
+      },
+      "athlete": {
+       "id": "259910",
+       "displayName": "Marc Cucurella",
+       "shortName": "M. Cucurella",
+       "fullName": "Marc Cucurella",
+       "lastName": "Cucurella"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "24",
+      "formationPlace": "2",
+      "position": {
+       "abbreviation": "RB",
+       "name": "Right Back"
+      },
+      "athlete": {
+       "id": "213248",
+       "displayName": "Denzel Dumfries",
+       "shortName": "D. Dumfries",
+       "fullName": "Denzel Dumfries",
+       "lastName": "Dumfries"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "5",
+      "formationPlace": "10",
+      "position": {
+       "abbreviation": "AM",
+       "name": "Attacking Midfielder"
+      },
+      "athlete": {
+       "id": "291281",
+       "displayName": "Jude Bellingham",
+       "shortName": "J. Bellingham",
+       "fullName": "Jude Bellingham",
+       "lastName": "Bellingham"
+      }
+     },
+     {
+      "starter": true,
+      "jersey": "6",
+      "formationPlace": "4",
+      "position": {
+       "abbreviation": "LM",
+       "name": "Left Midfielder"
+      },
+      "athlete": {
+       "id": "285150",
+       "displayName": "Eduardo Camavinga",
+       "shortName": "E. Camavinga",
+       "fullName": "Eduardo Camavinga",
+       "lastName": "Camavinga"
+      }
+     }
+    ]
+   }
+  ],
+  "keyEvents": [
+   {
+    "id": "54800016",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T17:47:35Z",
+    "shootout": false,
+    "type": {
+     "id": "80",
+     "text": "Kickoff",
+     "type": "kickoff"
+    },
+    "clock": {
+     "value": 0,
+     "displayValue": ""
+    },
+    "period": {
+     "number": 1
+    }
+   },
+   {
+    "id": "54800396",
+    "text": "Goal! AEK Athens 1, Real Madrid 0. Aboubakary Koïta (AEK Athens) left footed shot from the centre of the box to the bottom right corner. Assisted by Luka Jovic.",
+    "shortText": "Aboubakary Koita Goal",
+    "scoringPlay": true,
+    "wallclock": "2026-11-04T17:58:46Z",
+    "shootout": false,
+    "type": {
+     "id": "70",
+     "text": "Goal",
+     "type": "goal"
+    },
+    "clock": {
+     "value": 671,
+     "displayValue": "12'"
+    },
+    "team": {
+     "id": "887",
+     "displayName": "AEK Athens"
+    },
+    "period": {
+     "number": 1
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "260026",
+       "displayName": "Aboubakary Koita"
+      }
+     },
+     {
+      "athlete": {
+       "id": "221332",
+       "displayName": "Luka Jovic"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54800876",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T18:15:08Z",
+    "shootout": false,
+    "type": {
+     "id": "129",
+     "text": "Start Delay",
+     "type": "start-delay"
+    },
+    "clock": {
+     "value": 1652,
+     "displayValue": "28'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 1
+    }
+   },
+   {
+    "id": "54800877",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T18:16:16Z",
+    "shootout": false,
+    "type": {
+     "id": "130",
+     "text": "End Delay",
+     "type": "end-delay"
+    },
+    "clock": {
+     "value": 1720,
+     "displayValue": "29'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 1
+    }
+   },
+   {
+    "id": "54800968",
+    "text": "Goal! AEK Athens 1, Real Madrid 1. Jude Bellingham (Real Madrid) left footed shot from the centre of the box to the bottom right corner. Assisted by Marc Cucurella with a cross.",
+    "shortText": "Jude Bellingham Goal",
+    "scoringPlay": true,
+    "wallclock": "2026-11-04T18:19:29Z",
+    "shootout": false,
+    "type": {
+     "id": "70",
+     "text": "Goal",
+     "type": "goal"
+    },
+    "clock": {
+     "value": 1914,
+     "displayValue": "32'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 1
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "291281",
+       "displayName": "Jude Bellingham"
+      }
+     },
+     {
+      "athlete": {
+       "id": "259910",
+       "displayName": "Marc Cucurella"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54801013",
+    "text": "Kervin Arriaga (AEK Athens) is shown the yellow card.",
+    "shortText": "Kervin Arriaga Yellow Card",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T18:20:55Z",
+    "shootout": false,
+    "type": {
+     "id": "94",
+     "text": "Yellow Card",
+     "type": "yellow-card"
+    },
+    "clock": {
+     "value": 2000,
+     "displayValue": "34'"
+    },
+    "team": {
+     "id": "887",
+     "displayName": "AEK Athens"
+    },
+    "period": {
+     "number": 1
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "260554",
+       "displayName": "Kervin Arriaga"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54801386",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T18:33:36Z",
+    "shootout": false,
+    "type": {
+     "id": "81",
+     "text": "Halftime",
+     "type": "halftime"
+    },
+    "clock": {
+     "value": 2700,
+     "displayValue": "45'+1'"
+    },
+    "period": {
+     "number": 1
+    }
+   },
+   {
+    "id": "54801410",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T18:49:42Z",
+    "shootout": false,
+    "type": {
+     "id": "82",
+     "text": "Start 2nd Half",
+     "type": "start-2nd-half"
+    },
+    "clock": {
+     "value": 2700,
+     "displayValue": "45'"
+    },
+    "period": {
+     "number": 2
+    }
+   },
+   {
+    "id": "54801628",
+    "text": "Substitution, AEK Athens. Zine replaces Lovro Majer.",
+    "shortText": "Zini Substitution",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T18:57:15Z",
+    "shootout": false,
+    "type": {
+     "id": "76",
+     "text": "Substitution",
+     "type": "substitution"
+    },
+    "clock": {
+     "value": 3153,
+     "displayValue": "53'"
+    },
+    "team": {
+     "id": "887",
+     "displayName": "AEK Athens"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "297754",
+       "displayName": "Zini"
+      }
+     },
+     {
+      "athlete": {
+       "id": "237549",
+       "displayName": "Lovro Majer"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54801835",
+    "text": "Delay in match because of an injury Lazaros Rota (AEK Athens).",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:03:26Z",
+    "shootout": false,
+    "type": {
+     "id": "129",
+     "text": "Start Delay",
+     "type": "start-delay"
+    },
+    "clock": {
+     "value": 3524,
+     "displayValue": "59'"
+    },
+    "team": {
+     "id": "887",
+     "displayName": "AEK Athens"
+    },
+    "period": {
+     "number": 2
+    }
+   },
+   {
+    "id": "54801836",
+    "text": "Delay in match because of an injury Eduardo Camavinga (Real Madrid).",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:03:26Z",
+    "shootout": false,
+    "type": {
+     "id": "129",
+     "text": "Start Delay",
+     "type": "start-delay"
+    },
+    "clock": {
+     "value": 3524,
+     "displayValue": "59'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 2
+    }
+   },
+   {
+    "id": "54801853",
+    "text": "Substitution, AEK Athens. Razvan Marin replaces Mijat Gacinovic.",
+    "shortText": "Razvan Marin Substitution",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:04:02Z",
+    "shootout": false,
+    "type": {
+     "id": "76",
+     "text": "Substitution",
+     "type": "substitution"
+    },
+    "clock": {
+     "value": 3560,
+     "displayValue": "60'"
+    },
+    "team": {
+     "id": "887",
+     "displayName": "AEK Athens"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "239738",
+       "displayName": "Razvan Marin"
+      }
+     },
+     {
+      "athlete": {
+       "id": "192943",
+       "displayName": "Mijat Gacinovic"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54801865",
+    "text": "Substitution, AEK Athens. Barnabás Varga replaces Kaan Kairinen.",
+    "shortText": "Barnabás Varga Substitution",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:04:24Z",
+    "shootout": false,
+    "type": {
+     "id": "76",
+     "text": "Substitution",
+     "type": "substitution"
+    },
+    "clock": {
+     "value": 3583,
+     "displayValue": "60'"
+    },
+    "team": {
+     "id": "887",
+     "displayName": "AEK Athens"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "246666",
+       "displayName": "Barnabás Varga"
+      }
+     },
+     {
+      "athlete": {
+       "id": "235669",
+       "displayName": "Kaan Kairinen"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54801855",
+    "text": "Delay over. They are ready to continue.",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:04:30Z",
+    "shootout": false,
+    "type": {
+     "id": "130",
+     "text": "End Delay",
+     "type": "end-delay"
+    },
+    "clock": {
+     "value": 3588,
+     "displayValue": "60'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 2
+    }
+   },
+   {
+    "id": "54801854",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:04:31Z",
+    "shootout": false,
+    "type": {
+     "id": "130",
+     "text": "End Delay",
+     "type": "end-delay"
+    },
+    "clock": {
+     "value": 3588,
+     "displayValue": "60'"
+    },
+    "team": {
+     "id": "887",
+     "displayName": "AEK Athens"
+    },
+    "period": {
+     "number": 2
+    }
+   },
+   {
+    "id": "54802015",
+    "text": "Marc Cucurella (Real Madrid) is shown the yellow card for a bad foul.",
+    "shortText": "Marc Cucurella Yellow Card",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:09:37Z",
+    "shootout": false,
+    "type": {
+     "id": "94",
+     "text": "Yellow Card",
+     "type": "yellow-card"
+    },
+    "clock": {
+     "value": 3896,
+     "displayValue": "65'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "259910",
+       "displayName": "Marc Cucurella"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54802040",
+    "text": "Substitution, Real Madrid. Federico Valverde replaces Yan Diomande.",
+    "shortText": "Federico Valverde Substitution",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:11:17Z",
+    "shootout": false,
+    "type": {
+     "id": "76",
+     "text": "Substitution",
+     "type": "substitution"
+    },
+    "clock": {
+     "value": 3996,
+     "displayValue": "67'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "235818",
+       "displayName": "Federico Valverde"
+      }
+     },
+     {
+      "athlete": {
+       "id": "402479",
+       "displayName": "Yan Diomande"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54802041",
+    "text": "Substitution, Real Madrid. Endrick replaces Bernardo Silva.",
+    "shortText": "Endrick Substitution",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:11:25Z",
+    "shootout": false,
+    "type": {
+     "id": "76",
+     "text": "Substitution",
+     "type": "substitution"
+    },
+    "clock": {
+     "value": 4003,
+     "displayValue": "67'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "346612",
+       "displayName": "Endrick"
+      }
+     },
+     {
+      "athlete": {
+       "id": "199833",
+       "displayName": "Bernardo Silva"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54802265",
+    "text": "Goal! AEK Athens 2, Real Madrid 1. Stavros Pilios (AEK Athens) left footed shot from the centre of the box to the centre of the goal. Assisted by Aboubakary Koïta following a fast break.",
+    "shortText": "Stavros Pilios Goal",
+    "scoringPlay": true,
+    "wallclock": "2026-11-04T19:19:09Z",
+    "shootout": false,
+    "type": {
+     "id": "70",
+     "text": "Goal",
+     "type": "goal"
+    },
+    "clock": {
+     "value": 4468,
+     "displayValue": "75'"
+    },
+    "team": {
+     "id": "887",
+     "displayName": "AEK Athens"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "285427",
+       "displayName": "Stavros Pilios"
+      }
+     },
+     {
+      "athlete": {
+       "id": "260026",
+       "displayName": "Aboubakary Koita"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54802303",
+    "text": "Goal! AEK Athens 2, Real Madrid 2. Kylian Mbappé (Real Madrid) right footed shot from very close range to the bottom left corner. Assisted by Denzel Dumfries.",
+    "shortText": "Kylian Mbappé Goal",
+    "scoringPlay": true,
+    "wallclock": "2026-11-04T19:21:49Z",
+    "shootout": false,
+    "type": {
+     "id": "70",
+     "text": "Goal",
+     "type": "goal"
+    },
+    "clock": {
+     "value": 4628,
+     "displayValue": "78'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "231388",
+       "displayName": "Kylian Mbappé"
+      }
+     },
+     {
+      "athlete": {
+       "id": "213248",
+       "displayName": "Denzel Dumfries"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54802413",
+    "text": "Substitution, Real Madrid. Brahim Díaz replaces Marc Cucurella.",
+    "shortText": "Brahim Díaz Substitution",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:25:27Z",
+    "shootout": false,
+    "type": {
+     "id": "76",
+     "text": "Substitution",
+     "type": "substitution"
+    },
+    "clock": {
+     "value": 4845,
+     "displayValue": "81'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "246532",
+       "displayName": "Brahim Díaz"
+      }
+     },
+     {
+      "athlete": {
+       "id": "259910",
+       "displayName": "Marc Cucurella"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54802476",
+    "text": "Substitution, Real Madrid. Álvaro Carreras replaces Vinícius Júnior.",
+    "shortText": "Álvaro Carreras Substitution",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:25:34Z",
+    "shootout": false,
+    "type": {
+     "id": "76",
+     "text": "Substitution",
+     "type": "substitution"
+    },
+    "clock": {
+     "value": 4852,
+     "displayValue": "81'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "310637",
+       "displayName": "Álvaro Carreras"
+      }
+     },
+     {
+      "athlete": {
+       "id": "252107",
+       "displayName": "Vinícius Júnior"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54802565",
+    "text": "Substitution, Real Madrid. Carlos Espí replaces Jude Bellingham.",
+    "shortText": "Carlos Espí Substitution",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:29:43Z",
+    "shootout": false,
+    "type": {
+     "id": "76",
+     "text": "Substitution",
+     "type": "substitution"
+    },
+    "clock": {
+     "value": 5101,
+     "displayValue": "86'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "380286",
+       "displayName": "Carlos Espí"
+      }
+     },
+     {
+      "athlete": {
+       "id": "291281",
+       "displayName": "Jude Bellingham"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54802630",
+    "text": "Substitution, AEK Athens. Oleksandr Zubkov replaces Luka Jovic.",
+    "shortText": "Oleksandr Zubkov Substitution",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:32:22Z",
+    "shootout": false,
+    "type": {
+     "id": "76",
+     "text": "Substitution",
+     "type": "substitution"
+    },
+    "clock": {
+     "value": 5261,
+     "displayValue": "88'"
+    },
+    "team": {
+     "id": "887",
+     "displayName": "AEK Athens"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "228267",
+       "displayName": "Oleksandr Zubkov"
+      }
+     },
+     {
+      "athlete": {
+       "id": "221332",
+       "displayName": "Luka Jovic"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54802760",
+    "text": "Goal! AEK Athens 2, Real Madrid 3. Federico Valverde (Real Madrid) right footed shot from outside the box to the top right corner. Assisted by Brahim Díaz.",
+    "shortText": "Federico Valverde Goal",
+    "scoringPlay": true,
+    "wallclock": "2026-11-04T19:36:10Z",
+    "shootout": false,
+    "type": {
+     "id": "70",
+     "text": "Goal",
+     "type": "goal"
+    },
+    "clock": {
+     "value": 5400,
+     "displayValue": "90'+2'"
+    },
+    "team": {
+     "id": "86",
+     "displayName": "Real Madrid"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "235818",
+       "displayName": "Federico Valverde"
+      }
+     },
+     {
+      "athlete": {
+       "id": "246532",
+       "displayName": "Brahim Díaz"
+      }
+     }
+    ]
+   },
+   {
+    "id": "54802811",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:39:36Z",
+    "shootout": false,
+    "type": {
+     "id": "83",
+     "text": "End Regular Time",
+     "type": "end-regular-time"
+    },
+    "clock": {
+     "value": 5400,
+     "displayValue": "90'+5'"
+    },
+    "period": {
+     "number": 2
+    }
+   },
+   {
+    "id": "54802820",
+    "text": "Aboubakary Koïta (AEK Athens) is shown the red card.",
+    "shortText": "Aboubakary Koita Red Card",
+    "scoringPlay": false,
+    "wallclock": "2026-11-04T19:39:27Z",
+    "shootout": false,
+    "type": {
+     "id": "93",
+     "text": "Red Card",
+     "type": "red-card"
+    },
+    "clock": {
+     "value": 5400,
+     "displayValue": "90'+5'"
+    },
+    "team": {
+     "id": "887",
+     "displayName": "AEK Athens"
+    },
+    "period": {
+     "number": 2
+    },
+    "participants": [
+     {
+      "athlete": {
+       "id": "260026",
+       "displayName": "Aboubakary Koita"
+      }
+     }
+    ]
+   }
+  ],
+  "standings": {
+   "groups": [
+    {
+     "standings": {
+      "entries": [
+       {
+        "team": "Paris Saint-Germain",
+        "id": "160",
+        "stats": [
+         {
+          "name": "gamesPlayed",
+          "value": 4,
+          "displayValue": "4"
+         },
+         {
+          "name": "losses",
+          "value": 0,
+          "displayValue": "0"
+         },
+         {
+          "name": "pointDifferential",
+          "value": 15,
+          "displayValue": "+15"
+         },
+         {
+          "name": "points",
+          "value": 12,
+          "displayValue": "12"
+         },
+         {
+          "name": "ties",
+          "value": 0,
+          "displayValue": "0"
+         },
+         {
+          "name": "wins",
+          "value": 4,
+          "displayValue": "4"
+         },
+         {
+          "name": "rank",
+          "value": 1,
+          "displayValue": "1"
+         },
+         {
+          "name": "overall",
+          "displayValue": "4-0-0"
+         }
+        ]
+       },
+       {
+        "team": "Real Madrid",
+        "id": "86",
+        "stats": [
+         {
+          "name": "gamesPlayed",
+          "value": 4,
+          "displayValue": "4"
+         },
+         {
+          "name": "losses",
+          "value": 0,
+          "displayValue": "0"
+         },
+         {
+          "name": "pointDifferential",
+          "value": 6,
+          "displayValue": "+6"
+         },
+         {
+          "name": "points",
+          "value": 12,
+          "displayValue": "12"
+         },
+         {
+          "name": "ties",
+          "value": 0,
+          "displayValue": "0"
+         },
+         {
+          "name": "wins",
+          "value": 4,
+          "displayValue": "4"
+         },
+         {
+          "name": "rank",
+          "value": 2,
+          "displayValue": "2"
+         },
+         {
+          "name": "overall",
+          "displayValue": "4-0-0"
+         }
+        ]
+       },
+       {
+        "team": "Arsenal",
+        "id": "359",
+        "stats": [
+         {
+          "name": "gamesPlayed",
+          "value": 4,
+          "displayValue": "4"
+         },
+         {
+          "name": "losses",
+          "value": 0,
+          "displayValue": "0"
+         },
+         {
+          "name": "pointDifferential",
+          "value": 5,
+          "displayValue": "+5"
+         },
+         {
+          "name": "points",
+          "value": 10,
+          "displayValue": "10"
+         },
+         {
+          "name": "ties",
+          "value": 1,
+          "displayValue": "1"
+         },
+         {
+          "name": "wins",
+          "value": 3,
+          "displayValue": "3"
+         },
+         {
+          "name": "rank",
+          "value": 3,
+          "displayValue": "3"
+         },
+         {
+          "name": "overall",
+          "displayValue": "3-1-0"
+         }
+        ]
+       },
+       {
+        "team": "Como",
+        "id": "2572",
+        "stats": [
+         {
+          "name": "gamesPlayed",
+          "value": 4,
+          "displayValue": "4"
+         },
+         {
+          "name": "losses",
+          "value": 1,
+          "displayValue": "1"
+         },
+         {
+          "name": "pointDifferential",
+          "value": 13,
+          "displayValue": "+13"
+         },
+         {
+          "name": "points",
+          "value": 9,
+          "displayValue": "9"
+         },
+         {
+          "name": "ties",
+          "value": 0,
+          "displayValue": "0"
+         },
+         {
+          "name": "wins",
+          "value": 3,
+          "displayValue": "3"
+         },
+         {
+          "name": "rank",
+          "value": 4,
+          "displayValue": "4"
+         },
+         {
+          "name": "overall",
+          "displayValue": "3-0-1"
+         }
+        ]
+       },
+       {
+        "team": "Barcelona",
+        "id": "83",
+        "stats": [
+         {
+          "name": "gamesPlayed",
+          "value": 4,
+          "displayValue": "4"
+         },
+         {
+          "name": "losses",
+          "value": 1,
+          "displayValue": "1"
+         },
+         {
+          "name": "pointDifferential",
+          "value": 8,
+          "displayValue": "+8"
+         },
+         {
+          "name": "points",
+          "value": 9,
+          "displayValue": "9"
+         },
+         {
+          "name": "ties",
+          "value": 0,
+          "displayValue": "0"
+         },
+         {
+          "name": "wins",
+          "value": 3,
+          "displayValue": "3"
+         },
+         {
+          "name": "rank",
+          "value": 5,
+          "displayValue": "5"
+         },
+         {
+          "name": "overall",
+          "displayValue": "3-0-1"
+         }
+        ]
+       },
+       {
+        "team": "Aston Villa",
+        "id": "362",
+        "stats": [
+         {
+          "name": "gamesPlayed",
+          "value": 4,
+          "displayValue": "4"
+         },
+         {
+          "name": "losses",
+          "value": 1,
+          "displayValue": "1"
+         },
+         {
+          "name": "pointDifferential",
+          "value": 6,
+          "displayValue": "+6"
+         },
+         {
+          "name": "points",
+          "value": 9,
+          "displayValue": "9"
+         },
+         {
+          "name": "ties",
+          "value": 0,
+          "displayValue": "0"
+         },
+         {
+          "name": "wins",
+          "value": 3,
+          "displayValue": "3"
+         },
+         {
+          "name": "rank",
+          "value": 6,
+          "displayValue": "6"
+         },
+         {
+          "name": "overall",
+          "displayValue": "3-0-1"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "odds": [
+   {
+    "details": "RMA -550",
+    "provider": {
+     "id": "100",
+     "name": "DraftKings"
+    },
+    "homeTeamOdds": {
+     "favorite": false,
+     "moneyLine": 1200
+    },
+    "awayTeamOdds": {
+     "favorite": true,
+     "moneyLine": -550
+    },
+    "drawOdds": {
+     "moneyLine": 700
+    }
+   }
+  ]
+ },
+ "autres": [
+  {
+   "id": "401915382",
+   "date": "2026-11-04T17:45Z",
+   "name": "Liverpool at Fenerbahce",
+   "shortName": "LIV @ FEN",
+   "status": {
+    "clock": 5400,
+    "displayClock": "90'+3'",
+    "period": 2,
+    "type": {
+     "id": "28",
+     "name": "STATUS_FULL_TIME",
+     "state": "post",
+     "completed": true,
+     "detail": "FT"
+    }
+   },
+   "venue": {},
+   "competitions": [
+    {
+     "id": "401915382",
+     "competitors": [
+      {
+       "id": "436",
+       "homeAway": "home",
+       "score": "3",
+       "team": {
+        "id": "436",
+        "displayName": "Fenerbahce",
+        "shortDisplayName": "Fenerbahce",
+        "name": "Fenerbahce",
+        "abbreviation": "FEN",
+        "color": "ffff00",
+        "alternateColor": "ffffff"
+       }
+      },
+      {
+       "id": "364",
+       "homeAway": "away",
+       "score": "2",
+       "team": {
+        "id": "364",
+        "displayName": "Liverpool",
+        "shortDisplayName": "Liverpool",
+        "name": "Liverpool",
+        "abbreviation": "LIV",
+        "color": "d11317",
+        "alternateColor": "FFFFFF"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401915304",
+   "date": "2026-11-04T20:00Z",
+   "name": "Real Betis at Borussia Dortmund",
+   "shortName": "BET @ DOR",
+   "status": {
+    "clock": 5400,
+    "displayClock": "90'+4'",
+    "period": 2,
+    "type": {
+     "id": "28",
+     "name": "STATUS_FULL_TIME",
+     "state": "post",
+     "completed": true,
+     "detail": "FT"
+    }
+   },
+   "venue": {},
+   "competitions": [
+    {
+     "id": "401915304",
+     "competitors": [
+      {
+       "id": "124",
+       "homeAway": "home",
+       "score": "2",
+       "team": {
+        "id": "124",
+        "displayName": "Borussia Dortmund",
+        "shortDisplayName": "Dortmund",
+        "name": "Borussia Dortmund",
+        "abbreviation": "DOR",
+        "color": "ffee00",
+        "alternateColor": "272726"
+       }
+      },
+      {
+       "id": "244",
+       "homeAway": "away",
+       "score": "1",
+       "team": {
+        "id": "244",
+        "displayName": "Real Betis",
+        "shortDisplayName": "Betis",
+        "name": "Real Betis",
+        "abbreviation": "BET",
+        "color": "288A00",
+        "alternateColor": "0A422D"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401915301",
+   "date": "2026-11-04T20:00Z",
+   "name": "Napoli at FC Porto",
+   "shortName": "NAP @ FCP",
+   "status": {
+    "clock": 5400,
+    "displayClock": "90'+3'",
+    "period": 2,
+    "type": {
+     "id": "28",
+     "name": "STATUS_FULL_TIME",
+     "state": "post",
+     "completed": true,
+     "detail": "FT"
+    }
+   },
+   "venue": {},
+   "competitions": [
+    {
+     "id": "401915301",
+     "competitors": [
+      {
+       "id": "437",
+       "homeAway": "home",
+       "score": "4",
+       "team": {
+        "id": "437",
+        "displayName": "FC Porto",
+        "shortDisplayName": "FC Porto",
+        "name": "FC Porto",
+        "abbreviation": "FCP",
+        "color": "0000dd",
+        "alternateColor": "ffa000"
+       }
+      },
+      {
+       "id": "114",
+       "homeAway": "away",
+       "score": "1",
+       "team": {
+        "id": "114",
+        "displayName": "Napoli",
+        "shortDisplayName": "Napoli",
+        "name": "Napoli",
+        "abbreviation": "NAP",
+        "color": "0677d2",
+        "alternateColor": "ffffff"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
