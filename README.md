@@ -9,12 +9,54 @@ réel d'un match **décalé pour coller à ton stream**.
 
 ---
 
-## Démarrer
+## Démarrer, le plus simplement possible
+
+Il faut **[Node.js](https://nodejs.org/fr/download) 20 ou plus**, et rien d'autre.
+Ensuite, un seul fichier à lancer.
+
+**macOS et Linux** — double-clique `demarrer.command`, ou dans un terminal :
+
+```sh
+./demarrer.command
+```
+
+**Windows** — double-clique `demarrer.bat`.
+
+Le lanceur vérifie Node, installe les dépendances la première fois (deux à
+trois minutes, une seule fois), écrit un `.env` réglé sur **ESPN** — qui ne
+demande aucun jeton et couvre la Ligue 1 et la Ligue des Champions — puis
+démarre le serveur et ouvre la régie. Dans la régie, la touche <kbd>M</kbd>
+ouvre le sélecteur de match.
+
+> Sur macOS, récupère le projet avec `git clone` plutôt qu'en téléchargeant le
+> ZIP : un fichier venu d'un navigateur est mis en quarantaine par Gatekeeper
+> et refuse de s'ouvrir au double-clic.
+
+### Dans OBS
+
+Deux sources navigateur, **1920 × 1080** chacune, et ta webcam **entre les
+deux** — c'est ce qui donne l'impression que tu es dans le plateau plutôt que
+posé dessus.
+
+| Ordre dans la scène | Source |
+|---|---|
+| au-dessus | `http://localhost:4000/overlay/?layer=fg` |
+| au milieu | **ta webcam** |
+| en dessous | `http://localhost:4000/overlay/?layer=bg` |
+
+### À la main
 
 ```sh
 pnpm install
 pnpm fixture   # génère un match de démonstration rejouable
 pnpm dev
+```
+
+Les réglages vivent dans `.env` (voir `.env.example`). Une variable posée dans
+l'environnement l'emporte toujours sur le fichier :
+
+```sh
+KZ_PROVIDER=simulator pnpm dev   # rejeu hors ligne, sans réseau
 ```
 
 Trois pages :

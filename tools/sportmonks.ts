@@ -18,6 +18,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import type { MatchEvent } from '@kz/core';
+import { chargerEnv } from '../packages/providers/src/env.js';
 import {
   capturerUneFois,
   nouvelEtat,
@@ -25,6 +26,10 @@ import {
   SportmonksProvider,
   type SmFixture,
 } from '../packages/providers/src/sportmonks/index.js';
+
+// AVANT de lire le jeton : Node ne charge pas `.env` tout seul, et sans ça
+// l'outil part sans jeton alors que le fichier en contient un.
+chargerEnv();
 
 const BASE = 'https://api.sportmonks.com/v3/football';
 const TOKEN = process.env.SPORTMONKS_TOKEN;

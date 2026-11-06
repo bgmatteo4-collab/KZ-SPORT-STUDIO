@@ -29,5 +29,9 @@
     "ws": "^8.18.0",
     "@kz/core": "workspace:*",
     "@kz/providers": "workspace:*"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=20.11"
   }
 }

@@ -17,6 +17,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import type { MatchEvent } from '@kz/core';
+import { chargerEnv } from '../packages/providers/src/env.js';
 import {
   capturerUneFois,
   EspnProvider,
@@ -27,6 +28,10 @@ import {
   traduire,
   type SourceEspn,
 } from '../packages/providers/src/espn/index.js';
+
+// Node ne charge pas `.env` tout seul : sans cet appel, `ESPN_LEAGUE` et les
+// autres réglages écrits dans le fichier seraient ignorés en silence.
+chargerEnv();
 
 // ─────────────────────────────── Les commandes ──────────────────────────────
 

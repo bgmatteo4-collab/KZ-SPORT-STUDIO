@@ -23,6 +23,7 @@ import {
   type ServerMessage,
 } from '@kz/core';
 import {
+  chargerEnv,
   espn,
   EspnProvider,
   SimulatorProvider,
@@ -32,6 +33,12 @@ import {
 import { ServerClock } from './clock.js';
 import { Hub } from './hub.js';
 import { ControlStore } from './persist.js';
+
+// AVANT toute lecture de `process.env`, sans quoi tout ce qui suit lit des
+// valeurs par défaut. Node ne charge pas `.env` de lui-même, et l'oublier ne
+// provoque aucune erreur : le serveur démarre simplement sur le simulateur
+// pendant qu'on cherche pourquoi le vrai match n'arrive pas.
+const charges = chargerEnv();
 
 const PORT = Number(process.env.KZ_PORT ?? 4100);
 const PROVIDER_NAME = process.env.KZ_PROVIDER ?? 'simulator';
@@ -457,6 +464,9 @@ wss.on('connection', (socket) => {
 
 server.listen(PORT, () => {
   console.log(`▶ KZ Studio — serveur sur http://localhost:${PORT}`);
+  // Dire ce qui a été lu dans `.env` : si le fichier est ignoré, ça se voit
+  // tout de suite au lieu de se déduire d'un match de démonstration inattendu.
+  console.log(`  .env        : ${charges.length > 0 ? charges.join(', ') : 'aucun fichier lu'}`);
   console.log(`  fournisseur : ${provider.name}`);
   console.log(`  vitesse     : x${clock.scale}`);
   console.log(`  délai       : ${hub.controlState.delayMs} ms${Object.keys(retenu).length ? ' (repris)' : ''}`);
