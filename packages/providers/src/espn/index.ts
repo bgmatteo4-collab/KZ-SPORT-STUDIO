@@ -106,24 +106,9 @@ export async function resume(ligue: string, eventId: string): Promise<EspnSummar
   return json<EspnSummary>(`${BASE}/${ligue}/summary?event=${encodeURIComponent(eventId)}`);
 }
 
-/** Les matchs en cours, tous championnats connus confondus. */
-export async function matchsEnCours(): Promise<
-  { ligue: string; nom: string; event: EspnEvent }[]
-> {
-  const resultats = await Promise.allSettled(
-    Object.keys(LIGUES).map(async (ligue) => ({ ligue, bord: await tableauDeBord(ligue) })),
-  );
-  const out: { ligue: string; nom: string; event: EspnEvent }[] = [];
-  for (const r of resultats) {
-    if (r.status !== 'fulfilled') continue;
-    for (const e of r.value.bord.events ?? []) {
-      const etat = (e.status ?? e.competitions?.[0]?.status)?.type?.state;
-      if (etat === 'in') {
-        out.push({ ligue: r.value.ligue, nom: LIGUES[r.value.ligue]?.nom ?? r.value.ligue, event: e });
-      }
-    }
-  }
-  return out;
+/** Les matchs en cours, TOUTES compétitions — un seul appel. */
+export async function matchsEnCours(): Promise<MatchListe[]> {
+  return (await toutLeJour()).filter((m) => m.etat === 'in');
 }
 
 // ───────────────────────── La liste, pour le sélecteur ───────────────────────
@@ -174,30 +159,38 @@ function equipeListe(c: EspnCompetitor | undefined): EquipeListe {
   };
 }
 
+/** Un match, mis à plat. La compétition est fournie : le tableau global ne la porte pas. */
+function unMatch(
+  e: EspnEvent,
+  comp_: { ligue: string; nom: string; logo: string | null },
+): MatchListe {
+  const comp = e.competitions?.[0];
+  const st = e.status ?? comp?.status;
+  const brut = st?.type?.state;
+  const etat: 'pre' | 'in' | 'post' = brut === 'in' ? 'in' : brut === 'post' ? 'post' : 'pre';
+  return {
+    id: e.id ?? '',
+    ligue: comp_.ligue,
+    ligueNom: comp_.nom,
+    ligueLogo: comp_.logo,
+    date: e.date ?? null,
+    etat,
+    detail: st?.type?.detail ?? st?.type?.shortDetail ?? '',
+    minute: minuteAffichee(st),
+    domicile: equipeListe((comp?.competitors ?? []).find((c) => c.homeAway === 'home')),
+    exterieur: equipeListe((comp?.competitors ?? []).find((c) => c.homeAway === 'away')),
+  };
+}
+
 /** Met un tableau de bord à plat, prêt pour le sélecteur de la régie. */
 export function listerMatchs(bord: EspnScoreboard, ligue: string): MatchListe[] {
   const infos = bord.leagues?.[0];
-  const logo = logoDeLigue(infos) ?? null;
-  const nom = LIGUES[ligue]?.nom ?? infos?.name ?? ligue;
-
-  return (bord.events ?? []).map((e) => {
-    const comp = e.competitions?.[0];
-    const st = e.status ?? comp?.status;
-    const brut = st?.type?.state;
-    const etat: 'pre' | 'in' | 'post' = brut === 'in' ? 'in' : brut === 'post' ? 'post' : 'pre';
-    return {
-      id: e.id ?? '',
-      ligue,
-      ligueNom: nom,
-      ligueLogo: logo,
-      date: e.date ?? null,
-      etat,
-      detail: st?.type?.detail ?? st?.type?.shortDetail ?? '',
-      minute: minuteAffichee(st),
-      domicile: equipeListe((comp?.competitors ?? []).find((c) => c.homeAway === 'home')),
-      exterieur: equipeListe((comp?.competitors ?? []).find((c) => c.homeAway === 'away')),
-    };
-  });
+  const comp = {
+    ligue,
+    nom: LIGUES[ligue]?.nom ?? infos?.name ?? ligue,
+    logo: logoDeLigue(infos) ?? null,
+  };
+  return (bord.events ?? []).map((e) => unMatch(e, comp));
 }
 
 /** La soirée d'un championnat, déjà mise à plat. */
@@ -205,19 +198,94 @@ export async function matchsDuJour(ligue: string): Promise<MatchListe[]> {
   return listerMatchs(await tableauDeBord(ligue), ligue);
 }
 
+// ──────────────────── Tout le football du jour, en deux appels ───────────────
+//
+// Le sélecteur ne doit PAS dépendre d'une liste de compétitions écrite en dur :
+// c'est ainsi qu'on « ne trouve pas tous les matchs en direct ». Un soir de
+// semaine, le football se joue dans quarante championnats, pas dans les neuf
+// qu'on avait prévus.
+//
+// ESPN expose deux choses complémentaires :
+//
+//   • un CATALOGUE des compétitions (42 ce soir), avec leur identifiant ;
+//   • un tableau de bord GLOBAL, toutes compétitions confondues, qui donne
+//     jusqu'à cent rencontres en un seul appel.
+//
+// Le global ne nomme pas la compétition de chaque match — il faut la retrouver.
+// Deux chemins, dans cet ordre : l'identifiant caché dans `uid` recoupé avec le
+// catalogue, puis, pour les rares manquants, le lien « Table » que chaque match
+// porte et qui contient le code de sa compétition.
+
+const CATALOGUE_URL = 'https://site.web.api.espn.com/apis/v2/scoreboard/header?sport=soccer';
+const CATALOGUE_MS = 3_600_000;
+
+export interface LigueConnue {
+  slug: string;
+  nom: string;
+}
+
+interface EnTete {
+  sports?: { leagues?: { id?: string; slug?: string; name?: string }[] }[];
+}
+
+let catalogue: { at: number; parId: Map<string, LigueConnue> } | null = null;
+
+/** Les compétitions qu'ESPN suit aujourd'hui, par identifiant interne. */
+export async function catalogueLigues(): Promise<Map<string, LigueConnue>> {
+  if (catalogue && Date.now() - catalogue.at < CATALOGUE_MS) return catalogue.parId;
+  const parId = new Map<string, LigueConnue>();
+  try {
+    const d = await json<EnTete>(CATALOGUE_URL);
+    for (const l of d.sports?.[0]?.leagues ?? []) {
+      if (l.id && l.slug) parId.set(String(l.id), { slug: l.slug, nom: l.name ?? l.slug });
+    }
+  } catch {
+    // Catalogue indisponible : on se rabattra sur le lien « Table » de chaque
+    // match. Mieux vaut un menu complet sans jolis noms qu'un menu vide.
+  }
+  catalogue = { at: Date.now(), parId };
+  return parId;
+}
+
+/** Le code de compétition d'un match du tableau global. */
+function ligueDuMatch(e: EspnEvent, parId: Map<string, LigueConnue>): LigueConnue | null {
+  const id = /~l:(\d+)~/.exec(e.uid ?? '')?.[1];
+  const connue = id ? parId.get(id) : undefined;
+  if (connue) return connue;
+  // Le lien « Table » porte le code : .../soccer/table/_/league/eng.1
+  for (const lien of e.links ?? []) {
+    const slug = /\/league\/([a-z0-9._-]+)/i.exec(lien.href ?? '')?.[1];
+    if (slug) return { slug, nom: LIGUES[slug]?.nom ?? slug };
+  }
+  return null;
+}
+
 /**
- * Tous les matchs du jour, tous championnats suivis.
+ * Tout le football du jour, toutes compétitions.
  *
- * Un championnat qui ne répond pas est SAUTÉ, pas propagé en erreur : la régie
- * doit pouvoir choisir parmi ce qui marche même si ESPN a un hoquet sur une
- * compétition. Les matchs en cours remontent en tête — c'est ce qu'on cherche
- * neuf fois sur dix en ouvrant ce menu.
+ * Les matchs EN COURS remontent en tête — c'est ce qu'on cherche neuf fois sur
+ * dix en ouvrant ce menu. Un match dont on ne sait pas rattacher la compétition
+ * est quand même listé : on peut toujours le regarder, et l'exclure
+ * reviendrait à refaire le défaut qu'on corrige.
  */
 export async function toutLeJour(): Promise<MatchListe[]> {
-  const resultats = await Promise.allSettled(
-    Object.keys(LIGUES).map(async (ligue) => listerMatchs(await tableauDeBord(ligue), ligue)),
-  );
-  const out = resultats.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
+  const [parId, bord] = await Promise.all([
+    catalogueLigues(),
+    json<EspnScoreboard>(`${BASE}/all/scoreboard`),
+  ]);
+
+  const out: MatchListe[] = [];
+  for (const e of bord.events ?? []) {
+    const ligue = ligueDuMatch(e, parId);
+    out.push(
+      unMatch(e, {
+        ligue: ligue?.slug ?? '',
+        nom: ligue ? (LIGUES[ligue.slug]?.nom ?? ligue.nom) : 'Autre compétition',
+        logo: null,
+      }),
+    );
+  }
+
   const rang = { in: 0, pre: 1, post: 2 } as const;
   return out.sort(
     (a, b) =>

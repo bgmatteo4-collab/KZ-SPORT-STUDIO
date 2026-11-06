@@ -1355,3 +1355,163 @@ html {
   line-height: 1.55;
   white-space: pre;
 }
+
+/* ─────────────────────────────── L'écran d'attente ──────────────────────────
+
+   Une AFFICHE, pas un tableau. Les dix minutes avant le coup d'envoi doivent
+   dire deux choses à la fois : le live a commencé, le match non. Un tableau de
+   bord rempli de zéros dit exactement le contraire des deux.                 */
+
+.att {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s4);
+  padding: var(--s5);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, transparent 38%),
+    var(--panel);
+  border-radius: var(--radius-panel);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    var(--panel-glow);
+  overflow: hidden;
+}
+
+.att__affiche {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+}
+
+.att__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+  flex: 1;
+  min-width: 0;
+}
+
+.att__crest {
+  width: 76px;
+  height: 80px;
+  font-size: 21px;
+}
+
+.att__team {
+  font-size: 17px;
+  font-weight: 800;
+  font-stretch: var(--width-tight);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Le compte à rebours. C'est lui qu'on regarde : il tient le centre. */
+.att__horloge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  min-width: 42%;
+}
+
+.att__valeur {
+  font-size: 54px;
+  line-height: 0.95;
+  font-weight: 900;
+  font-stretch: var(--width-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.att__unite {
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+/* Sous cinq minutes, l'accent passe sur le chiffre : c'est le moment où les
+   gens reviennent de leur cuisine. */
+.att[data-etat='imminent'] .att__valeur {
+  color: var(--accent);
+}
+
+.att[data-etat='commence'] .att__valeur {
+  font-size: 38px;
+  color: var(--live);
+}
+
+.att__faits {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+
+.att__fait {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: var(--pill);
+  border-radius: var(--radius-chip);
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+.att__cotes {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.att__cotes[data-on='0'] {
+  visibility: hidden;
+}
+
+/* Les trois segments se PARTAGENT la barre, via flex-grow : mis à l'échelle
+   chacun dans son tiers, ils laisseraient des trous entre eux. */
+.att__bar {
+  display: flex;
+  height: 9px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--pill);
+}
+
+.att__fill {
+  flex-basis: 0;
+  flex-grow: 1;
+  transition: flex-grow var(--dur-base) var(--ease);
+}
+
+.att__fill--home { background: var(--accent); }
+.att__fill--draw { background: rgba(255, 255, 255, 0.26); }
+.att__fill--away { background: var(--live); }
+
+.att__legend {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink-soft);
+}
+
+/* Pourquoi la composition est vide. Un terrain nu sans un mot ressemble à une
+   panne ; la phrase transforme l'absence en information. */
+.lineup__attente {
+  margin: 0;
+  padding: 0 var(--s4) var(--s3);
+  text-align: center;
+  color: var(--ink-dim);
+}

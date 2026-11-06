@@ -7,6 +7,7 @@
  */
 
 import { h } from '../dom.js';
+import { attente } from './attente.js';
 import { backdrop, camFrame, scoreRecap, social, streamCounters, title } from './chrome.js';
 import { flash } from './flash.js';
 import { lineups } from './lineups.js';
@@ -41,6 +42,7 @@ export const REGISTRY: Record<string, WidgetFactory> = {
   flash,
 
   // Les panneaux
+  attente,
   stats,
   lineups,
   // Deuxième entrée pour le même widget : le compositeur identifie une couche

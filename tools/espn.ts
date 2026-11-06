@@ -47,14 +47,14 @@ async function live(): Promise<void> {
 
   console.log(`${matchs.length} match(s) en cours :\n`);
   for (const m of matchs) {
-    const st = m.event.status ?? m.event.competitions?.[0]?.status;
-    const noms = (m.event.competitions?.[0]?.competitors ?? [])
-      .map((c) => `${c.team?.displayName ?? '?'} ${c.score ?? ''}`)
-      .join(' — ');
+    const score = `${m.domicile.score ?? 0}-${m.exterieur.score ?? 0}`;
     console.log(
-      `  ${(m.event.id ?? '?').padEnd(11)} ${(st?.displayClock ?? '—').padStart(7)}  ${noms}`,
+      `  ${m.id.padEnd(11)} ${m.minute.padStart(5)}'  ` +
+        `${m.domicile.nom} ${score} ${m.exterieur.nom}`,
     );
-    console.log(`              ${m.nom}  ·  pnpm espn peek ${m.ligue} ${m.event.id ?? ''}`);
+    console.log(
+      `              ${m.ligueNom}${m.ligue ? `  ·  pnpm espn peek ${m.ligue} ${m.id}` : ''}`,
+    );
   }
 }
 

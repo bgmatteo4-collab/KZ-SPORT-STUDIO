@@ -65,6 +65,10 @@ export function logoDeLigue(l: EspnLeague | undefined): string | undefined {
 
 export interface EspnEvent {
   id?: string;
+  /** « s:600~l:700~e:401879242 » — le `l:` porte l'identifiant de compétition. */
+  uid?: string;
+  /** Le lien « Table » contient le code de la compétition : /league/eng.1 */
+  links?: { href?: string; rel?: string[]; text?: string }[];
   /** Coup d'envoi PRÉVU, en ISO 8601 : « 2026-11-04T17:45Z ». */
   date?: string;
   /** « Real Madrid at AEK Athens » — le domicile est à DROITE du « at ». */
@@ -289,6 +293,30 @@ export const LIGUES: Record<string, { nom: string; theme: string }> = {
   'ita.coppa_italia': { nom: 'Coupe d’Italie', theme: 'seriea' },
   'ger.1': { nom: 'Bundesliga', theme: 'bundesliga' },
   'ger.dfb_pokal': { nom: 'Coupe d’Allemagne', theme: 'bundesliga' },
+  'fra.2': { nom: 'Ligue 2', theme: 'ligue1' },
+  'eng.2': { nom: 'Championship', theme: 'premier' },
+  'esp.2': { nom: 'Liga 2', theme: 'liga' },
+  'ita.2': { nom: 'Serie B', theme: 'seriea' },
+  'ger.2': { nom: 'Bundesliga 2', theme: 'bundesliga' },
+  'ned.1': { nom: 'Eredivisie', theme: 'kztv' },
+  'por.1': { nom: 'Liga Portugal', theme: 'kztv' },
+  'bel.1': { nom: 'Pro League belge', theme: 'kztv' },
+  'tur.1': { nom: 'Süper Lig', theme: 'kztv' },
+  'sco.1': { nom: 'Premiership écossaise', theme: 'kztv' },
+  'ksa.1': { nom: 'Saudi Pro League', theme: 'kztv' },
+  'usa.1': { nom: 'MLS', theme: 'kztv' },
+  'bra.1': { nom: 'Brasileirão', theme: 'kztv' },
+  'arg.1': { nom: 'Liga argentine', theme: 'kztv' },
+  'fifa.world': { nom: 'Coupe du monde', theme: 'kztv' },
+  'uefa.euro': { nom: 'Euro', theme: 'kztv' },
+  'uefa.nations': { nom: 'Ligue des Nations', theme: 'kztv' },
+  // Le football féminin : ESPN le distingue par un « w » dans le code. Sans
+  // nom explicite, « French Première Ligue » se confond avec la Ligue 1.
+  'fra.w.1': { nom: 'D1 féminine', theme: 'ligue1' },
+  'eng.w.1': { nom: 'WSL féminine', theme: 'premier' },
+  'esp.w.1': { nom: 'Liga F', theme: 'liga' },
+  'uefa.wchampions': { nom: 'LDC féminine', theme: 'ucl' },
+  'usa.nwsl': { nom: 'NWSL', theme: 'kztv' },
 };
 
 /**

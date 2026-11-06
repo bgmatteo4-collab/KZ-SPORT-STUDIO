@@ -258,20 +258,37 @@ const MATCH_FIN: SceneLayer[] = [
  */
 export const SCENES: Scene[] = [
   {
+    // L'ÉCRAN D'ATTENTE. Les dix minutes avant le coup d'envoi sont les plus
+    // importantes d'un watchalong : les gens arrivent, le streamer parle. Un
+    // tableau de bord rempli de zéros dirait que le match est commencé et nul.
+    //
+    // D'où une composition symétrique, en affiche plutôt qu'en tableau : les
+    // deux compositions probables se font face, et entre elles, sous la
+    // caméra, le compte à rebours.
     id: 'avant-match',
     name: 'Avant-match',
-    cam: CAM.centreHaut,
+    cam: CAM.case,
     camStyle: 'framed',
     transition: SLIDE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'prematch', slot: SLOT.colonneGauche, z: 20 },
+      {
+        widget: 'lineups',
+        slot: SLOT.colonneGauche,
+        z: 20,
+        opts: { side: 'home', probable: true },
+      },
+      { widget: 'attente', slot: SLOT.radar, z: 20 },
+      {
+        widget: 'lineups-away',
+        slot: SLOT.colonneDroiteTout,
+        z: 20,
+        opts: { side: 'away', probable: true },
+      },
       { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
-      { widget: 'lineups', slot: SLOT.colonneDroite, z: 20 },
-      { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
       { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.centreHaut, z: 110 },
+      { widget: 'cam-frame', slot: CAM.case, z: 110 },
     ],
   },
   {

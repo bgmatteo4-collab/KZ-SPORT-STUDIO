@@ -172,6 +172,7 @@ export function monterSelecteur(flash: (message: string) => void): Selecteur {
     li.className = 'picker__row';
     li.dataset.curseur = actif ? '1' : '0';
     li.dataset.etat = m.etat;
+    if (!m.ligue) li.dataset.inconnu = '1';
     if (source && source.eventId === m.id) li.dataset.antenne = '1';
 
     li.innerHTML = `
@@ -228,6 +229,12 @@ export function monterSelecteur(flash: (message: string) => void): Selecteur {
 
   async function choisir(m: MatchListe): Promise<void> {
     if (bascule) return;
+    // Sans code de compétition, le serveur ne saurait pas où aller chercher le
+    // match. On le dit plutôt que de lancer une bascule qui échouera.
+    if (!m.ligue) {
+      flash('Compétition non identifiée — ce match n’est pas diffusable');
+      return;
+    }
     bascule = true;
     racine.dataset.busy = '1';
     const nom = `${m.domicile.nom} – ${m.exterieur.nom}`;

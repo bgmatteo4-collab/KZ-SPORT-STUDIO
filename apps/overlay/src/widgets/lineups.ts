@@ -75,16 +75,24 @@ function positions(formation: string, count: number): { x: number; y: number }[]
 export const lineups: WidgetFactory = (ctx): Widget => {
   const side: Side = ctx.opts.side === 'away' ? 'away' : 'home';
   const large = ctx.opts.large === true;
+  // Avant le coup d'envoi, on annonce une composition PROBABLE. ESPN ne publie
+  // la vraie qu'environ une heure avant ; tant qu'elle n'est pas là, un terrain
+  // vide sans explication passe pour une panne.
+  const probable = ctx.opts.probable === true;
 
   const box = panel({
     icon: 'lineup',
     kicker: side === 'home' ? 'Domicile' : 'Extérieur',
-    title: 'Compositions',
+    title: probable ? 'Composition probable' : 'Compositions',
     crests: 1,
   });
 
   const formation = h('span', { class: 'odds__badge' }, ['—']);
   box.el.querySelector('.panel__aside')?.prepend(formation);
+
+  const attenteCompo = h('p', { class: 'lineup__attente t-caption', hidden: '' }, [
+    'Composition annoncée environ une heure avant le coup d’envoi.',
+  ]);
 
   const pitch = h('div', { class: 'lineup' }, [pitchSvg()]);
   const coach = h('div', { class: 'lineup__coach' }, [
@@ -97,7 +105,7 @@ export const lineups: WidgetFactory = (ctx): Widget => {
     bench,
   ]);
 
-  box.body.append(pitch, coach);
+  box.body.append(pitch, attenteCompo, coach);
   if (large) box.body.append(benchWrap);
 
   // `null` et non `''` : une liste vide produit la signature `''`, donc une
@@ -120,7 +128,7 @@ export const lineups: WidgetFactory = (ctx): Widget => {
       box.setCrests([team]);
       box.setHead(
         team?.short ?? (side === 'home' ? 'Domicile' : 'Extérieur'),
-        'Compositions',
+        probable ? 'Composition probable' : 'Compositions',
       );
 
       const lineup = state.lineups[side];
@@ -136,6 +144,9 @@ export const lineups: WidgetFactory = (ctx): Widget => {
 
       pitch.replaceChildren(pitchSvg());
       bench.replaceChildren();
+      // Dire POURQUOI c'est vide. Un terrain nu sans un mot ressemble à une
+      // panne ; la phrase transforme l'absence en information.
+      attenteCompo.hidden = Boolean(lineup) || !probable;
       if (!lineup) return;
 
       const coords = positions(lineup.formation, lineup.starters.length);

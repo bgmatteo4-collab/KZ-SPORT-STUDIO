@@ -985,3 +985,11 @@ button[data-on='1'] {
 .switcher--modes[data-actif='0'] {
   opacity: 0.4;
 }
+
+/* Un match dont on n'a pas su rattacher la compétition : listé, parce que le
+   cacher referait le défaut qu'on vient de corriger — mais pas diffusable,
+   faute de savoir où le serveur irait le chercher. */
+.picker__row[data-inconnu='1'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

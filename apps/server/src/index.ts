@@ -382,9 +382,17 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
     const ligue = url.searchParams.get('ligue') ?? url.searchParams.get('league');
     void (async () => {
       try {
+        const matchs = ligue ? await listeCachee(ligue) : await listeCachee(TOUT);
+        // Les filtres se construisent sur ce qui EXISTE ce soir, pas sur une
+        // liste figée : c'est ainsi qu'on finissait par « ne pas trouver tous
+        // les matchs en direct ».
+        const vues = new Map<string, string>();
+        for (const m of matchs) if (m.ligue) vues.set(m.ligue, m.ligueNom);
         json(res, 200, {
-          ligues: Object.entries(espn.LIGUES).map(([id, l]) => ({ id, nom: l.nom })),
-          matchs: ligue ? await listeCachee(ligue) : await listeCachee(TOUT),
+          ligues: [...vues]
+            .map(([id, nom]) => ({ id, nom }))
+            .sort((a, b) => a.nom.localeCompare(b.nom, 'fr')),
+          matchs,
           source: hub.controlState.source,
         });
       } catch (erreur) {
