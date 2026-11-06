@@ -21,6 +21,7 @@ import {
   insertActif,
   INSERTS,
   PHASE_LABEL,
+  SCENE_MODES,
   SCENES,
   StateCursor,
   THEMES,
@@ -51,6 +52,9 @@ const nowPhase = el('now-phase');
 const sceneName = el('scene-name');
 const sourceDetail = el('source-detail');
 const scenesBox = el('scenes');
+const modesBox = el('modes');
+const pickButton = el('pick-match');
+const pickNow = el('pick-now');
 const themesBox = el('themes');
 const camBox = el('cam-mode');
 const speedBox = el('speed');
@@ -88,6 +92,21 @@ SCENES.forEach((scene, index) => {
   button.addEventListener('click', () => send({ name: 'set-scene', sceneId: scene.id }));
   scenesBox.append(button);
 });
+
+// ───────────────────────────── Le moment d'émission ───────────────────────────
+//
+// Quatre boutons, pas quatre scènes : le décor ne bouge pas, seul le propos
+// change. C'est ce qui permet de passer de l'avant-match au coup d'envoi sans
+// que le spectateur voie un changement de plateau.
+
+for (const mode of SCENE_MODES) {
+  const button = document.createElement('button');
+  button.className = 'scene scene--mode';
+  button.dataset.mode = mode.id;
+  button.textContent = mode.nom;
+  button.addEventListener('click', () => send({ name: 'set-scene-mode', mode: mode.id }));
+  modesBox.append(button);
+}
 
 for (const theme of THEMES) {
   const button = document.createElement('button');
@@ -181,6 +200,9 @@ function flash(message: string): void {
 // ──────────────────────────── Le choix du match ──────────────────────────────
 
 const selecteur = monterSelecteur(flash);
+// Deux chemins vers le même menu : le bouton dédié de la colonne Antenne, et
+// le bandeau du haut — on clique sur le match qu'on veut remplacer.
+pickButton.addEventListener('click', () => selecteur.ouvrir());
 el('now').addEventListener('click', () => selecteur.ouvrir());
 
 // ─────────────────────────────── Le clavier ──────────────────────────────────
@@ -193,12 +215,6 @@ document.addEventListener('keydown', (event) => {
   // Tant que le sélecteur est ouvert, il a le clavier pour lui : les chiffres
   // y servent à filtrer, pas à changer de scène à l'antenne par mégarde.
   if (selecteur.ouvert) return;
-
-  if (event.key === 'm' || event.key === 'M') {
-    selecteur.ouvrir();
-    event.preventDefault();
-    return;
-  }
 
   if (event.key >= '1' && event.key <= '9') {
     const scene = SCENES[Number(event.key) - 1];
@@ -311,8 +327,20 @@ function applyControl(next: ControlState): void {
   mark(speedBox, 'speed', String(next.timeScale));
   mark(insertModeBox, 'mode', next.insertMode);
   mark(insertForceBox, 'force', next.insertForce ?? '');
+  mark(modesBox, 'mode', next.sceneMode);
+  // Une scène sans variantes de mode ignore les quatre boutons : autant le
+  // dire, plutôt que de laisser cliquer sur des boutons sans effet.
+  modesBox.dataset.actif = findScene(next.sceneId).modes ? '1' : '0';
   sceneName.textContent = findScene(next.sceneId).name;
+  pickNow.textContent = next.source.label ?? describeSource(next.source);
   selecteur.setSource(next.source);
+}
+
+/** De quoi nommer la source quand aucun libellé n'a été retenu. */
+function describeSource(source: ControlState['source']): string {
+  if (source.provider === 'simulator') return 'Rejeu — match enregistré';
+  if (!source.eventId) return 'Premier match en cours';
+  return `Match ${source.eventId}`;
 }
 
 function mark(box: HTMLElement, attribute: string, value: string): void {
@@ -341,6 +369,12 @@ function refresh(): void {
   lampSource.dataset.on = provider.connected ? '1' : '0';
   const onAir = state.phase !== 'pre' && state.phase !== 'full_time';
   lampLive.dataset.on = onAir ? '1' : '0';
+
+  // Un match lancé par variable d'environnement n'a pas de libellé retenu :
+  // plutôt qu'un identifiant brut, on nomme les équipes dès qu'on les connaît.
+  if (!control.source.label && state.meta) {
+    pickNow.textContent = `${state.meta.home.short} – ${state.meta.away.short}`;
+  }
 
   nowHome.textContent = state.meta?.home.abbr ?? '—';
   nowAway.textContent = state.meta?.away.abbr ?? '—';

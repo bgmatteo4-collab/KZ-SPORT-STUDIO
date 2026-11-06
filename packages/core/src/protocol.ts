@@ -7,12 +7,18 @@
  *     par `resume` sans tout retélécharger.
  */
 
+import type { SceneMode } from './scenes.js';
 import type { MatchEvent } from './types.js';
 
 export interface ControlState {
   /** Le décalage anti-spoiler, en ms. La valeur qui rattrape ton stream. */
   delayMs: number;
   sceneId: string;
+  /**
+   * Le moment d'émission. Il ne change PAS la scène, il change ce qu'elle
+   * raconte : cotes avant, statistiques à la pause, classement à l'arrivée.
+   */
+  sceneMode: SceneMode;
   themeId: string;
   /** `obs` : on pilote la webcam dans OBS. `browser` : l'overlay la capture. */
   camMode: 'obs' | 'browser';
@@ -84,6 +90,7 @@ export interface MatchSource {
 
 export type Command =
   | { name: 'set-source'; source: MatchSource }
+  | { name: 'set-scene-mode'; mode: SceneMode }
   | { name: 'set-delay'; delayMs: number }
   | { name: 'nudge-delay'; deltaMs: number }
   | { name: 'set-scene'; sceneId: string }
@@ -97,6 +104,7 @@ export type Command =
 export const DEFAULT_CONTROL: ControlState = {
   delayMs: 30_000,
   sceneId: 'match',
+  sceneMode: 'direct',
   themeId: 'kztv',
   camMode: 'browser',
   live: false,

@@ -870,3 +870,118 @@ button[data-on='1'] {
 .picker__keys kbd {
   margin: 0 2px;
 }
+
+/* ───────────────────── La régie comme une application ───────────────────────
+
+   Une régie n'est pas une page de réglages : c'est un instrument. Elle se
+   présente donc comme un outil qu'on ouvre — une marque en haut à gauche, des
+   colonnes nommées, et une hiérarchie qui dit où regarder.
+
+   Trois colonnes, trois rôles : ce qui est à l'ANTENNE, ce qu'on VOIT, ce
+   qu'on RÈGLE. On ne cherche pas un bouton de configuration en commentant.   */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.brand__mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 9px;
+  background: linear-gradient(150deg, var(--accent) 0%, #c98e36 100%);
+  color: #10131c;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.brand__nom {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+}
+
+.brand__nom b {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+
+/* Le titre de colonne. Il nomme un RÔLE, pas un réglage. */
+.head--section {
+  margin-top: 0;
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Le bouton de choix du match : il porte le match à l'antenne. */
+.pick {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  width: 100%;
+  padding: var(--s3);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 140ms var(--ease), background 140ms var(--ease);
+}
+
+.pick:hover {
+  border-color: var(--line-strong);
+  background: var(--surface);
+}
+
+.pick__now {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pick__action {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Les quatre moments. Même pupitre que les scènes, sans touche clavier. */
+.switcher--modes {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.scene--mode {
+  justify-content: center;
+  text-align: center;
+  font-size: 12px;
+  padding: var(--s2) var(--s2);
+}
+
+/* Une scène sans variantes de mode : les boutons restent lisibles mais
+   annoncent qu'ils ne changeront rien ici. */
+.switcher--modes[data-actif='0'] {
+  opacity: 0.4;
+}

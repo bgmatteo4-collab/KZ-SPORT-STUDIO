@@ -12,9 +12,11 @@
 
 import {
   applyTheme,
+  DEFAULT_SCENE_MODE,
   insertActif,
   INSERTS,
   type InsertActif,
+  type SceneMode,
   findScene,
   findTheme,
   layersFor,
@@ -48,6 +50,8 @@ const watcher = new TriggerWatcher();
 
 let theme: Theme = findTheme('kztv');
 let scene: Scene = findScene('match');
+/** Le moment d'émission. Il ne change pas la scène, il change son contenu. */
+let modeActuel: SceneMode = DEFAULT_SCENE_MODE;
 /** Un saut de temps est survenu : réarmer sans rien rejouer. */
 let needsPrime = true;
 /** L'insert actuellement à l'antenne, choisi par la régie automatique. */
@@ -120,13 +124,19 @@ async function ensureCamStream(): Promise<void> {
  * caméra, plus les notifications qui ne dépendent d'aucune scène.
  */
 function wantedLayers(current: Scene): SceneLayer[] {
-  const list = layersFor(current, LAYER);
+  // Le mode décide du CONTENU de la scène : avant-match, direct, mi-temps,
+  // fin. Une scène qui ne déclare pas de variante l'ignore.
+  const list = layersFor(current, LAYER, modeActuel);
 
   // La régie automatique : le panneau qui occupe le créneau d'insert cède
   // temporairement la place. Le choix de l'insert est déterministe, donc les
   // deux sources navigateur substituent exactement le même widget au même
   // instant — sans quoi l'une montrerait les stats et l'autre le classement.
-  if (current.insertSlot && insertEnCours) {
+  // Les inserts n'ont lieu QU'EN DIRECT. À la mi-temps ou à la fin, la colonne
+  // de gauche porte déjà les statistiques : un insert viendrait les remplacer
+  // par elles-mêmes, ou pire, voler la place de ce qu'on est en train de
+  // commenter.
+  if (current.insertSlot && insertEnCours && modeActuel === 'direct') {
     const spec = INSERTS.find((i) => i.id === insertEnCours);
     const creneau = current.insertSlot;
     const index = list.findIndex(
@@ -296,8 +306,10 @@ connection.onControl = (control) => {
   const nextScene = findScene(control.sceneId);
   const sceneChanged = nextScene.id !== scene.id;
   scene = nextScene;
+  modeActuel = control.sceneMode;
   syncScene(scene);
   if (sceneChanged) document.documentElement.dataset.scene = scene.id;
+  document.documentElement.dataset.mode = modeActuel;
 };
 
 connection.onJump = () => {

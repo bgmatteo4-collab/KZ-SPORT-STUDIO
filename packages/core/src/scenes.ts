@@ -45,13 +45,44 @@ export interface SceneLayer {
   opts?: Record<string, unknown>;
 }
 
+/**
+ * Le MOMENT d'émission, à l'intérieur d'une même scène.
+ *
+ * ── Pourquoi un mode plutôt que quatre scènes ───────────────────────────────
+ *
+ * Avant le coup d'envoi, à la mi-temps et au coup de sifflet final, on regarde
+ * le même match depuis le même plateau. Ce qui change, ce n'est pas la
+ * disposition — c'est ce qu'on a à dire. Des cotes avant, des statistiques à la
+ * pause, le classement à l'arrivée.
+ *
+ * En faire quatre scènes séparées obligerait l'opérateur à retenir quatre
+ * boutons qui donnent presque la même image, et à se tromper en direct. Un mode
+ * garde une seule scène « Match » et remplace son CONTENU.
+ */
+export type SceneMode = 'avant' | 'direct' | 'mi-temps' | 'fin';
+
+export const SCENE_MODES: { id: SceneMode; nom: string; court: string }[] = [
+  { id: 'avant', nom: 'Avant-match', court: 'Avant' },
+  { id: 'direct', nom: 'Direct', court: 'Direct' },
+  { id: 'mi-temps', nom: 'Mi-temps', court: 'Mi-temps' },
+  { id: 'fin', nom: 'Fin de match', court: 'Fin' },
+];
+
+export const DEFAULT_SCENE_MODE: SceneMode = 'direct';
+
 export interface Scene {
   id: string;
   name: string;
   /** Rectangle cible de la webcam. `null` = caméra masquée sur cette scène. */
   cam: Rect | null;
   camStyle: CamStyle;
+  /** Les couches par défaut, et celles des scènes qui ignorent le mode. */
   layers: SceneLayer[];
+  /**
+   * Les variantes par moment d'émission. Une scène sans `modes` affiche
+   * `layers` quel que soit le mode — c'est le cas de la plupart.
+   */
+  modes?: Partial<Record<SceneMode, SceneLayer[]>>;
   /**
    * Le créneau où la régie automatique glisse ses inserts.
    *
@@ -73,8 +104,11 @@ export interface Scene {
 export type OverlayLayer = 'bg' | 'fg' | 'all';
 
 /** Les couches qui reviennent à une source navigateur donnée. */
-export function layersFor(scene: Scene, layer: OverlayLayer): SceneLayer[] {
-  return scene.layers
+export function layersFor(scene: Scene, layer: OverlayLayer, mode?: SceneMode): SceneLayer[] {
+  // Une scène qui ne déclare pas ce mode garde ses couches par défaut : le mode
+  // ne doit jamais vider un plateau par surprise.
+  const couches = (mode && scene.modes?.[mode]) ?? scene.layers;
+  return couches
     .filter((l) => (layer === 'all' ? true : layer === 'bg' ? l.z < CAM_Z : l.z > CAM_Z))
     .sort((a, b) => a.z - b.z);
 }
@@ -114,6 +148,8 @@ const SLOT = {
   colonneDroite: { x: 0.746, y: 0.172, w: 0.246, h: 0.478 },
   /** Colonne de droite, bas : cotes. */
   colonneDroiteBas: { x: 0.746, y: 0.668, w: 0.246, h: 0.19 },
+  /** La colonne droite d'un seul tenant, quand un panneau mérite toute la hauteur. */
+  colonneDroiteTout: { x: 0.746, y: 0.172, w: 0.246, h: 0.686 },
   /** Pseudo social, tout en bas à droite. */
   social: { x: 0.746, y: 0.878, w: 0.246, h: 0.062 },
 
@@ -160,6 +196,59 @@ const CUT = { kind: 'cut', ms: 0 } as const;
 const FADE = { kind: 'fade', ms: 320 } as const;
 const SLIDE = { kind: 'slide', ms: 420 } as const;
 
+// ───────────────────────── Les quatre moments du match ───────────────────────
+//
+// Le décor est COMMUN aux quatre : même bannière, même cadre caméra, même
+// place pour les compteurs. Ce qui change, ce sont les trois panneaux — et
+// c'est exactement ce qu'on veut, parce qu'un spectateur ne doit pas avoir
+// l'impression de changer de chaîne entre l'avant-match et le coup d'envoi.
+
+const CHROME_MATCH: SceneLayer[] = [
+  { widget: 'backdrop', slot: SLOT.plein, z: 10 },
+  { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
+  { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
+  { widget: 'social', slot: SLOT.social, z: 20 },
+  { widget: 'cam-frame', slot: CAM.case, z: 110 },
+];
+
+/** Avant le coup d'envoi : l'affiche, les forces en présence, le contexte. */
+const MATCH_AVANT: SceneLayer[] = [
+  ...CHROME_MATCH,
+  { widget: 'prematch', slot: SLOT.colonneGauche, z: 20 },
+  // Le classement AVANT la rencontre : c'est le sens du match qu'on va voir.
+  { widget: 'standings', slot: SLOT.radar, z: 20 },
+  { widget: 'lineups', slot: SLOT.colonneDroite, z: 20, opts: { probable: true } },
+  { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
+];
+
+/** Le jeu. Les autres matchs à gauche, le rapport de force au centre. */
+const MATCH_DIRECT: SceneLayer[] = [
+  ...CHROME_MATCH,
+  { widget: 'multiplex', slot: SLOT.colonneGauche, z: 20 },
+  { widget: 'momentum', slot: SLOT.radar, z: 20 },
+  { widget: 'lineups', slot: SLOT.colonneDroite, z: 20 },
+  { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
+];
+
+/** La pause : on analyse. Les chiffres de la première période, le momentum. */
+const MATCH_MI_TEMPS: SceneLayer[] = [
+  ...CHROME_MATCH,
+  { widget: 'stats', slot: SLOT.colonneGauche, z: 20 },
+  { widget: 'momentum', slot: SLOT.radar, z: 20 },
+  { widget: 'multiplex', slot: SLOT.colonneDroite, z: 20 },
+  { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
+];
+
+/** Au coup de sifflet : le bilan, et ce que ça change au classement. */
+const MATCH_FIN: SceneLayer[] = [
+  ...CHROME_MATCH,
+  { widget: 'stats', slot: SLOT.colonneGauche, z: 20 },
+  { widget: 'momentum', slot: SLOT.radar, z: 20 },
+  // Plus de cotes à l'arrivée : elles ne veulent plus rien dire. La colonne
+  // droite passe d'un seul tenant au classement, qui vient de bouger.
+  { widget: 'standings', slot: SLOT.colonneDroiteTout, z: 20 },
+];
+
 /**
  * Le catalogue. Une scène = une entrée ici, pas une ligne de logique.
  *
@@ -194,17 +283,17 @@ export const SCENES: Scene[] = [
     // régie automatique : statistiques, classement, momentum.
     insertSlot: SLOT.colonneGauche,
     transition: SLIDE,
-    layers: [
-      { widget: 'backdrop', slot: SLOT.plein, z: 10 },
-      { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'multiplex', slot: SLOT.colonneGauche, z: 20 },
-      { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
-      { widget: 'radar2d', slot: SLOT.radar, z: 20 },
-      { widget: 'lineups', slot: SLOT.colonneDroite, z: 20 },
-      { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
-      { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.case, z: 110 },
-    ],
+    // Le plateau ne bouge pas d'un mode à l'autre — seul son CONTENU change.
+    // La caméra reste au même endroit, les cadres aussi : l'opérateur passe de
+    // l'avant-match au direct sans que le spectateur voie un changement de
+    // décor, uniquement un changement de propos.
+    layers: MATCH_DIRECT,
+    modes: {
+      avant: MATCH_AVANT,
+      direct: MATCH_DIRECT,
+      'mi-temps': MATCH_MI_TEMPS,
+      fin: MATCH_FIN,
+    },
   },
   {
     id: 'plein-cadre',
@@ -228,16 +317,21 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'radar-plein',
-    name: 'Radar plein écran',
+    // Le radar plein écran a disparu : aucune source gratuite ne donne la
+    // position du ballon, et un terrain vide en grand ne dit rien. Le
+    // classement, lui, est ce qu'on commente vraiment entre deux actions.
+    id: 'classement',
+    name: 'Classement',
     cam: CAM.coin,
     camStyle: 'framed',
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'radar2d', slot: SLOT.pleinPrincipal, z: 20, opts: { large: true } },
-      { widget: 'stats', slot: SLOT.pleinSecondaire, z: 20 },
+      { widget: 'standings', slot: SLOT.pleinPrincipal, z: 20, opts: { large: true } },
+      // Les autres résultats de la soirée : ce sont EUX qui font bouger le
+      // tableau qu'on est en train de regarder.
+      { widget: 'multiplex', slot: SLOT.pleinSecondaire, z: 20 },
       { widget: 'social', slot: SLOT.social, z: 20 },
       { widget: 'cam-frame', slot: CAM.coin, z: 110 },
     ],

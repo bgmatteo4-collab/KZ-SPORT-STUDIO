@@ -276,14 +276,19 @@ export interface EspnOdds {
  */
 export const LIGUES: Record<string, { nom: string; theme: string }> = {
   'uefa.champions': { nom: 'Ligue des Champions', theme: 'ucl' },
-  'uefa.europa': { nom: 'Ligue Europa', theme: 'ucl' },
-  'uefa.europa.conf': { nom: 'Ligue Conférence', theme: 'ucl' },
+  'uefa.europa': { nom: 'Ligue Europa', theme: 'europa' },
+  'uefa.europa.conf': { nom: 'Ligue Conférence', theme: 'conference' },
+  'uefa.super_cup': { nom: 'Supercoupe d’Europe', theme: 'ucl' },
   'fra.1': { nom: 'Ligue 1', theme: 'ligue1' },
+  'fra.coupe_de_france': { nom: 'Coupe de France', theme: 'coupedefrance' },
   'eng.1': { nom: 'Premier League', theme: 'premier' },
-  'esp.1': { nom: 'Liga', theme: 'kztv' },
-  'ita.1': { nom: 'Serie A', theme: 'kztv' },
-  'ger.1': { nom: 'Bundesliga', theme: 'kztv' },
-  'fra.coupe_de_france': { nom: 'Coupe de France', theme: 'ligue1' },
+  'eng.fa': { nom: 'FA Cup', theme: 'premier' },
+  'esp.1': { nom: 'Liga', theme: 'liga' },
+  'esp.copa_del_rey': { nom: 'Coupe du Roi', theme: 'liga' },
+  'ita.1': { nom: 'Serie A', theme: 'seriea' },
+  'ita.coppa_italia': { nom: 'Coupe d’Italie', theme: 'seriea' },
+  'ger.1': { nom: 'Bundesliga', theme: 'bundesliga' },
+  'ger.dfb_pokal': { nom: 'Coupe d’Allemagne', theme: 'bundesliga' },
 };
 
 /**

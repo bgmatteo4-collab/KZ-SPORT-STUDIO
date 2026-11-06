@@ -9,10 +9,12 @@
 
 import {
   DEFAULT_CONTROL,
+  DEFAULT_SCENE_MODE,
   estContexte,
   findScene,
   findTheme,
   RECUL_CONTEXTE,
+  SCENE_MODES,
   type Command,
   type ControlState,
   type MatchEvent,
@@ -157,6 +159,16 @@ export class Hub {
       }
       case 'set-scene': {
         this.control = { ...this.control, sceneId: findScene(command.sceneId).id };
+        break;
+      }
+      case 'set-scene-mode': {
+        // Un mode inconnu retombe sur « direct » plutôt que de vider le
+        // plateau : en régie, une faute de frappe ne doit pas couper l'antenne.
+        const connu = SCENE_MODES.some((m) => m.id === command.mode);
+        this.control = {
+          ...this.control,
+          sceneMode: connu ? command.mode : DEFAULT_SCENE_MODE,
+        };
         break;
       }
       case 'set-theme': {

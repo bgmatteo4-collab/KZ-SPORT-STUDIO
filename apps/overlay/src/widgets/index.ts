@@ -51,6 +51,9 @@ export const REGISTRY: Record<string, WidgetFactory> = {
   standings,
   odds,
   prematch,
+  // Plus utilisé par aucune scène : aucune source gratuite ne donne la
+  // position du ballon. Gardé enregistré pour le jour où un palier payant la
+  // fournit — le widget, lui, est écrit et testé.
   radar2d,
   sheet,
 

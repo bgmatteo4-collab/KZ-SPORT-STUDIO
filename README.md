@@ -132,7 +132,7 @@ réglage qui demande ton œil, et il est modifiable en pleine rencontre.
 Une touche = une URL. N'importe quel plugin sachant faire un GET suffit.
 
 ```
-http://localhost:4100/api/scene/radar-plein
+http://localhost:4100/api/scene/classement
 http://localhost:4100/api/delay/32000
 http://localhost:4100/api/delay/nudge/-500
 http://localhost:4100/api/theme/ucl

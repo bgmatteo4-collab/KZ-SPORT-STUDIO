@@ -16,10 +16,12 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import {
   findScene,
   rectToPixels,
+  SCENE_MODES,
   SCENES,
   THEMES,
   type ClientMessage,
   type Command,
+  type SceneMode,
   type ServerMessage,
 } from '@kz/core';
 import {
@@ -282,6 +284,7 @@ function commandFromPath(parts: string[]): Command | null {
   const [head, a, b] = parts;
 
   if (head === 'scene' && a) return { name: 'set-scene', sceneId: a };
+  if (head === 'mode' && a) return { name: 'set-scene-mode', mode: a as SceneMode };
   if (head === 'theme' && a) return { name: 'set-theme', themeId: a };
   if (head === 'cam' && (a === 'obs' || a === 'browser')) return { name: 'set-cam-mode', camMode: a };
   if (head === 'speed' && a) return { name: 'replay-speed', speed: Number(a) };
@@ -339,7 +342,8 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
       control: hub.controlState,
       provider: hub.providerStatus,
       timeline: hub.timelineSize,
-      scenes: SCENES.map((s) => ({ id: s.id, name: s.name })),
+      scenes: SCENES.map((s) => ({ id: s.id, name: s.name, aDesModes: Boolean(s.modes) })),
+      modes: SCENE_MODES,
       themes: THEMES.map((t) => ({ id: t.id, name: t.name })),
       clients: clients.size,
     });
