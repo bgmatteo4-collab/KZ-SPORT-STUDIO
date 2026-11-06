@@ -29,6 +29,44 @@ echo "  KZ STUDIO"
 echo "  ─────────"
 echo
 
+# ── 0. Est-ce que ça tourne déjà ? ───────────────────────────────────────────
+#
+# Le cas le plus fréquent, et de loin : on relance par réflexe alors que la
+# première fenêtre est toujours ouverte quelque part. Sans ce garde-fou, Vite
+# se déplace sur un autre port, le serveur meurt en EADDRINUSE, et on lit une
+# pile d'erreurs Node qui ne dit rien à personne — alors que tout va bien.
+PORT_SERVEUR="${KZ_PORT:-4100}"
+
+occupe() {
+  if command -v lsof > /dev/null 2>&1; then
+    lsof -ti "tcp:$1" -sTCP:LISTEN 2>/dev/null | head -1
+  fi
+}
+
+DEJA=$(occupe "$PORT_SERVEUR")
+if [ -n "$DEJA" ]; then
+  vert "  ✓ KZ Studio tourne déjà"
+  echo
+  echo "    Inutile de relancer : ouvre simplement"
+  echo
+  echo "      http://localhost:4000/regie/"
+  echo
+  command -v open > /dev/null 2>&1 && open "http://localhost:4000/regie/"
+  echo "    Pour repartir de zéro, arrête d'abord l'instance en cours :"
+  echo "      ferme son Terminal, ou lance ce fichier avec  ARRETER=1"
+  echo
+  if [ "${ARRETER:-0}" = "1" ]; then
+    for p in 4000 4001 4002 "$PORT_SERVEUR"; do
+      pid=$(occupe "$p")
+      [ -n "$pid" ] && kill -9 "$pid" 2>/dev/null && echo "    arrêté : port $p"
+    done
+    sleep 1
+    vert "  ✓ tout est arrêté — relance ce fichier normalement"
+  fi
+  read -r -p "  Appuie sur Entrée pour fermer." _
+  exit 0
+fi
+
 # ── 1. Node.js ───────────────────────────────────────────────────────────────
 if ! command -v node > /dev/null 2>&1; then
   rouge "  ✗ Node.js n'est pas installé sur cette machine."

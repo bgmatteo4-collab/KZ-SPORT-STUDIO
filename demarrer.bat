@@ -19,6 +19,28 @@ echo   KZ STUDIO
 echo   ---------
 echo.
 
+rem --- 0. Est-ce que ca tourne deja ? -----------------------------------------
+rem
+rem  Le cas le plus frequent : on relance par reflexe alors qu'une fenetre est
+rem  deja ouverte ailleurs. Sans ce garde-fou, le serveur meurt en EADDRINUSE et
+rem  crache une pile d'erreurs Node qui ne dit rien a personne — alors que tout
+rem  va bien et que la regie repond deja.
+set "DEJA="
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":4100" ^| findstr "LISTENING"') do set "DEJA=%%p"
+if defined DEJA (
+  echo   [v] KZ Studio tourne deja.
+  echo.
+  echo       Inutile de relancer : ouvre simplement
+  echo.
+  echo         http://localhost:4000/regie/
+  echo.
+  start "" http://localhost:4000/regie/
+  echo       Pour repartir de zero, ferme d'abord la fenetre deja ouverte.
+  echo.
+  pause
+  exit /b 0
+)
+
 rem --- 1. Node.js ------------------------------------------------------------
 where node >nul 2>nul
 if errorlevel 1 (
