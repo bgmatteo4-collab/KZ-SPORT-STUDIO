@@ -16,7 +16,7 @@
  * invisible de même largeur à gauche garde le score exactement au centre.
  */
 
-import { clockLabel, ecuLocal, PHASE_LABEL } from '@kz/core';
+import { clockLabel, embleme, PHASE_LABEL } from '@kz/core';
 import { h, setAttr, setText } from '../dom.js';
 import { crestEl, paintCrest } from './crest.js';
 import type { Widget, WidgetContext, WidgetFactory } from './types.js';
@@ -39,7 +39,8 @@ export const scoreBanner: WidgetFactory = (): Widget => {
   const compCap = h('div', { class: 'banner__comp' }, [compLogo, compText]);
   compLogo.addEventListener('load', () => compCap.setAttribute('data-logo', '1'));
   compLogo.addEventListener('error', () => compCap.removeAttribute('data-logo'));
-  let embleme = '';
+  /** L'adresse de l'emblème actuellement affiché, pour ne pas le recharger. */
+  let emblemeAffiche = '';
 
   const scorersHome = h('div', { class: 'banner__scorers banner__scorers--home' });
   const scorersAway = h('div', { class: 'banner__scorers' });
@@ -88,9 +89,11 @@ export const scoreBanner: WidgetFactory = (): Widget => {
       setText(compName, competition);
       setText(compRound, round);
 
-      const voulu = ecuLocal(meta?.competitionCrest) ?? '';
-      if (voulu !== embleme) {
-        embleme = voulu;
+      // Un emblème déposé dans `assets/competitions/` prime sur celui du
+      // fournisseur : ESPN sert encore le logo de Ligue 1 d'avant 2020.
+      const voulu = embleme(meta?.competitionId, meta?.competitionCrest) ?? '';
+      if (voulu !== emblemeAffiche) {
+        emblemeAffiche = voulu;
         compCap.removeAttribute('data-logo');
         if (voulu) compLogo.setAttribute('src', voulu);
         else compLogo.removeAttribute('src');

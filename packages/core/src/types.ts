@@ -124,6 +124,12 @@ export interface MatchMeta {
   /** Identifiant d'habillage : « ucl », « ligue1 »… */
   competitionTheme: string;
   /**
+   * Le code de la compétition chez le fournisseur : « fra.1 », « uefa.champions ».
+   * Il sert à retrouver un emblème déposé localement, qui prime sur celui du
+   * fournisseur — ESPN date les siens de 2019 et ne les a jamais remis à jour.
+   */
+  competitionId?: string;
+  /**
    * L'URL du logo de la compétition, quand le fournisseur en donne une. Le
    * cartouche doré porte alors l'emblème plutôt que seulement des lettres —
    * et retombe sur le nom écrit si l'image ne charge pas.

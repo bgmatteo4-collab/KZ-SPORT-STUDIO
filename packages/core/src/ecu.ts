@@ -15,6 +15,27 @@
  * La fonction est volontairement tolérante : pas d'adresse, pas de
  * transformation. Une donnée manquante ne doit jamais provoquer d'erreur.
  */
+/**
+ * L'emblème d'une compétition.
+ *
+ * Il passe par une route qui regarde D'ABORD si un fichier a été déposé dans
+ * `assets/competitions/`. Raison : les emblèmes servis par ESPN datent de 2019
+ * et n'ont jamais été remis à jour — son logo de Ligue 1 est encore l'ancien,
+ * en gris. On ne peut pas corriger ESPN ; on peut laisser l'utilisateur
+ * imposer le bon.
+ *
+ * Sans fichier local, la route retombe sur l'adresse du fournisseur, mise en
+ * cache comme les écussons de club.
+ */
+export function embleme(
+  competitionId: string | null | undefined,
+  distant: string | null | undefined,
+): string | undefined {
+  if (!competitionId) return ecuLocal(distant);
+  const repli = distant ? `?de=${encodeURIComponent(distant)}` : '';
+  return `/api/embleme/${encodeURIComponent(competitionId)}${repli}`;
+}
+
 export function ecuLocal(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
   // Déjà relative : c'est la nôtre, on n'y touche pas.

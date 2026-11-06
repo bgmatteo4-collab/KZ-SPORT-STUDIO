@@ -594,6 +594,7 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
       id: ev?.id ?? `${eqDom.id}-${eqExt.id}`,
       competition: ligue?.nom ?? src.ligueInfos?.name ?? src.ligue ?? 'Football',
       competitionTheme: ligue?.theme ?? 'kztv',
+      ...(src.ligue ? { competitionId: src.ligue } : {}),
       ...(embleme ? { competitionCrest: embleme } : {}),
       home: eqDom,
       away: eqExt,

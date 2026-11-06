@@ -218,6 +218,48 @@ async function servirEcu(brut: string | null, res: ServerResponse): Promise<void
   }
 }
 
+// ───────────────── Les emblèmes de compétition, remplaçables ─────────────────
+//
+// ESPN date ses emblèmes de mai 2019 et ne les a jamais remis à jour : son
+// logo de Ligue 1 est encore l'ancien, en gris. On ne peut pas corriger ESPN,
+// mais on peut laisser l'utilisateur imposer le bon — il dépose un fichier
+// nommé d'après le code de la compétition dans `assets/competitions/`, et il
+// prime. Sans fichier, on retombe sur celui du fournisseur.
+const EMBLEME_DIR = resolve(process.cwd(), 'assets/competitions');
+const EMBLEME_TYPES: [string, string][] = [
+  ['.svg', 'image/svg+xml'],
+  ['.png', 'image/png'],
+  ['.webp', 'image/webp'],
+  ['.jpg', 'image/jpeg'],
+  ['.jpeg', 'image/jpeg'],
+];
+
+function servirEmbleme(slug: string, repli: string | null, res: ServerResponse): void {
+  // Cette valeur devient un chemin de fichier : on n'accepte que la forme d'un
+  // code de compétition, et jamais de quoi remonter dans l'arborescence.
+  if (!/^[a-z0-9._-]{1,64}$/i.test(slug) || slug.includes('..')) {
+    json(res, 400, { error: 'code de compétition invalide' });
+    return;
+  }
+
+  for (const [ext, type] of EMBLEME_TYPES) {
+    const chemin = resolve(EMBLEME_DIR, `${slug}${ext}`);
+    if (!existsSync(chemin)) continue;
+    const buffer = readFileSync(chemin);
+    res.writeHead(200, {
+      'content-type': type,
+      'content-length': String(buffer.byteLength),
+      // Court : on veut qu'un fichier remplacé se voie au rechargement suivant,
+      // pas une heure plus tard en pleine émission.
+      'cache-control': 'public, max-age=60',
+    });
+    res.end(buffer);
+    return;
+  }
+
+  void servirEcu(repli, res);
+}
+
 /** Clé de cache pour « tous les championnats ». */
 const TOUT = '*';
 const CACHE_MS = 15_000;
@@ -370,6 +412,11 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
 
   if (parts[0] === 'ecu') {
     void servirEcu(url.searchParams.get('u'), res);
+    return;
+  }
+
+  if (parts[0] === 'embleme' && parts.length === 2) {
+    servirEmbleme(parts[1]!, url.searchParams.get('de'), res);
     return;
   }
 
