@@ -83,12 +83,20 @@ export const lineups: WidgetFactory = (ctx): Widget => {
   const box = panel({
     icon: 'lineup',
     kicker: side === 'home' ? 'Domicile' : 'Extérieur',
-    title: probable ? 'Composition probable' : 'Compositions',
+    // Le titre reste court : « Composition probable » déborde de l'en-tête et
+    // s'affiche « Composition prob… ». Le mot « probable » vit dans un badge,
+    // où il est lu aussi bien et ne rogne rien.
+    title: 'Compositions',
     crests: 1,
   });
 
   const formation = h('span', { class: 'odds__badge' }, ['—']);
   box.el.querySelector('.panel__aside')?.prepend(formation);
+  if (probable) {
+    box.el
+      .querySelector('.panel__aside')
+      ?.prepend(h('span', { class: 'odds__badge odds__badge--doux' }, ['probable']));
+  }
 
   const attenteCompo = h('p', { class: 'lineup__attente t-caption', hidden: '' }, [
     'Composition annoncée environ une heure avant le coup d’envoi.',
@@ -117,6 +125,12 @@ export const lineups: WidgetFactory = (ctx): Widget => {
     update({ state, box: slot }: WidgetContext) {
       // Les maillots grandissent avec le panneau. À taille fixe, onze maillots
       // de 50 px dans un panneau de 900 font une composition qui flotte.
+      // « COMPOSITIONS » ne tient pas dans l'en-tête d'une colonne étroite :
+      // il s'affichait « COMPOSITIO… ». On resserre le titre plutôt que de le
+      // laisser couper — un mot tronqué dans un en-tête fait négligé.
+      const etroit = slot.w > 0 && slot.w < 560;
+      box.el.dataset.etroit = etroit ? '1' : '0';
+
       if (slot.w > 0) {
         const size = Math.round(Math.min(118, Math.max(46, slot.w * 0.105)));
         if (pitch.style.getPropertyValue('--jersey') !== `${size}px`) {
@@ -128,7 +142,9 @@ export const lineups: WidgetFactory = (ctx): Widget => {
       box.setCrests([team]);
       box.setHead(
         team?.short ?? (side === 'home' ? 'Domicile' : 'Extérieur'),
-        probable ? 'Composition probable' : 'Compositions',
+        // « COMPO » dans une colonne étroite : c'est l'abréviation qu'emploie
+        // le football français, et elle tient. « COMPOSITIO… » ne tient pas.
+        etroit ? 'Compo' : 'Compositions',
       );
 
       const lineup = state.lineups[side];
@@ -150,6 +166,35 @@ export const lineups: WidgetFactory = (ctx): Widget => {
       if (!lineup) return;
 
       const coords = positions(lineup.formation, lineup.starters.length);
+
+      // La largeur maximale d'une pastille de nom vient de la RANGÉE LA PLUS
+      // CHARGÉE : sans ça, « GACINOVIC » et « KAIRINEN » côte à côte dans une
+      // ligne de quatre se chevauchent — défaut repéré en mesurant les boîtes
+      // de tous les écrans, et invisible tant qu'on ne tombe pas sur deux noms
+      // longs voisins.
+      //
+      // La rangée se lit dans la FORMATION, pas dans les coordonnées. Première
+      // version : regrouper les joueurs par `y` arrondi. Deux rangées proches
+      // tombaient sur le même entier, la plus chargée en comptait sept au lieu
+      // de quatre, et les noms se retrouvaient coupés à une lettre.
+      const lignes = lineup.formation
+        .split('-')
+        .map((n) => Number.parseInt(n, 10))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      const plusChargee = lignes.length > 0 ? Math.max(...lignes) : 4;
+
+      // En PIXELS, pas en pourcentage : la pastille est enfant d'un conteneur
+      // positionné qui fait la largeur du maillot, et un pourcentage s'y
+      // rapporterait au lieu de se rapporter au terrain.
+      //
+      // Et l'écart entre deux voisins vaut la largeur divisée par n+1, pas par
+      // n : les joueurs sont posés à (i+1)/(n+1), ce qui laisse une demi-case
+      // à chaque bord. Diviser par n donnait une borne PLUS LARGE que la place
+      // réelle, et les noms se chevauchaient encore.
+      const largeurPiste = pitch.clientWidth || slot.w;
+      const cap = Math.max(60, Math.floor(largeurPiste / (plusChargee + 1)) - 6);
+      pitch.style.setProperty('--largeur-nom', `${cap}px`);
+
       lineup.starters.forEach((player, index) => {
         const at = coords[index];
         if (at) pitch.append(buildMan(player, at, index === 0, state, team));

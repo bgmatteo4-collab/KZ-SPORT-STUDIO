@@ -13,12 +13,18 @@
  * compte à rebours qui descend vraiment, et ce qu'on sait déjà du match — la
  * compétition, le stade, le rapport de force annoncé par les cotes.
  *
- * ── Le compte à rebours ─────────────────────────────────────────────────────
+ * ── Sur quelle horloge il descend ───────────────────────────────────────────
  *
- * Il descend en TEMPS RÉEL, pas en temps de match. Le temps de match ne
- * s'écoule pas avant le coup d'envoi, et en rejeu accéléré un compte à rebours
- * qui file à ×20 n'aurait aucun sens : ce qu'on attend, c'est une heure du
- * monde réel.
+ * Sur l'instant RENDU — celui que le spectateur a sous les yeux, décalage
+ * anti-spoiler compris. Pas sur l'heure de la machine.
+ *
+ * La différence n'est pas théorique : avec trente secondes de décalage, un
+ * compte à rebours calé sur l'heure réelle atteindrait zéro une demi-minute
+ * avant que le spectateur ne voie le coup d'envoi. Il annoncerait un match qui,
+ * pour lui, n'a pas commencé.
+ *
+ * Et en rejeu accéléré il descend à la même vitesse que le match, ce qui est
+ * bien ce qu'on veut : le coup d'envoi arrive vingt fois plus tôt.
  *
  * Passé le coup d'envoi, il ne compte pas à l'envers : il annonce que ça a
  * commencé et s'efface. Un compte à rebours négatif est un bug à l'antenne.
@@ -91,7 +97,7 @@ export const attente: WidgetFactory = (): Widget => {
     // continu, comme l'horloge du match.
     animated: true,
 
-    update({ state, realNow }: WidgetContext) {
+    update({ state, now }: WidgetContext) {
       const meta = state.meta;
 
       const signature = meta ? `${meta.home.id}|${meta.away.id}|${meta.kickoff}` : '';
@@ -115,7 +121,7 @@ export const attente: WidgetFactory = (): Widget => {
       }
 
       // ── Le compte à rebours ────────────────────────────────────────────────
-      const restant = meta ? meta.kickoff - realNow : null;
+      const restant = meta ? meta.kickoff - now : null;
       if (restant === null) {
         setText(valeur, '—');
         setText(unite, 'en attente des informations du match');

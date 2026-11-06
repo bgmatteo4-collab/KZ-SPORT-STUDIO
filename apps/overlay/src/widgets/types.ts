@@ -29,6 +29,11 @@ export interface WidgetContext {
    * changerait sous les doigts de l'opérateur dès qu'il touche à la vitesse.
    */
   realNow: number;
+  // ATTENTION : `realNow` est un compteur depuis l'ouverture de la page, pas
+  // une date. Il sert à MESURER DES DURÉES — combien de temps un carton reste
+  // à l'écran — et uniquement à ça. Le comparer à un instant du match, comme
+  // une heure de coup d'envoi, donne des absurdités : on a vu un compte à
+  // rebours annoncer « 498281 h ». Pour un instant, c'est `now` qu'il faut.
   /** Position de la caméra sur la scène courante, si elle est visible. */
   cam: { x: number; y: number; w: number; h: number; style: string } | null;
 }
