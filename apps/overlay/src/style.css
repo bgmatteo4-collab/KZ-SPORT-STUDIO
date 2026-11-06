@@ -196,17 +196,25 @@ html {
   transition: opacity var(--dur-fast) var(--ease);
 }
 
-/* Le vrai écusson, par-dessus l'écu dessiné. Il ne le remplace pas : il le
-   recouvre, pour que l'écu reparaisse tout seul si l'image disparaît. */
+/* Le vrai écusson. Il occupe toute la case : un logo de club est déjà un
+   blason, et le poser dans un second cadre fait doublon. */
 .crest__img {
   position: absolute;
-  left: 13%;
-  top: 13%;
-  width: 74%;
-  height: 74%;
+  left: 2%;
+  top: 2%;
+  width: 96%;
+  height: 96%;
   object-fit: contain;
   z-index: 2;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  /* Juste assez d'ombre pour décoller le logo du fond sombre, sans halo. */
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
+}
+
+/* Image chargée : la plaque dessinée s'efface entièrement — fond, contour et
+   forme de blason compris. Si l'image disparaît, tout revient. */
+.crest[data-logo='1'] {
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .crest[data-logo='1'] .crest__abbr {

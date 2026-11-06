@@ -27,6 +27,8 @@ export interface ControlState {
    * `null` : c'est elle qui choisit.
    */
   insertForce: string | null;
+  /** Le match à l'antenne. Voir `MatchSource`. */
+  source: MatchSource;
   /**
    * Vitesse d'écoulement du temps du match. 1 en direct.
    * En rejeu accéléré, le client DOIT la connaître : sans ça son horloge
@@ -62,7 +64,26 @@ export type ClientMessage =
   | { type: 'resume'; sinceSeq: number }
   | { type: 'command'; command: Command };
 
+/**
+ * Le match à l'antenne.
+ *
+ * Il vit dans l'état de contrôle, donc il est ENREGISTRÉ comme le reste :
+ * relancer le serveur reprend le match qu'on diffusait, au lieu de retomber
+ * sur une variable d'environnement posée la veille.
+ */
+export interface MatchSource {
+  /** « espn », « sportmonks », « simulator ». */
+  provider: string;
+  /** Le championnat chez le fournisseur : « uefa.champions », « fra.1 »… */
+  league: string | null;
+  /** Le match. `null` : le fournisseur prend le premier en cours. */
+  eventId: string | null;
+  /** De quoi l'afficher en régie sans réinterroger l'API. */
+  label: string | null;
+}
+
 export type Command =
+  | { name: 'set-source'; source: MatchSource }
   | { name: 'set-delay'; delayMs: number }
   | { name: 'nudge-delay'; deltaMs: number }
   | { name: 'set-scene'; sceneId: string }
@@ -81,5 +102,6 @@ export const DEFAULT_CONTROL: ControlState = {
   live: false,
   insertMode: 'auto',
   insertForce: null,
+  source: { provider: 'simulator', league: null, eventId: null, label: null },
   timeScale: 1,
 };

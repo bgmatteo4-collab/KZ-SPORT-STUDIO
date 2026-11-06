@@ -66,6 +66,24 @@ export class Hub {
     this.broadcast({ type: 'events', events: fresh });
   }
 
+  /**
+   * Vide la timeline.
+   *
+   * Changer de match ne doit RIEN garder du précédent — et pas seulement les
+   * événements : `seen` est indexé sur `seq`, et un nouveau fournisseur
+   * repart de zéro. Sans ce vidage, ses premiers événements seraient pris
+   * pour des doublons et jetés en silence.
+   */
+  reset(): void {
+    this.events = [];
+    this.seen.clear();
+  }
+
+  /** Demande aux pages de se reconstruire depuis zéro. */
+  demanderRechargement(): void {
+    this.broadcast({ type: 'reload' });
+  }
+
   setProviderStatus(status: ProviderStatus): void {
     const changed =
       status.connected !== this.provider.connected ||
@@ -111,6 +129,21 @@ export class Hub {
     const before = this.control;
 
     switch (command.name) {
+      case 'set-source': {
+        // On borne ici aussi : une régie ne doit pas pouvoir inscrire
+        // n'importe quoi dans l'état qu'on va enregistrer sur disque.
+        const s = command.source;
+        this.control = {
+          ...this.control,
+          source: {
+            provider: String(s.provider ?? 'espn').slice(0, 32),
+            league: s.league ? String(s.league).slice(0, 64) : null,
+            eventId: s.eventId ? String(s.eventId).slice(0, 64) : null,
+            label: s.label ? String(s.label).slice(0, 120) : null,
+          },
+        };
+        break;
+      }
       case 'set-delay': {
         this.control = { ...this.control, delayMs: clampDelay(command.delayMs) };
         break;

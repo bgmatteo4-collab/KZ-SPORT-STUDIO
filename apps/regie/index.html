@@ -12,14 +12,17 @@
     <header class="bar">
       <div class="brand">KZ Studio <b>Régie</b></div>
 
-      <div class="now" id="now">
+      <!-- Le match à l'antenne EST le bouton pour en changer : on clique sur
+           ce qu'on veut remplacer, plutôt que de chercher un réglage ailleurs. -->
+      <button class="now" id="now" type="button" title="Changer de match (M)">
         <span class="now__team" id="now-home">—</span>
         <span class="now__score" id="now-score">0–0</span>
         <span class="now__team" id="now-away">—</span>
         <span class="now__sep"></span>
         <span class="now__clock" id="now-clock">0:00</span>
         <span class="now__phase" id="now-phase">—</span>
-      </div>
+        <span class="now__swap">Changer <kbd>M</kbd></span>
+      </button>
 
       <div class="lamps">
         <span class="lamp" id="lamp-live"><i></i>Antenne</span>
@@ -79,6 +82,7 @@
              pendant un match, on les lit. -->
         <h2 class="head">Raccourcis</h2>
         <dl class="keys">
+          <dt><kbd>M</kbd></dt><dd>choisir le match</dd>
           <dt><kbd>1</kbd>…<kbd>9</kbd><kbd>0</kbd></dt><dd>changer de scène</dd>
           <dt><kbd>←</kbd><kbd>→</kbd></dt><dd>décalage, ¼ de seconde</dd>
           <dt><kbd>⇧</kbd><kbd>←</kbd><kbd>→</kbd></dt><dd>décalage, 1 seconde</dd>
@@ -153,6 +157,30 @@
         </div>
       </section>
     </main>
+
+    <!-- ── Le sélecteur de match ────────────────────────────────────────────
+         Ouvert par M ou par le bandeau du haut. Il se referme sur Échap ou en
+         cliquant à côté. ─────────────────────────────────────────────────── -->
+    <div class="picker" id="picker" data-on="0" data-busy="0" role="dialog" aria-modal="true"
+         aria-label="Choisir le match" tabindex="-1">
+      <div class="picker__card">
+        <header class="picker__top">
+          <h2>Choisir le match</h2>
+          <input class="picker__search" id="picker-search" type="search" autocomplete="off"
+                 placeholder="Filtrer : équipe, compétition…" />
+          <button class="picker__close" id="picker-close" type="button" aria-label="Fermer">✕</button>
+        </header>
+        <div class="picker__leagues" id="picker-leagues"></div>
+        <ul class="picker__list" id="picker-list"></ul>
+        <footer class="picker__foot">
+          <span class="picker__count" id="picker-count">—</span>
+          <span class="picker__warn">
+            Changer de match vide la timeline et recharge l’overlay.
+          </span>
+          <span class="picker__keys"><kbd>↑</kbd><kbd>↓</kbd> naviguer · <kbd>⏎</kbd> choisir · <kbd>Échap</kbd> fermer</span>
+        </footer>
+      </div>
+    </div>
 
     <div class="toast" id="toast"></div>
     <script type="module" src="./src/main.ts"></script>

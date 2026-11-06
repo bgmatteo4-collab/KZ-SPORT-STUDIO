@@ -16,7 +16,7 @@
  * invisible de même largeur à gauche garde le score exactement au centre.
  */
 
-import { clockLabel, PHASE_LABEL } from '@kz/core';
+import { clockLabel, ecuLocal, PHASE_LABEL } from '@kz/core';
 import { h, setAttr, setText } from '../dom.js';
 import { crestEl, paintCrest } from './crest.js';
 import type { Widget, WidgetContext, WidgetFactory } from './types.js';
@@ -88,7 +88,7 @@ export const scoreBanner: WidgetFactory = (): Widget => {
       setText(compName, competition);
       setText(compRound, round);
 
-      const voulu = meta?.competitionCrest ?? '';
+      const voulu = ecuLocal(meta?.competitionCrest) ?? '';
       if (voulu !== embleme) {
         embleme = voulu;
         compCap.removeAttribute('data-logo');

@@ -8,7 +8,7 @@
  * fichiers sous licence, seule cette fonction change.
  */
 
-import type { Team, TeamBrief } from '@kz/core';
+import { ecuLocal, type Team, type TeamBrief } from '@kz/core';
 import { h } from '../dom.js';
 
 export type AnyTeam = Team | TeamBrief;
@@ -28,16 +28,19 @@ export function paintCrest(el: HTMLElement, team: AnyTeam | undefined | null): v
     return;
   }
   const alt = team.colorAlt ?? shade(team.color, -28);
-  // Un vrai écusson a besoin d'un fond NEUTRE : le blanc du Real Madrid sur un
-  // dégradé blanc disparaît complètement. Tant qu'aucune image n'a chargé, on
-  // garde les couleurs du club, qui portent le trigramme.
+  // Quand un VRAI écusson a chargé, la plaque disparaît : plus de fond, plus
+  // de contour, plus de forme de blason. Un logo de club est déjà un écusson —
+  // l'enfermer dans un second cadre fait doublon et ça se voit tout de suite.
+  // L'écu dessiné ne sert que tant qu'on n'a pas l'image.
   const avecLogo = el.getAttribute('data-logo') === '1';
   const background = avecLogo
-    ? 'linear-gradient(160deg, rgba(16,20,36,0.94) 0%, rgba(8,11,20,0.96) 100%)'
+    ? 'transparent'
     : `linear-gradient(160deg, ${team.color} 0%, ${alt} 100%)`;
   if (el.style.background !== background) el.style.background = background;
   el.style.color = readable(team.color);
-  poser(el, team.abbr, team.crest);
+  // On passe par notre serveur : il garde les écussons, donc l'antenne ne
+  // dépend plus d'un CDN tiers une fois la première image reçue.
+  poser(el, team.abbr, ecuLocal(team.crest));
 }
 
 /**

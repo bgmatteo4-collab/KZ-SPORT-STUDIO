@@ -33,8 +33,21 @@ import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import type { MatchEvent, ProviderStatus } from '@kz/core';
 import type { Clock, EventSink, Provider } from '../provider.js';
-import { nouvelEtat, traduire, type EtatTraduction, type SourceEspn } from './translate.js';
-import { LIGUES, type EspnEvent, type EspnScoreboard, type EspnSummary } from './types.js';
+import {
+  minuteAffichee,
+  nouvelEtat,
+  traduire,
+  type EtatTraduction,
+  type SourceEspn,
+} from './translate.js';
+import {
+  LIGUES,
+  logoDeLigue,
+  type EspnCompetitor,
+  type EspnEvent,
+  type EspnScoreboard,
+  type EspnSummary,
+} from './types.js';
 
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 
@@ -111,6 +124,107 @@ export async function matchsEnCours(): Promise<
     }
   }
   return out;
+}
+
+// ───────────────────────── La liste, pour le sélecteur ───────────────────────
+
+/**
+ * Ce que la régie a besoin de savoir d'un match pour le choisir.
+ *
+ * Volontairement plat et léger : c'est ce qui transite vers le navigateur
+ * toutes les quinze secondes pendant qu'une émission tourne. Rien de ce qui
+ * sert à la TRADUCTION n'a sa place ici.
+ */
+export interface MatchListe {
+  id: string;
+  ligue: string;
+  ligueNom: string;
+  ligueLogo: string | null;
+  /** Coup d'envoi prévu, en ISO 8601. */
+  date: string | null;
+  /** « pre » à venir, « in » en cours, « post » terminé. */
+  etat: 'pre' | 'in' | 'post';
+  /** Ce qu'ESPN affiche : « FT », « HT », ou l'heure de coup d'envoi. */
+  detail: string;
+  /** La minute d'antenne quand le match tourne : « 67 », « 45+2 », « MT ». */
+  minute: string;
+  domicile: EquipeListe;
+  exterieur: EquipeListe;
+}
+
+export interface EquipeListe {
+  nom: string;
+  abbr: string;
+  score: number | null;
+  logo: string | null;
+  couleur: string | null;
+}
+
+function equipeListe(c: EspnCompetitor | undefined): EquipeListe {
+  const t = c?.team;
+  const nom = t?.shortDisplayName ?? t?.displayName ?? t?.name ?? '—';
+  const brut = c?.score;
+  const n = brut === undefined ? null : Number(brut);
+  return {
+    nom,
+    abbr: t?.abbreviation ?? nom.slice(0, 3).toUpperCase(),
+    score: n !== null && Number.isFinite(n) ? n : null,
+    logo: t?.logo ?? t?.logos?.find((l) => l.href)?.href ?? null,
+    couleur: t?.color ? `#${t.color.replace(/^#/, '')}` : null,
+  };
+}
+
+/** Met un tableau de bord à plat, prêt pour le sélecteur de la régie. */
+export function listerMatchs(bord: EspnScoreboard, ligue: string): MatchListe[] {
+  const infos = bord.leagues?.[0];
+  const logo = logoDeLigue(infos) ?? null;
+  const nom = LIGUES[ligue]?.nom ?? infos?.name ?? ligue;
+
+  return (bord.events ?? []).map((e) => {
+    const comp = e.competitions?.[0];
+    const st = e.status ?? comp?.status;
+    const brut = st?.type?.state;
+    const etat: 'pre' | 'in' | 'post' = brut === 'in' ? 'in' : brut === 'post' ? 'post' : 'pre';
+    return {
+      id: e.id ?? '',
+      ligue,
+      ligueNom: nom,
+      ligueLogo: logo,
+      date: e.date ?? null,
+      etat,
+      detail: st?.type?.detail ?? st?.type?.shortDetail ?? '',
+      minute: minuteAffichee(st),
+      domicile: equipeListe((comp?.competitors ?? []).find((c) => c.homeAway === 'home')),
+      exterieur: equipeListe((comp?.competitors ?? []).find((c) => c.homeAway === 'away')),
+    };
+  });
+}
+
+/** La soirée d'un championnat, déjà mise à plat. */
+export async function matchsDuJour(ligue: string): Promise<MatchListe[]> {
+  return listerMatchs(await tableauDeBord(ligue), ligue);
+}
+
+/**
+ * Tous les matchs du jour, tous championnats suivis.
+ *
+ * Un championnat qui ne répond pas est SAUTÉ, pas propagé en erreur : la régie
+ * doit pouvoir choisir parmi ce qui marche même si ESPN a un hoquet sur une
+ * compétition. Les matchs en cours remontent en tête — c'est ce qu'on cherche
+ * neuf fois sur dix en ouvrant ce menu.
+ */
+export async function toutLeJour(): Promise<MatchListe[]> {
+  const resultats = await Promise.allSettled(
+    Object.keys(LIGUES).map(async (ligue) => listerMatchs(await tableauDeBord(ligue), ligue)),
+  );
+  const out = resultats.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
+  const rang = { in: 0, pre: 1, post: 2 } as const;
+  return out.sort(
+    (a, b) =>
+      rang[a.etat] - rang[b.etat] ||
+      (a.date ?? '').localeCompare(b.date ?? '') ||
+      a.ligueNom.localeCompare(b.ligueNom),
+  );
 }
 
 export class EspnProvider implements Provider {

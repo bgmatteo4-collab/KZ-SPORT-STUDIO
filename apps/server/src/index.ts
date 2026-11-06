@@ -8,7 +8,10 @@
  * proxifie /api et /ws vers ici.
  */
 
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { resolve } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import {
   findScene,
@@ -19,7 +22,13 @@ import {
   type Command,
   type ServerMessage,
 } from '@kz/core';
-import { EspnProvider, SimulatorProvider, SportmonksProvider, type Provider } from '@kz/providers';
+import {
+  espn,
+  EspnProvider,
+  SimulatorProvider,
+  SportmonksProvider,
+  type Provider,
+} from '@kz/providers';
 import { ServerClock } from './clock.js';
 import { Hub } from './hub.js';
 import { ControlStore } from './persist.js';
@@ -54,6 +63,20 @@ hub.onControlChange = (control) => store.write(control);
 let provider: Provider;
 let simulator: SimulatorProvider | null = null;
 
+/** Un fournisseur ESPN réglé comme on les veut ici. Une seule définition. */
+function creerEspn(ligue: string, eventId: string | null): EspnProvider {
+  return new EspnProvider({
+    ligue,
+    // Sans match désigné, le fournisseur prend le premier en cours : c'est ce
+    // qu'on veut neuf fois sur dix en lançant pendant une soirée.
+    ...(eventId ? { eventId } : {}),
+    avecMultiplex: process.env.KZ_MULTIPLEX !== '0',
+    // Enregistrer pendant qu'on diffuse ne coûte rien et sauve la soirée
+    // suivante : chaque match réel devient une fixture rejouable.
+    ...(process.env.KZ_RECORD ? { recordTo: process.env.KZ_RECORD } : {}),
+  });
+}
+
 if (PROVIDER_NAME === 'sportmonks') {
   const token = process.env.SPORTMONKS_TOKEN;
   const fixtureId = Number(process.env.SPORTMONKS_FIXTURE_ID ?? 0);
@@ -78,27 +101,149 @@ if (PROVIDER_NAME === 'sportmonks') {
   // ESPN ne demande aucun jeton. C'est le seul fournisseur avec lequel on peut
   // diffuser la Ligue des Champions et la Ligue 1 aujourd'hui — le palier
   // gratuit de Sportmonks n'ouvre que quatre championnats, aucun des nôtres.
-  const ligue = process.env.ESPN_LEAGUE ?? 'uefa.champions';
-  const eventId = process.env.ESPN_EVENT_ID;
+  //
+  // Le match retenu : d'abord ce que dit l'environnement, sinon CELUI QU'ON
+  // DIFFUSAIT. Relancer le serveur en pleine soirée doit reprendre le match en
+  // cours, pas retomber sur une variable posée la veille.
+  const repris = retenu.source;
+  const ligue = process.env.ESPN_LEAGUE ?? repris?.league ?? 'uefa.champions';
+  const eventId = process.env.ESPN_EVENT_ID ?? repris?.eventId ?? null;
   console.log(
     `  championnat : ${ligue}${eventId ? ` · match ${eventId}` : ' · premier match en cours'}`,
   );
-  provider = new EspnProvider({
-    ligue,
-    // Sans match désigné, le fournisseur prend le premier en cours : c'est ce
-    // qu'on veut neuf fois sur dix en lançant pendant une soirée.
-    ...(eventId ? { eventId } : {}),
-    avecMultiplex: process.env.KZ_MULTIPLEX !== '0',
-    // Enregistrer pendant qu'on diffuse ne coûte rien et sauve la soirée
-    // suivante : chaque match réel devient une fixture rejouable.
-    ...(process.env.KZ_RECORD ? { recordTo: process.env.KZ_RECORD } : {}),
+  provider = creerEspn(ligue, eventId);
+  hub.apply({
+    name: 'set-source',
+    source: { provider: 'espn', league: ligue, eventId, label: repris?.label ?? null },
   });
 } else {
   simulator = new SimulatorProvider({ fixturePath: FIXTURE, startAtMs: START_AT });
   provider = simulator;
+  hub.apply({
+    name: 'set-source',
+    source: { provider: 'simulator', league: null, eventId: null, label: FIXTURE },
+  });
 }
 
 await provider.start((events) => hub.ingest(events), clock);
+
+/**
+ * Changer de match SANS redémarrer.
+ *
+ * Trois choses doivent se passer dans cet ordre, et aucune n'est facultative :
+ * arrêter l'ancien fournisseur (sinon deux sources nourrissent la même
+ * timeline), VIDER la timeline (sinon le match précédent reste à l'écran et
+ * les `seq` du nouveau passent pour des doublons), et demander aux pages de se
+ * reconstruire.
+ *
+ * Le verrou n'est pas de la précaution gratuite : deux clics rapides en régie
+ * lanceraient deux bascules entrelacées, et c'est la timeline qui trinquerait.
+ */
+// ───────────────────────── Les écussons, mis en cache ────────────────────────
+//
+// Les logos viennent du CDN d'ESPN : 59 Ko pièce, et une centaine pour ouvrir
+// le sélecteur. Deux raisons de les garder ici, et la seconde est la vraie :
+//
+//   • le menu s'ouvre instantanément la deuxième fois ;
+//   • surtout, l'overlay cesse de dépendre d'un tiers EN PLEINE ÉMISSION. Un
+//     hoquet du CDN d'ESPN ferait disparaître tous les écussons à l'antenne.
+//     Une fois le fichier ici, il y reste.
+//
+// La liste d'hôtes n'est pas une formalité : sans elle, cette route serait un
+// mandataire ouvert, et n'importe qui sur le réseau pourrait faire sortir des
+// requêtes par notre serveur.
+const ECU_HOTES = new Set(['a.espncdn.com']);
+const ECU_DIR = resolve(process.cwd(), '.kz/ecussons');
+const ecusEnMemoire = new Map<string, Buffer>();
+
+async function servirEcu(brut: string | null, res: ServerResponse): Promise<void> {
+  let cible: URL;
+  try {
+    cible = new URL(brut ?? '');
+  } catch {
+    json(res, 400, { error: 'adresse invalide' });
+    return;
+  }
+  if (cible.protocol !== 'https:' || !ECU_HOTES.has(cible.hostname)) {
+    json(res, 403, { error: `hôte non autorisé : ${cible.hostname}` });
+    return;
+  }
+
+  const cle = createHash('sha1').update(cible.href).digest('hex');
+  const chemin = resolve(ECU_DIR, `${cle}.png`);
+
+  const envoyer = (buffer: Buffer): void => {
+    res.writeHead(200, {
+      'content-type': 'image/png',
+      'content-length': String(buffer.byteLength),
+      // Une semaine : un club ne change pas d'écusson en cours de saison.
+      'cache-control': 'public, max-age=604800, immutable',
+    });
+    res.end(buffer);
+  };
+
+  const enMemoire = ecusEnMemoire.get(cle);
+  if (enMemoire) {
+    envoyer(enMemoire);
+    return;
+  }
+  if (existsSync(chemin)) {
+    const buffer = readFileSync(chemin);
+    ecusEnMemoire.set(cle, buffer);
+    envoyer(buffer);
+    return;
+  }
+
+  try {
+    const r = await fetch(cible, { signal: AbortSignal.timeout(8_000) });
+    if (!r.ok) throw new Error(`CDN ${r.status}`);
+    const buffer = Buffer.from(await r.arrayBuffer());
+    mkdirSync(ECU_DIR, { recursive: true });
+    writeFileSync(chemin, buffer);
+    ecusEnMemoire.set(cle, buffer);
+    envoyer(buffer);
+  } catch (erreur) {
+    // 404 plutôt qu'une erreur : côté page, l'image se retire et l'écu dessiné
+    // reparaît. Un logo manquant ne doit jamais faire un trou à l'antenne.
+    json(res, 404, { error: erreur instanceof Error ? erreur.message : String(erreur) });
+  }
+}
+
+/** Clé de cache pour « tous les championnats ». */
+const TOUT = '*';
+const CACHE_MS = 15_000;
+const cacheMatchs = new Map<string, { at: number; liste: espn.MatchListe[] }>();
+
+async function listeCachee(cle: string): Promise<espn.MatchListe[]> {
+  const vu = cacheMatchs.get(cle);
+  if (vu && Date.now() - vu.at < CACHE_MS) return vu.liste;
+  const liste = cle === TOUT ? await espn.toutLeJour() : await espn.matchsDuJour(cle);
+  cacheMatchs.set(cle, { at: Date.now(), liste });
+  return liste;
+}
+
+let basculeEnCours = false;
+
+async function basculerVers(ligue: string, eventId: string, label: string | null): Promise<void> {
+  if (basculeEnCours) throw new Error('une bascule est déjà en cours');
+  basculeEnCours = true;
+  try {
+    await provider.stop();
+    hub.reset();
+    simulator = null;
+    hub.apply({
+      name: 'set-source',
+      source: { provider: 'espn', league: ligue, eventId, label },
+    });
+    provider = creerEspn(ligue, eventId);
+    await provider.start((events) => hub.ingest(events), clock);
+    hub.setProviderStatus(provider.status());
+    hub.demanderRechargement();
+    console.log(`↻ bascule sur ${label ?? eventId} (${ligue})`);
+  } finally {
+    basculeEnCours = false;
+  }
+}
 
 // L'état du fournisseur est republié régulièrement : la régie doit voir d'un
 // coup d'œil si la source est vivante.
@@ -209,6 +354,48 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
         json(res, 400, { error: 'corps JSON invalide' });
       }
     });
+    return;
+  }
+
+  if (parts[0] === 'ecu') {
+    void servirEcu(url.searchParams.get('u'), res);
+    return;
+  }
+
+  // ── Le sélecteur de match ──────────────────────────────────────────────────
+  //
+  // La liste est MISE EN CACHE quinze secondes. La régie l'interroge en boucle
+  // pendant qu'une émission tourne, et rien ne justifie de taper neuf fois sur
+  // ESPN à chaque rafraîchissement d'un menu que personne ne regarde.
+  if (parts[0] === 'matchs' || parts[0] === 'matches') {
+    const ligue = url.searchParams.get('ligue') ?? url.searchParams.get('league');
+    void (async () => {
+      try {
+        json(res, 200, {
+          ligues: Object.entries(espn.LIGUES).map(([id, l]) => ({ id, nom: l.nom })),
+          matchs: ligue ? await listeCachee(ligue) : await listeCachee(TOUT),
+          source: hub.controlState.source,
+        });
+      } catch (erreur) {
+        // ESPN qui bronche ne doit pas faire tomber la régie : elle garde son
+        // dernier menu et réessaiera.
+        json(res, 502, { error: erreur instanceof Error ? erreur.message : String(erreur) });
+      }
+    })();
+    return;
+  }
+
+  if (parts[0] === 'match' && parts.length === 3) {
+    const ligue = parts[1]!;
+    const eventId = parts[2]!;
+    void (async () => {
+      try {
+        await basculerVers(ligue, eventId, url.searchParams.get('label'));
+        json(res, 200, { ok: true, control: hub.controlState });
+      } catch (erreur) {
+        json(res, 409, { error: erreur instanceof Error ? erreur.message : String(erreur) });
+      }
+    })();
     return;
   }
 

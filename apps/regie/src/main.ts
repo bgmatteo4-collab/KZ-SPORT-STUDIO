@@ -36,6 +36,7 @@ import {
   type ServerMessage,
   type SubEntry,
 } from '@kz/core';
+import { monterSelecteur } from './picker.js';
 
 const el = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -177,12 +178,27 @@ function flash(message: string): void {
   toastTimer = window.setTimeout(() => { toast.dataset.on = '0'; }, 1600);
 }
 
+// ──────────────────────────── Le choix du match ──────────────────────────────
+
+const selecteur = monterSelecteur(flash);
+el('now').addEventListener('click', () => selecteur.ouvrir());
+
 // ─────────────────────────────── Le clavier ──────────────────────────────────
 // En plein match, on ne vise pas un bouton à la souris.
 
 document.addEventListener('keydown', (event) => {
   if (event.target instanceof HTMLInputElement) return;
   if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+  // Tant que le sélecteur est ouvert, il a le clavier pour lui : les chiffres
+  // y servent à filtrer, pas à changer de scène à l'antenne par mégarde.
+  if (selecteur.ouvert) return;
+
+  if (event.key === 'm' || event.key === 'M') {
+    selecteur.ouvrir();
+    event.preventDefault();
+    return;
+  }
 
   if (event.key >= '1' && event.key <= '9') {
     const scene = SCENES[Number(event.key) - 1];
@@ -296,6 +312,7 @@ function applyControl(next: ControlState): void {
   mark(insertModeBox, 'mode', next.insertMode);
   mark(insertForceBox, 'force', next.insertForce ?? '');
   sceneName.textContent = findScene(next.sceneId).name;
+  selecteur.setSource(next.source);
 }
 
 function mark(box: HTMLElement, attribute: string, value: string): void {

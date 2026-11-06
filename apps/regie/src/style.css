@@ -519,3 +519,354 @@ button[data-on='1'] {
   .desk { grid-template-columns: 1fr; overflow-y: auto; }
   html, body { overflow: auto; }
 }
+
+/* ─────────────────────────── Le sélecteur de match ───────────────────────────
+
+   Le bandeau du haut n'est plus seulement un affichage : c'est le bouton. On
+   clique sur le match qu'on veut remplacer, au lieu d'aller chercher un
+   réglage dans une colonne.                                                  */
+
+.now {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: var(--s2) var(--s4);
+  border-radius: var(--r-card);
+  transition:
+    background var(--dur, 140ms) var(--ease),
+    border-color var(--dur, 140ms) var(--ease);
+}
+
+.now:hover,
+.now:focus-visible {
+  background: var(--surface-2);
+  border-color: var(--line);
+  outline: none;
+}
+
+.now__swap {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-left: var(--s3);
+  opacity: 0;
+  transition: opacity var(--dur, 140ms) var(--ease);
+}
+
+.now:hover .now__swap,
+.now:focus-visible .now__swap {
+  opacity: 1;
+}
+
+.picker {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--s5);
+  background: rgba(4, 6, 12, 0.72);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms var(--ease);
+}
+
+.picker[data-on='1'] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Pendant une bascule, on coupe l'interaction : un second clic lancerait une
+   deuxième bascule entrelacée, et c'est la timeline qui trinquerait. */
+.picker[data-busy='1'] .picker__card {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.picker__card {
+  width: min(920px, 100%);
+  max-height: min(680px, 100%);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-panel);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  transform: translateY(8px) scale(0.985);
+  transition: transform 180ms var(--ease);
+}
+
+.picker[data-on='1'] .picker__card {
+  transform: none;
+}
+
+.picker__top {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s4) var(--s4) var(--s3);
+  border-bottom: 1px solid var(--line);
+}
+
+.picker__top h2 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.picker__search {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  padding: var(--s2) var(--s3);
+}
+
+.picker__search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.picker__close {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  color: var(--ink-soft);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+
+.picker__close:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.picker__leagues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--line);
+}
+
+.picker__league {
+  appearance: none;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  color: var(--ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  padding: 5px var(--s3);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.picker__league i {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+
+.picker__league[data-on='1'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #10131c;
+}
+
+.picker__league[data-on='1'] i {
+  color: rgba(16, 19, 28, 0.6);
+}
+
+.picker__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--s2);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.picker__row {
+  display: grid;
+  grid-template-columns: 136px 68px 1fr 76px 1fr 86px;
+  align-items: center;
+  gap: var(--s2);
+  padding: 9px var(--s3);
+  border-radius: var(--r-card);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.picker__row[data-curseur='1'] {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+
+.picker__row[data-antenne='1'] {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Un match terminé reste choisissable — on teste souvent sur un match de la
+   veille — mais il ne doit pas attirer l'œil autant qu'un match en cours. */
+.picker__row[data-etat='post'] {
+  opacity: 0.62;
+}
+
+.picker__comp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.picker__comp em {
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.picker__complogo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex: none;
+}
+
+.picker__etat {
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.picker__row[data-etat='in'] .picker__etat {
+  color: var(--live);
+  font-weight: 700;
+}
+
+.picker__live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--live);
+  flex: none;
+}
+
+.picker__equipe {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.picker__equipe--dom {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.picker__equipe b {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Le logo nu, sans cadre ni blason : les clubs en ont déjà un. */
+.picker__ecu {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex: none;
+}
+
+.picker__score {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.picker__row[data-etat='pre'] .picker__score {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-dim);
+}
+
+.picker__score i {
+  font-style: normal;
+  color: var(--ink-dim);
+  margin: 0 3px;
+}
+
+.picker__marque {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.picker__vide {
+  padding: var(--s5);
+  text-align: center;
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+
+.picker__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s3) var(--s4);
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.picker__count {
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.picker__warn {
+  flex: 1;
+  min-width: 0;
+}
+
+.picker__keys {
+  white-space: nowrap;
+}
+
+.picker__keys kbd {
+  margin: 0 2px;
+}
