@@ -37,8 +37,30 @@ import type { Kit } from '@kz/core';
 
 export interface EspnScoreboard {
   events?: EspnEvent[];
-  leagues?: { id?: string; slug?: string; name?: string; abbreviation?: string }[];
+  leagues?: EspnLeague[];
   day?: { date?: string };
+}
+
+export interface EspnLeague {
+  id?: string;
+  slug?: string;
+  name?: string;
+  abbreviation?: string;
+  midsizeName?: string;
+  /**
+   * Deux variantes, distinguées par `rel` : « default » est l'emblème dessiné
+   * pour un fond CLAIR, « dark » celui dessiné pour un fond sombre. Notre
+   * cartouche de compétition est doré, donc c'est « default » qu'il faut — se
+   * tromper de variante donne un logo blanc sur or, illisible.
+   */
+  logos?: { href?: string; rel?: string[] }[];
+}
+
+/** L'emblème de la compétition, dans la variante qui va sur notre cartouche doré. */
+export function logoDeLigue(l: EspnLeague | undefined): string | undefined {
+  const liste = l?.logos ?? [];
+  const clair = liste.find((x) => (x.rel ?? []).includes('default') && !(x.rel ?? []).includes('dark'));
+  return clair?.href ?? liste[0]?.href;
 }
 
 export interface EspnEvent {

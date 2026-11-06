@@ -13,7 +13,8 @@ const CIRCUMFERENCE = 2 * Math.PI * 46;
 
 interface Row {
   label: string;
-  read: (s: MatchState) => Pair;
+  /** `undefined` quand le fournisseur ne publie pas cette donnée. */
+  read: (s: MatchState) => Pair | undefined;
   format?: (v: number) => string;
 }
 
@@ -101,7 +102,17 @@ export const stats: WidgetFactory = (ctx): Widget => {
       }
 
       for (const { row, home, away, fill } of built) {
-        const [a, b] = row.read(state);
+        const paire = row.read(state);
+        if (!paire) {
+          // Donnée absente chez le fournisseur. On le DIT : afficher « 0.00 »
+          // affirmerait que les deux équipes n'ont rien produit, et une barre
+          // à moitié remplie suggérerait un équilibre qu'on ne mesure pas.
+          setText(home, '—');
+          setText(away, '—');
+          setScaleX(fill, 0.5);
+          continue;
+        }
+        const [a, b] = paire;
         const format = row.format ?? ((v: number) => String(Math.round(v)));
         setText(home, format(a));
         setText(away, format(b));

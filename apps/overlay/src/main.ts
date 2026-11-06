@@ -427,7 +427,7 @@ function renderDebug(state: MatchState, now: number, clockMs: number): void {
     `phase       ${state.phase}`,
     `chrono      ${(clockMs / 60000).toFixed(2)} min`,
     `score       ${state.score[0]}-${state.score[1]}`,
-    `ballon      ${state.ball.x.toFixed(2)} / ${state.ball.y.toFixed(2)}`,
+    `ballon      ${state.ball ? `${state.ball.x.toFixed(2)} / ${state.ball.y.toFixed(2)}` : 'aucune position'}`,
     `attaque     ${state.attack.side ?? '—'} ${state.attack.intensity}`,
     `pression    ${state.pressure.home.toFixed(1)} / ${state.pressure.away.toFixed(1)}`,
     `rendu à     ${new Date(now).toISOString().slice(11, 23)}`,

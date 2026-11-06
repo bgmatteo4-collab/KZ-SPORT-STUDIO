@@ -190,6 +190,29 @@ html {
 
 /* ═══════════════════════════════ Les écus ═════════════════════════════════ */
 
+.crest__abbr {
+  position: relative;
+  z-index: 1;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+/* Le vrai écusson, par-dessus l'écu dessiné. Il ne le remplace pas : il le
+   recouvre, pour que l'écu reparaisse tout seul si l'image disparaît. */
+.crest__img {
+  position: absolute;
+  left: 13%;
+  top: 13%;
+  width: 74%;
+  height: 74%;
+  object-fit: contain;
+  z-index: 2;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.crest[data-logo='1'] .crest__abbr {
+  opacity: 0;
+}
+
 .crest {
   position: relative;
   flex: none;
@@ -285,10 +308,10 @@ html {
 /* Le cartouche de compétition, soudé à l'extrémité droite de la bande. */
 .banner__comp {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: var(--s2);
   padding: 0 var(--s3);
   text-align: center;
   /* Un voile superposé plutôt que `color-mix` : celui-ci n'existe pas avant
@@ -297,6 +320,33 @@ html {
     linear-gradient(160deg, rgba(255, 255, 255, 0.16) 0%, rgba(0, 0, 0, 0.3) 100%),
     var(--accent);
   color: #10131c;
+}
+
+.banner__comp-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Tant que l'image n'a pas chargé, elle n'occupe aucune place : le cartouche
+   doit être juste avec OU sans emblème, pas seulement avec. */
+.banner__comp-logo {
+  display: none;
+  width: 52px;
+  height: 52px;
+  flex: none;
+  object-fit: contain;
+}
+
+.banner__comp[data-logo='1'] .banner__comp-logo {
+  display: block;
+}
+
+.banner__comp[data-logo='1'] .banner__comp-name {
+  font-size: 16px;
 }
 
 .banner__comp-name {

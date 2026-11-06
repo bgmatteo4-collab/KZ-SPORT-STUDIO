@@ -168,6 +168,7 @@ export class EspnProvider implements Provider {
         const src: SourceEspn = {
           event,
           ligue: this.options.ligue,
+          ...(bord.leagues?.[0] ? { ligueInfos: bord.leagues[0] } : {}),
           ...(this.resumeEnCache ? { summary: this.resumeEnCache } : {}),
           ...(this.options.avecMultiplex
             ? { autres: tous.filter((e) => e.id !== this.eventId) }
@@ -259,6 +260,7 @@ export async function capturerUneFois(
 
   const src: SourceEspn = {
     ligue,
+    ...(bord.leagues?.[0] ? { ligueInfos: bord.leagues[0] } : {}),
     ...(event ? { event } : {}),
     summary,
     autres: tous.filter((e) => e.id !== eventId),

@@ -91,7 +91,14 @@ export interface MatchStats {
   corners: Pair;
   fouls: Pair;
   offsides: Pair;
-  xg: Pair;
+  /**
+   * ABSENT quand le fournisseur n'en publie pas — ESPN, par exemple, et le
+   * palier gratuit de Sportmonks. Ce n'est pas un détail de typage : afficher
+   * « 0.00 » affirme que les deux équipes n'ont rien créé, ce qui est un
+   * mensonge à l'antenne. L'absence doit être représentable pour pouvoir être
+   * dite.
+   */
+  xg?: Pair;
   passes: Pair;
   passAccuracy: Pair;
   yellowCards: Pair;
@@ -105,7 +112,6 @@ export const EMPTY_STATS: MatchStats = {
   corners: [0, 0],
   fouls: [0, 0],
   offsides: [0, 0],
-  xg: [0, 0],
   passes: [0, 0],
   passAccuracy: [0, 0],
   yellowCards: [0, 0],
@@ -117,6 +123,12 @@ export interface MatchMeta {
   competition: string;
   /** Identifiant d'habillage : « ucl », « ligue1 »… */
   competitionTheme: string;
+  /**
+   * L'URL du logo de la compétition, quand le fournisseur en donne une. Le
+   * cartouche doré porte alors l'emblème plutôt que seulement des lettres —
+   * et retombe sur le nom écrit si l'image ne charge pas.
+   */
+  competitionCrest?: string;
   round?: string;
   venue?: string;
   home: Team;
@@ -167,6 +179,31 @@ export type MatchEvent =
 
 export type MatchEventKind = MatchEvent['kind'];
 
+/**
+ * Les familles d'événements qui ne révèlent RIEN du direct.
+ *
+ * Le décalage anti-spoiler existe pour qu'un but n'apparaisse pas à l'écran
+ * avant que le spectateur ne le voie. Mais le nom des équipes, le stade, la
+ * composition annoncée une heure avant, les cotes et le classement ne spoilent
+ * rien : ils étaient vrais bien avant le coup d'envoi.
+ *
+ * Les soumettre au décalage a une conséquence qu'on ne voit qu'en situation :
+ * au démarrage, le plateau reste VIDE pendant toute la durée du décalage. Et
+ * un serveur relancé en pleine émission vide l'écran pendant une minute.
+ */
+export const CONTEXTE: readonly MatchEventKind[] = ['meta', 'lineup', 'odds', 'standings'];
+
+export function estContexte(kind: MatchEventKind): boolean {
+  return CONTEXTE.includes(kind);
+}
+
+/**
+ * De combien on antidate le contexte. Une heure : largement plus que tout
+ * décalage qu'on réglera jamais en régie, et sans effet sur un rejeu, dont le
+ * contexte est déjà daté du coup d'envoi.
+ */
+export const RECUL_CONTEXTE = 3_600_000;
+
 export interface ClockAnchorPayload {
   /** Chrono du match à l'instant `t` de l'événement. */
   matchMs: number;
@@ -205,6 +242,12 @@ export interface TeamBrief {
   colorAlt?: string;
   /** Le maillot. Uni par défaut : rayer tout le monde est faux et se voit. */
   kit?: Kit;
+  /**
+   * L'URL d'un vrai écusson, quand le fournisseur en donne une. Rien n'est
+   * rangé dans le dépôt — et si l'image ne charge pas, l'écu dessiné reste
+   * dessous.
+   */
+  crest?: string;
 }
 
 export type Kit = 'plain' | 'striped' | 'hoops';
@@ -301,7 +344,12 @@ export interface MatchState {
   stats: MatchStats;
   lineups: { home: LineupPayload | null; away: LineupPayload | null };
   ratings: { home: Record<string, number>; away: Record<string, number> };
-  ball: { x: number; y: number };
+  /**
+   * NULL tant qu'aucun fournisseur n'a donné de position. Le centre du terrain
+   * est une position comme une autre : s'en servir par défaut dessine un
+   * ballon au rond central et fait croire au spectateur qu'on suit le jeu.
+   */
+  ball: { x: number; y: number } | null;
   attack: { side: Side | null; intensity: AttackIntensity };
   otherMatches: OtherMatch[];
   standings: StandingRow[];

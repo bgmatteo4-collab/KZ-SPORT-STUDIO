@@ -24,14 +24,63 @@ export function crestEl(extraClass = ''): HTMLElement {
 export function paintCrest(el: HTMLElement, team: AnyTeam | undefined | null): void {
   if (!team) {
     el.style.background = 'var(--pill)';
-    if (el.textContent !== '') el.textContent = '';
+    poser(el, '', undefined);
     return;
   }
   const alt = team.colorAlt ?? shade(team.color, -28);
-  const background = `linear-gradient(160deg, ${team.color} 0%, ${alt} 100%)`;
+  // Un vrai écusson a besoin d'un fond NEUTRE : le blanc du Real Madrid sur un
+  // dégradé blanc disparaît complètement. Tant qu'aucune image n'a chargé, on
+  // garde les couleurs du club, qui portent le trigramme.
+  const avecLogo = el.getAttribute('data-logo') === '1';
+  const background = avecLogo
+    ? 'linear-gradient(160deg, rgba(16,20,36,0.94) 0%, rgba(8,11,20,0.96) 100%)'
+    : `linear-gradient(160deg, ${team.color} 0%, ${alt} 100%)`;
   if (el.style.background !== background) el.style.background = background;
   el.style.color = readable(team.color);
-  if (el.textContent !== team.abbr) el.textContent = team.abbr;
+  poser(el, team.abbr, team.crest);
+}
+
+/**
+ * Le trigramme, et par-dessus le vrai écusson quand on en a l'adresse.
+ *
+ * Aucun logo n'est rangé dans le dépôt : l'URL vient de la donnée en direct,
+ * donc rien de déposé n'est redistribué. Et si l'image ne charge pas — hors
+ * ligne, 404, réseau coupé en pleine émission — elle se retire et l'écu dessiné
+ * reste dessous. Le plateau ne montre jamais un trou.
+ */
+function poser(el: HTMLElement, abbr: string, url: string | undefined): void {
+  let label = el.querySelector<HTMLElement>('.crest__abbr');
+  if (!label) {
+    el.textContent = '';
+    label = h('span', { class: 'crest__abbr' });
+    el.append(label);
+  }
+  if (label.textContent !== abbr) label.textContent = abbr;
+
+  const img = el.querySelector<HTMLImageElement>('.crest__img');
+  if (!url) {
+    if (img) img.remove();
+    el.removeAttribute('data-logo');
+    return;
+  }
+  if (img) {
+    if (img.getAttribute('src') !== url) {
+      el.removeAttribute('data-logo');
+      img.setAttribute('src', url);
+    }
+    return;
+  }
+  const n = document.createElement('img');
+  n.className = 'crest__img';
+  n.alt = '';
+  n.decoding = 'async';
+  n.addEventListener('load', () => el.setAttribute('data-logo', '1'));
+  n.addEventListener('error', () => {
+    n.remove();
+    el.removeAttribute('data-logo');
+  });
+  n.setAttribute('src', url);
+  el.append(n);
 }
 
 /**

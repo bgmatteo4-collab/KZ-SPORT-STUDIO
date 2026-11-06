@@ -165,12 +165,40 @@ test('la composition reprend la formation calculée par ESPN', () => {
 });
 
 test('l’horloge est lue en secondes, et le temps additionnel dans l’affichage', () => {
-  const horloge = traduire(echantillon(), T, nouvelEtat()).find((e) => e.kind === 'clock');
-  assert.ok(horloge);
-  const p = horloge.payload as { matchMs: number; phase: string; addedMinutes?: number };
+  // La DERNIÈRE ancre est celle du présent : les précédentes datent des faits
+  // du passé, et elles sont postées à l'instant de chaque fait.
+  const horloges = traduire(echantillon(), T, nouvelEtat()).filter((e) => e.kind === 'clock');
+  assert.ok(horloges.length > 1, 'les faits du passé portent chacun leur ancre');
+  const p = horloges[horloges.length - 1]!.payload as {
+    matchMs: number;
+    phase: string;
+    addedMinutes?: number;
+  };
   assert.equal(p.matchMs, 5_400_000, '5400 secondes = 90 minutes');
   assert.equal(p.phase, 'full_time');
   assert.equal(p.addedMinutes, 4, '« 90\'+4\' » porte le temps additionnel');
+});
+
+test('chaque but du passé est précédé d’une ancre d’horloge à SON instant', () => {
+  // Le défaut que ce test empêche, et qui n'était visible que sur une capture
+  // d'écran du plateau : nos événements sont triés par instant RÉEL, donc un
+  // but d'il y a deux heures est réduit AVANT l'ancre d'horloge du présent.
+  // Le réducteur calculait alors sa minute sur une horloge encore à zéro, et
+  // les cinq buts s'affichaient « 1' ».
+  const evenements = traduire(echantillon(), T, nouvelEtat());
+  const buts = evenements.filter((e) => e.kind === 'goal');
+  assert.equal(buts.length, 5);
+
+  const minutes = buts.map((but) => {
+    const avant = evenements.filter((e) => e.kind === 'clock' && e.t <= but.t);
+    const ancre = avant[avant.length - 1];
+    assert.ok(ancre, 'aucune ancre d’horloge avant ce but');
+    assert.equal(ancre.t, but.t, 'l’ancre doit être posée à l’instant exact du but');
+    return Math.floor((ancre.payload as { matchMs: number }).matchMs / 60_000) + 1;
+  });
+
+  // Les vraies minutes de AEK Athènes – Real Madrid, et surtout : aucune « 1 ».
+  assert.deepEqual(minutes, [12, 32, 75, 78, 91]);
 });
 
 // ─────────────────────────── Les unités, le piège ────────────────────────────

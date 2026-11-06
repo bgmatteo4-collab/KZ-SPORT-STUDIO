@@ -9,8 +9,10 @@
 
 import {
   DEFAULT_CONTROL,
+  estContexte,
   findScene,
   findTheme,
+  RECUL_CONTEXTE,
   type Command,
   type ControlState,
   type MatchEvent,
@@ -45,9 +47,16 @@ export class Hub {
   /** Point d'entrée des fournisseurs. Idempotent par `seq`. */
   ingest(incoming: readonly MatchEvent[]): void {
     const fresh: MatchEvent[] = [];
-    for (const event of incoming) {
-      if (this.seen.has(event.seq)) continue;
-      this.seen.add(event.seq);
+    for (const brut of incoming) {
+      if (this.seen.has(brut.seq)) continue;
+      this.seen.add(brut.seq);
+      // Le contexte — équipes, compositions, cotes, classement — ne spoile
+      // rien et n'a donc aucune raison d'attendre le décalage. Sans cet
+      // antidatage, le plateau reste vide pendant toute la durée du décalage
+      // au démarrage, et une relance en pleine émission vide l'écran.
+      const event = estContexte(brut.kind)
+        ? ({ ...brut, t: brut.t - RECUL_CONTEXTE } as MatchEvent)
+        : brut;
       this.events.push(event);
       fresh.push(event);
     }

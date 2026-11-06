@@ -59,7 +59,7 @@ export function initialState(t = 0): MatchState {
     standings: [],
     odds: null,
     audience: null,
-    ball: { x: 0.5, y: 0.5 },
+    ball: null,
     attack: { side: null, intensity: 'none' },
     pressure: { home: 0, away: 0 },
     pressureLog: [],
@@ -157,7 +157,9 @@ function applyInto(draft: MatchState, event: MatchEvent): void {
         stats.shotsOnTarget = bump(stats.shotsOnTarget, event.payload.side);
       }
       if (event.payload.xg) {
-        stats.xg = bump(stats.xg, event.payload.side, event.payload.xg);
+        // `xg` n'existe que si un fournisseur en a donné : on part de zéro au
+        // premier tir chiffré, pas avant.
+        stats.xg = bump(stats.xg ?? [0, 0], event.payload.side, event.payload.xg);
       }
       draft.stats = stats;
       pushPressure(

@@ -9,3 +9,16 @@ dist-showcase/
 
 # État de la régie, propre à une installation
 .kz/
+
+# Artefacts de compilation À CÔTÉ des sources.
+#
+# Piège rencontré pour de vrai, et coûteux : nos imports ESM s'écrivent
+# « from './radar2d.js' ». Dès qu'un .js compilé existe à côté du .ts, Vite
+# sert CELUI-LÀ et ignore la source. Le navigateur affiche alors une
+# photographie du code, et on débogue pendant une heure une correction qui est
+# pourtant bien dans le fichier.
+packages/**/*.js
+packages/**/*.d.ts
+apps/**/src/**/*.js
+apps/**/src/**/*.d.ts
+*.tsbuildinfo

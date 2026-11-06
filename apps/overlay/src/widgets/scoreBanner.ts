@@ -31,7 +31,15 @@ export const scoreBanner: WidgetFactory = (): Widget => {
 
   const compName = h('div', { class: 'banner__comp-name' }, ['']);
   const compRound = h('div', { class: 'banner__comp-round' }, ['']);
-  const compCap = h('div', { class: 'banner__comp' }, [compName, compRound]);
+  // L'emblème de la compétition, quand le fournisseur en donne l'adresse. Il
+  // ne remplace pas le nom : à l'antenne, un logo seul laisse le spectateur
+  // qui ne le reconnaît pas sans rien. Il le précède.
+  const compLogo = h('img', { class: 'banner__comp-logo', alt: '', decoding: 'async' });
+  const compText = h('div', { class: 'banner__comp-text' }, [compName, compRound]);
+  const compCap = h('div', { class: 'banner__comp' }, [compLogo, compText]);
+  compLogo.addEventListener('load', () => compCap.setAttribute('data-logo', '1'));
+  compLogo.addEventListener('error', () => compCap.removeAttribute('data-logo'));
+  let embleme = '';
 
   const scorersHome = h('div', { class: 'banner__scorers banner__scorers--home' });
   const scorersAway = h('div', { class: 'banner__scorers' });
@@ -79,6 +87,14 @@ export const scoreBanner: WidgetFactory = (): Widget => {
       const [competition, round] = splitCompetition(meta?.competition, meta?.round);
       setText(compName, competition);
       setText(compRound, round);
+
+      const voulu = meta?.competitionCrest ?? '';
+      if (voulu !== embleme) {
+        embleme = voulu;
+        compCap.removeAttribute('data-logo');
+        if (voulu) compLogo.setAttribute('src', voulu);
+        else compLogo.removeAttribute('src');
+      }
 
       const label = clockLabel(clockMs, state.phase, state.clock.addedMinutes);
       const running =

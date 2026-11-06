@@ -9,11 +9,11 @@
     "dev:server": "tsx watch apps/server/src/index.ts",
     "dev:web": "vite",
     "build": "tsc -b && vite build",
-    "check": "tsc -b --noEmit false --emitDeclarationOnly false || tsc -b",
+    "check": "tsc --noEmit -p tsconfig.json",
     "fixture": "tsx packages/providers/src/generate-fixture.ts",
     "showcase": "vite build --config vite.showcase.config.ts && python3 tools/assemble-showcase.py",
     "test": "tsx --test \"packages/**/*.test.ts\"",
-    "verify": "tsc --noEmit -p tsconfig.json && pnpm test && python3 tools/lint-obs-css.py",
+    "verify": "tsc --noEmit -p tsconfig.json && pnpm test && python3 tools/lint-obs-css.py && python3 tools/lint-sources.py",
     "sportmonks": "tsx tools/sportmonks.ts",
     "espn": "tsx tools/espn.ts"
   },

@@ -40,7 +40,9 @@ import type {
 } from '@kz/core';
 import {
   LIGUES,
+  logoDeLigue,
   maillotDeviné,
+  type EspnLeague,
   type EspnBoxscoreTeam,
   type EspnCompetitor,
   type EspnDetail,
@@ -113,6 +115,8 @@ export interface SourceEspn {
   autres?: EspnEvent[];
   /** L'identifiant de championnat ESPN, pour nommer la compétition. */
   ligue?: string;
+  /** Le bloc « leagues » du tableau de bord : il porte l'emblème officiel. */
+  ligueInfos?: EspnLeague;
 }
 
 // ────────────────────────────────── Outils ──────────────────────────────────
@@ -230,6 +234,10 @@ function equipe(t: EspnTeam | undefined, uniforme?: { color?: string; alternateC
   // c'est ce que le spectateur a sous les yeux.
   const principale = couleur(uniforme?.color) ?? couleur(t.color) ?? GRIS_INCONNU;
   const seconde = couleur(uniforme?.alternateColor) ?? couleur(t.alternateColor);
+  // Le vrai écusson, servi par ESPN. On ne le RANGE pas dans le dépôt : on
+  // garde l'adresse, qui vient de la donnée en direct. Et l'écu dessiné reste
+  // dessous, donc une image qui ne charge pas ne laisse jamais de trou.
+  const logo = t.logo ?? t.logos?.find((l) => l.href)?.href;
   return {
     id: t.id ?? nom,
     name: nom,
@@ -238,9 +246,7 @@ function equipe(t: EspnTeam | undefined, uniforme?: { color?: string; alternateC
     color: principale,
     ...(seconde ? { colorAlt: seconde } : {}),
     ...(kit ? { kit } : {}),
-    // `crest` reste VIDE volontairement. ESPN sert de vrais écussons sur son
-    // CDN, mais les embarquer veut dire une dépendance réseau en direct et des
-    // logos qui ne nous appartiennent pas. Nos écus générés tiennent l'antenne.
+    ...(logo ? { crest: logo } : {}),
   };
 }
 
@@ -251,6 +257,7 @@ function bref(t: Team): TeamBrief {
     color: t.color,
     ...(t.colorAlt ? { colorAlt: t.colorAlt } : {}),
     ...(t.kit ? { kit: t.kit } : {}),
+    ...(t.crest ? { crest: t.crest } : {}),
   };
 }
 
@@ -389,9 +396,13 @@ function classement(st: EspnStandings | undefined, etat: EtatTraduction): Standi
     // plutôt que des couleurs plausibles et fausses.
     const connue = e.id ? etat.repertoire.get(e.id) : undefined;
     if (!connue) inconnues += 1;
+    // Le classement, lui, porte son propre logo : même une équipe qu'on n'a
+    // pas croisée ce soir aura donc son vrai écusson.
+    const embleme = e.logo?.find((l) => l.href)?.href;
+    const base: TeamBrief = connue ?? { abbr: trigramme(nom), short: nom, color: GRIS_INCONNU };
     lignes.push({
       rank: stat('rank') ?? lignes.length + 1,
-      team: connue ?? { abbr: trigramme(nom), short: nom, color: GRIS_INCONNU },
+      team: embleme && !base.crest ? { ...base, crest: embleme } : base,
       played: stat('gamesPlayed') ?? 0,
       diff: stat('pointDifferential') ?? 0,
       points: stat('points') ?? 0,
@@ -527,16 +538,63 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
     return now;
   };
 
+  /**
+   * Ancrer l'horloge SUR un fait du passé.
+   *
+   * Sans ça, un but rattrapé au branchement s'affiche « 1' ». La raison est
+   * subtile et m'a sauté aux yeux sur une capture d'écran : nos événements
+   * sont triés par instant RÉEL, donc un but d'il y a deux heures est réduit
+   * AVANT l'ancre d'horloge du présent. Le réducteur calcule alors sa minute
+   * sur une horloge encore à zéro.
+   *
+   * ESPN donne le chrono de chaque fait. On pose donc, juste avant lui et au
+   * même instant, une ancre qui dit « à cet instant, le match en était là ».
+   * `running: false` volontairement : entre deux faits, figer est exact, alors
+   * qu'extrapoler traverserait les mi-temps et les arrêts de jeu.
+   */
+  const ancrerSurLeFait = (f: EspnDetail | EspnKeyEvent, t: number): void => {
+    // Un fait récent n'en a pas besoin : l'ancre du tour courant le couvre.
+    if (now - t < 120_000) return;
+    const sec = nombre(f.clock?.value);
+    if (sec === null) return;
+    const periode = 'period' in f ? nombre(f.period?.number) : null;
+    const ph: MatchPhase =
+      periode === 1
+        ? 'first_half'
+        : periode === 2
+          ? 'second_half'
+          : periode === 3
+            ? 'extra_first'
+            : periode === 4
+              ? 'extra_second'
+              : periode === 5
+                ? 'penalties'
+                : sec >= 45 * 60
+                  ? 'second_half'
+                  : 'first_half';
+    // Le chrono d'ESPN plafonne à la fin réglementaire : un but à la 90e+2 a
+    // `clock.value` 5400 et le « +2 » dans l'affichage seulement.
+    const ajout = tempsAdditionnel(f.clock?.displayValue);
+    emettre('clock', t, {
+      matchMs: sec * 1000,
+      running: false,
+      phase: ph,
+      ...(ajout !== null ? { addedMinutes: ajout } : {}),
+    });
+  };
+
   const coteDe = (id?: string): Side | null =>
     id && id === etat.domicile ? 'home' : id && id === etat.exterieur ? 'away' : null;
 
   // ── meta ──────────────────────────────────────────────────────────────────
   if (eqDom && eqExt) {
     const ligue = src.ligue ? LIGUES[src.ligue] : undefined;
+    const embleme = logoDeLigue(src.ligueInfos);
     const meta = {
       id: ev?.id ?? `${eqDom.id}-${eqExt.id}`,
-      competition: ligue?.nom ?? src.ligue ?? 'Football',
+      competition: ligue?.nom ?? src.ligueInfos?.name ?? src.ligue ?? 'Football',
       competitionTheme: ligue?.theme ?? 'kztv',
+      ...(embleme ? { competitionCrest: embleme } : {}),
       home: eqDom,
       away: eqExt,
       kickoff: etat.coupDEnvoi ?? now,
@@ -656,6 +714,7 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
         etat.emis.delete(cle);
         continue;
       }
+      ancrerSurLeFait(f, t);
       emettre('goal', t, {
         side: camp,
         score: apres,
@@ -669,6 +728,7 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
 
     // ── un carton ───────────────────────────────────────────────────────────
     if ((rouge || jaune) && camp) {
+      ancrerSurLeFait(f, t);
       emettre('card', t, {
         side: camp,
         card: rouge ? 'red' : 'yellow',
@@ -680,6 +740,7 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
     // ── un remplacement ─────────────────────────────────────────────────────
     if (estRemplacement) {
       if (!camp) continue;
+      ancrerSurLeFait(f, t);
       emettre('substitution', t, {
         side: camp,
         ...(athletes[0] ? { in: athletes[0] } : {}),

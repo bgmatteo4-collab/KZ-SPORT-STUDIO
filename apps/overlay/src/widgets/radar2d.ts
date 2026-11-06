@@ -37,8 +37,10 @@ const TRAIL = 16;
 export const radar2d: WidgetFactory = (): Widget => {
   const crestHome = crestEl();
   const crestAway = crestEl();
-  const xgHome = h('div', { class: 'radar__xg' }, ['0.00']);
-  const xgAway = h('div', { class: 'radar__xg' }, ['0.00']);
+  // Un tiret, pas « 0.00 » : tant qu'aucun fournisseur n'a donné d'xG, zéro
+  // serait une affirmation, et elle serait fausse.
+  const xgHome = h('div', { class: 'radar__xg' }, ['—']);
+  const xgAway = h('div', { class: 'radar__xg' }, ['—']);
 
   const plate = (crest: HTMLElement, xg: HTMLElement) =>
     h('div', { class: 'radar__plate' }, [crest, xg, h('div', { class: 't-caption' }, ['xG'])]);
@@ -87,8 +89,9 @@ export const radar2d: WidgetFactory = (): Widget => {
     update({ state, theme, realNow }: WidgetContext) {
       paintCrest(crestHome, state.meta?.home);
       paintCrest(crestAway, state.meta?.away);
-      setText(xgHome, state.stats.xg[0].toFixed(2));
-      setText(xgAway, state.stats.xg[1].toFixed(2));
+      const xg = state.stats.xg;
+      setText(xgHome, xg ? xg[0].toFixed(2) : '—');
+      setText(xgAway, xg ? xg[1].toFixed(2) : '—');
 
       // Temps RÉEL, pour la même raison que le carton plein écran.
       if (goalUntil !== 0 && realNow >= goalUntil) {
@@ -104,11 +107,16 @@ export const radar2d: WidgetFactory = (): Widget => {
           : state.attack.side === 'away'
             ? state.meta?.away.short
             : null;
+      // Aucun fournisseur gratuit ne publie la position du ballon. Dessiner un
+      // ballon au rond central ferait croire au spectateur qu'on suit le jeu —
+      // c'est le pire mensonge que ce plateau puisse dire, parce qu'il est
+      // crédible. On affiche un terrain vide, et on explique pourquoi.
+      const sansBallon = state.ball === null;
       setAttr(stateBox, 'data-on', celebrating ? '0' : '1');
-      setAttr(stateBox, 'data-intensity', intensity);
-      setText(stateWhat, INTENSITY_LABEL[intensity]);
+      setAttr(stateBox, 'data-intensity', sansBallon ? 'none' : intensity);
+      setText(stateWhat, sansBallon ? 'Position du ballon indisponible' : INTENSITY_LABEL[intensity]);
       // Pas de camp qui attaque : pas de ligne. Un tiret est du bruit.
-      setText(stateTeam, team ?? '');
+      setText(stateTeam, sansBallon ? '' : (team ?? ''));
 
       const context = canvas.getContext('2d');
       if (!context) return;
@@ -126,14 +134,19 @@ export const radar2d: WidgetFactory = (): Widget => {
       const w = canvas.width;
       const hgt = canvas.height;
 
-      drawnX += (state.ball.x - drawnX) * 0.12;
-      drawnY += (state.ball.y - drawnY) * 0.12;
-      // Un nœud par relevé, pas par image : la traînée doit dessiner le CHEMIN
-      // du ballon, pas une bouillie de soixante points par seconde.
-      const last = trail[trail.length - 1];
-      if (!last || Math.hypot(last.x - drawnX, last.y - drawnY) > 0.022) {
-        trail.push({ x: drawnX, y: drawnY });
-        if (trail.length > TRAIL) trail.shift();
+      const ballon = state.ball;
+      if (ballon) {
+        drawnX += (ballon.x - drawnX) * 0.12;
+        drawnY += (ballon.y - drawnY) * 0.12;
+        // Un nœud par relevé, pas par image : la traînée doit dessiner le
+        // CHEMIN du ballon, pas une bouillie de soixante points par seconde.
+        const last = trail[trail.length - 1];
+        if (!last || Math.hypot(last.x - drawnX, last.y - drawnY) > 0.022) {
+          trail.push({ x: drawnX, y: drawnY });
+          if (trail.length > TRAIL) trail.shift();
+        }
+      } else if (trail.length > 0) {
+        trail.length = 0;
       }
 
       context.clearRect(0, 0, w, hgt);
@@ -141,8 +154,10 @@ export const radar2d: WidgetFactory = (): Widget => {
 
       if (!celebrating) {
         drawAttack(context, w, hgt, state.attack, theme.tokens);
-        drawTrail(context, w, hgt, trail, theme.tokens);
-        drawBall(context, w, hgt, drawnX, drawnY, theme.tokens);
+        if (ballon) {
+          drawTrail(context, w, hgt, trail, theme.tokens);
+          drawBall(context, w, hgt, drawnX, drawnY, theme.tokens);
+        }
       }
     },
   };

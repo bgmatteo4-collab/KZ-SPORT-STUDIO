@@ -141,7 +141,9 @@ test('sans métadonnées, l’état reste exploitable', () => {
   const etat = reduce([], T0);
   assert.equal(etat.meta, null);
   assert.deepEqual(etat.score, [0, 0]);
-  assert.deepEqual(etat.ball, { x: 0.5, y: 0.5 });
+  // Surtout PAS le rond central : une position par défaut fait dessiner un
+  // ballon là où on ne sait rien, et le spectateur croit qu'on suit le jeu.
+  assert.equal(etat.ball, null);
   assert.equal(etat.goals.length, 0);
   assert.equal(etat.standings.length, 0);
 });
