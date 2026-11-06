@@ -43,6 +43,7 @@ import {
   logoDeLigue,
   maillotDeviné,
   type EspnLeague,
+  type EspnPlay,
   type EspnBoxscoreTeam,
   type EspnCompetitor,
   type EspnDetail,
@@ -552,7 +553,7 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
    * `running: false` volontairement : entre deux faits, figer est exact, alors
    * qu'extrapoler traverserait les mi-temps et les arrêts de jeu.
    */
-  const ancrerSurLeFait = (f: EspnDetail | EspnKeyEvent, t: number): void => {
+  const ancrerSurLeFait = (f: EspnDetail | EspnKeyEvent | EspnPlay, t: number): void => {
     // Un fait récent n'en a pas besoin : l'ancre du tour courant le couvre.
     if (now - t < 120_000) return;
     const sec = nombre(f.clock?.value);
@@ -754,6 +755,98 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
 
     // Un type qu'on ne connaît pas. On ne devine pas, on le signale.
     if (slug || libelle) etat.lacunes.add(`type de fait non traduit : ${slug || libelle}`);
+  }
+
+  // ── Le fil du match ───────────────────────────────────────────────────────
+  //
+  // La matière la plus riche d'ESPN, et la dernière qu'on ait ouverte : chaque
+  // ligne de commentaire porte une action TYPÉE, son équipe, ses joueurs, et
+  // surtout sa POSITION sur le terrain. C'est ce qui permet de dire d'où un
+  // tir a été tenté — l'information qui manque le plus quand on ne voit pas
+  // les images.
+  //
+  // Une réserve honnête : l'équipe n'est donnée QUE par son nom d'affichage,
+  // sans identifiant. On compare donc des chaînes, et un fournisseur qui
+  // changerait sa façon d'écrire « Real Madrid » nous ferait perdre le camp.
+  // D'où la lacune inscrite plutôt qu'une attribution au hasard.
+  for (const ligne of src.summary?.commentary ?? []) {
+    const play = ligne.play;
+    const genre = play?.type?.type;
+    if (!play || !genre) continue;
+
+    const nom = play.team?.displayName;
+    const camp: Side | null =
+      nom && eqDom && nom === eqDom.name
+        ? 'home'
+        : nom && eqExt && nom === eqExt.name
+          ? 'away'
+          : null;
+    if (!camp) {
+      if (nom) etat.lacunes.add(`équipe du fil non reconnue : ${nom}`);
+      continue;
+    }
+
+    const tireur = joueur(play.participants?.[0]?.athlete);
+    const cle = `fil:${play.id ?? `${genre}:${play.clock?.value}:${nom}`}`;
+    if (etat.emis.has(cle)) continue;
+
+    const quandPlay = play.wallclock ? Date.parse(play.wallclock) : NaN;
+    const sec = nombre(play.clock?.value);
+    const t = Number.isFinite(quandPlay)
+      ? quandPlay
+      : sec !== null && etat.coupDEnvoi !== null
+        ? etat.coupDEnvoi + sec * 1000
+        : now;
+
+    const x = nombre(play.fieldPositionX);
+    const y = nombre(play.fieldPositionY);
+    const place = x !== null && y !== null ? { x, y } : {};
+
+    switch (genre) {
+      case 'shot-on-target':
+      case 'shot-off-target':
+      case 'shot-blocked': {
+        etat.emis.add(cle);
+        ancrerSurLeFait(play, t);
+        emettre('shot', t, {
+          side: camp,
+          onTarget: genre === 'shot-on-target',
+          outcome: genre === 'shot-on-target' ? 'on_target' : genre === 'shot-blocked' ? 'blocked' : 'off_target',
+          ...place,
+          ...(tireur ? { player: tireur } : {}),
+        });
+        break;
+      }
+      case 'goal': {
+        // Le but est déjà annoncé par les faits marquants ; ici on ne retient
+        // que la FRAPPE, pour que la carte des tirs sache où elle est partie.
+        etat.emis.add(cle);
+        ancrerSurLeFait(play, t);
+        emettre('shot', t, {
+          side: camp,
+          onTarget: true,
+          outcome: 'goal',
+          ...place,
+          ...(tireur ? { player: tireur } : {}),
+        });
+        break;
+      }
+      case 'corner-awarded': {
+        etat.emis.add(cle);
+        emettre('corner', t, { side: camp });
+        break;
+      }
+      case 'offside': {
+        etat.emis.add(cle);
+        emettre('offside', t, { side: camp });
+        break;
+      }
+      default:
+        // Fautes, arrêts de jeu, cartons et remplacements sont déjà portés par
+        // les faits marquants ou par les statistiques. On marque pour ne pas
+        // réexaminer, sans rien émettre.
+        etat.emis.add(cle);
+    }
   }
 
   // ── statistiques ──────────────────────────────────────────────────────────

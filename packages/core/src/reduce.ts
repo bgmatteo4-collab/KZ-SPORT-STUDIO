@@ -53,6 +53,7 @@ export function initialState(t = 0): MatchState {
     cards: [],
     subs: [],
     stats: { ...EMPTY_STATS },
+    shots: [],
     lineups: { home: null, away: null },
     ratings: { home: {}, away: {} },
     otherMatches: [],
@@ -156,6 +157,18 @@ function applyInto(draft: MatchState, event: MatchEvent): void {
       if (event.payload.onTarget) {
         stats.shotsOnTarget = bump(stats.shotsOnTarget, event.payload.side);
       }
+      // La frappe est CONSERVÉE, pas seulement comptée : un compteur dit
+      // combien, une carte dit d'où — et c'est « d'où » qui manque le plus
+      // quand on ne voit pas les images.
+      draft.shots = [
+        ...draft.shots,
+        {
+          ...event.payload,
+          seq: event.seq,
+          t: event.t,
+          minute: minuteLabel(matchClockAt(draft.clock, event.t), draft.phase),
+        },
+      ];
       if (event.payload.xg) {
         // `xg` n'existe que si un fournisseur en a donné : on part de zéro au
         // premier tir chiffré, pas avant.

@@ -56,6 +56,9 @@ const SEC = 1_000;
  * pas.
  */
 export const INSERTS: InsertSpec[] = [
+  // La carte des tirs en tête : c'est elle qui dit le DANGER, et le danger est
+  // ce qu'on perd le plus sûrement quand on ne voit pas les images.
+  { id: 'tirs', widget: 'shotmap', holdMs: 16 * SEC },
   { id: 'classement', widget: 'standings', holdMs: 14 * SEC },
   { id: 'momentum', widget: 'momentum', holdMs: 12 * SEC },
 ];

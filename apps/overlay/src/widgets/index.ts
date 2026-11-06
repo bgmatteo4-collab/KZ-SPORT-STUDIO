@@ -17,6 +17,7 @@ import { odds } from './odds.js';
 import { prematch } from './prematch.js';
 import { radar2d } from './radar2d.js';
 import { sheet } from './sheet.js';
+import { shotmap } from './shotmap.js';
 import { scoreBanner } from './scoreBanner.js';
 import { standings } from './standings.js';
 import { stats } from './stats.js';
@@ -58,6 +59,7 @@ export const REGISTRY: Record<string, WidgetFactory> = {
   // fournit — le widget, lui, est écrit et testé.
   radar2d,
   sheet,
+  shotmap,
 
   // À écrire
   radar3d: stub('radar3d'),

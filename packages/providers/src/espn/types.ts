@@ -186,7 +186,21 @@ export interface EspnSummary {
    * de rattraper un match déjà commencé avec les bonnes minutes.
    */
   keyEvents?: EspnKeyEvent[];
-  commentary?: { sequence?: number; time?: { value?: number; displayValue?: string }; text?: string }[];
+  /**
+   * Le fil du match. Ce n'est PAS que de la prose : chaque ligne porte un
+   * objet `play` typé, avec l'équipe, les joueurs, l'instant réel — et, pour
+   * 92 actions sur 107, la POSITION SUR LE TERRAIN.
+   *
+   * C'est la donnée la plus riche de tout ce qu'ESPN publie, et la seule qui
+   * permette de dire d'OÙ un tir a été tenté. On l'avait sous les yeux sans
+   * jamais l'ouvrir.
+   */
+  commentary?: {
+    sequence?: number;
+    time?: { value?: number; displayValue?: string };
+    text?: string;
+    play?: EspnPlay;
+  }[];
   standings?: EspnStandings;
   odds?: EspnOdds[];
   header?: unknown;
@@ -242,6 +256,30 @@ export interface EspnKeyEvent {
   /** Instant RÉEL du fait, en ISO 8601. Absent sur certains types. */
   wallclock?: string;
   shootout?: boolean;
+}
+
+/**
+ * Une action du fil, typée.
+ *
+ * `type.type` relevé sur un vrai match : `foul`, `shot-on-target`,
+ * `shot-off-target`, `shot-blocked`, `corner-awarded`, `goal`, `offside`,
+ * `yellow-card`, `red-card`, `substitution`, `start-delay`, `end-delay`.
+ */
+export interface EspnPlay {
+  id?: string;
+  type?: { id?: string; text?: string; type?: string };
+  text?: string;
+  shortText?: string;
+  period?: { number?: number };
+  clock?: { value?: number; displayValue?: string };
+  /** Seulement le NOM : pas d'identifiant ici, contrairement aux autres blocs. */
+  team?: { displayName?: string };
+  participants?: { athlete?: EspnAthlete }[];
+  wallclock?: string;
+  /** 0 à 100, relatif au but attaqué : 100 = la ligne de but adverse. */
+  fieldPositionX?: number;
+  /** 0 à 100, latéral : 50 = l'axe du terrain. */
+  fieldPositionY?: number;
 }
 
 export interface EspnStandings {

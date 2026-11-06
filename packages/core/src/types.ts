@@ -169,7 +169,7 @@ export type MatchEvent =
   | (EventBase & { kind: 'card'; payload: { side: Side; player?: Player; card: CardKind } })
   | (EventBase & { kind: 'substitution'; payload: { side: Side; out?: Player; in?: Player } })
   | (EventBase & { kind: 'corner'; payload: { side: Side } })
-  | (EventBase & { kind: 'shot'; payload: { side: Side; onTarget: boolean; xg?: number } })
+  | (EventBase & { kind: 'shot'; payload: ShotPayload })
   | (EventBase & { kind: 'free_kick'; payload: { side: Side } })
   | (EventBase & { kind: 'offside'; payload: { side: Side } })
   | (EventBase & { kind: 'penalty_awarded'; payload: { side: Side } })
@@ -217,6 +217,30 @@ export interface ClockAnchorPayload {
   phase: MatchPhase;
   /** Temps additionnel annoncé, en minutes. */
   addedMinutes?: number;
+}
+
+/**
+ * L'issue d'une frappe. C'est elle qui porte le sens : un tir contré et un tir
+ * à côté comptent tous deux comme « non cadré » dans un tableau, mais ils ne
+ * racontent pas la même chose sur une carte.
+ */
+export type ShotOutcome = 'goal' | 'on_target' | 'blocked' | 'off_target';
+
+export interface ShotPayload {
+  side: Side;
+  /** Conservé pour les sources qui ne savent dire que ça. */
+  onTarget: boolean;
+  outcome?: ShotOutcome;
+  /**
+   * Où la frappe a été tentée, RELATIVEMENT au but attaqué, sur [0,100] :
+   * `x` 100 = la ligne de but adverse, `y` 50 = l'axe. Les deux équipes
+   * tirent donc vers des `x` élevés — c'est au dessin de les mettre face à
+   * face. Absent quand le fournisseur ne donne pas la position.
+   */
+  x?: number;
+  y?: number;
+  player?: Player;
+  xg?: number;
 }
 
 export interface GoalPayload {
@@ -305,6 +329,14 @@ export interface CardEntry {
   card: CardKind;
 }
 
+/** Une frappe consolidée, pour la carte des tirs. */
+export interface ShotEntry extends ShotPayload {
+  seq: number;
+  t: number;
+  /** Minute d'antenne : « 45+2 ». */
+  minute: string;
+}
+
 export interface SubEntry {
   seq: number;
   t: number;
@@ -347,6 +379,12 @@ export interface MatchState {
   goals: GoalEntry[];
   cards: CardEntry[];
   subs: SubEntry[];
+  /**
+   * Toutes les frappes, avec leur place sur le terrain quand on l'a.
+   * C'est la matière de la carte des tirs — l'information qui dit le mieux ce
+   * qu'on rate quand on ne voit pas les images.
+   */
+  shots: ShotEntry[];
   stats: MatchStats;
   lineups: { home: LineupPayload | null; away: LineupPayload | null };
   ratings: { home: Record<string, number>; away: Record<string, number> };
