@@ -141,6 +141,21 @@ const DIAGONALS =
 /** Bandes verticales larges, façon rideau de plateau. */
 const CURTAIN =
   'repeating-linear-gradient(90deg, rgba(255,255,255,0.8) 0 3px, transparent 3px 70px)';
+/**
+ * Chevrons : deux trames croisées en biais.
+ *
+ * `pattern` finit en `background-image`, qui accepte une LISTE séparée par des
+ * virgules — on superpose donc deux dégradés répétés sans ajouter de couche au
+ * document. Plus anguleux que les diagonales, pour les compétitions qui ont du
+ * tranchant.
+ */
+const CHEVRONS =
+  'repeating-linear-gradient(45deg, rgba(255,255,255,0.9) 0 2px, transparent 2px 26px),' +
+  ' repeating-linear-gradient(-45deg, rgba(255,255,255,0.55) 0 2px, transparent 2px 26px)';
+/** Grille fine : la rigueur d'un tableau, pour les championnats. */
+const GRILLE =
+  'repeating-linear-gradient(0deg, rgba(255,255,255,0.8) 0 1px, transparent 1px 34px),' +
+  ' repeating-linear-gradient(90deg, rgba(255,255,255,0.8) 0 1px, transparent 1px 34px)';
 
 export const THEMES: Theme[] = [
   {
@@ -240,6 +255,171 @@ export const THEMES: Theme[] = [
       pitchLine: 'rgba(255, 255, 255, 0.62)',
       ball: '#00ff87',
       goalFlood: '#c2185b',
+    },
+  },
+
+  // ── Les coupes d'Europe ────────────────────────────────────────────────────
+  //
+  // Chacune a une identité que le spectateur reconnaît avant de lire le nom :
+  // le bleu nuit de la Ligue des Champions, l'orange de l'Europa, le vert de la
+  // Conférence. On ne copie pas les chartes — on en prend la LUMIÈRE, qui est
+  // ce qu'on reconnaît à l'antenne.
+
+  {
+    id: 'europa',
+    name: 'Ligue Europa',
+    tokens: {
+      ...SHAPE,
+      ...NEUTRAL,
+      bgDeep: '#49230a',
+      bgMid: '#140a04',
+      glow: 'rgba(255, 138, 31, 0.30)',
+      pattern: CHEVRONS,
+      patternOpacity: '0.05',
+      panel: 'rgba(28, 16, 8, 0.94)',
+      panelLine: 'rgba(255, 160, 70, 0.52)',
+      panelGlow: '0 0 0 1px rgba(255,160,70,0.16), 0 0 26px rgba(255,138,31,0.22)',
+      pill: 'rgba(74, 42, 18, 0.80)',
+      pillLine: 'rgba(255, 180, 110, 0.14)',
+      slab: 'rgba(255, 190, 130, 0.14)',
+      accent: '#ff9b35',
+      pitch: '#8f4409',
+      pitchStripe: 'rgba(255, 255, 255, 0.07)',
+      pitchLine: 'rgba(255, 255, 255, 0.60)',
+      ball: '#ffd24a',
+      goalFlood: '#ff6a00',
+    },
+  },
+  {
+    id: 'conference',
+    name: 'Ligue Conférence',
+    tokens: {
+      ...SHAPE,
+      ...NEUTRAL,
+      bgDeep: '#07402c',
+      bgMid: '#021410',
+      glow: 'rgba(47, 224, 138, 0.26)',
+      pattern: DOTS,
+      patternOpacity: '0.055',
+      panel: 'rgba(6, 26, 20, 0.94)',
+      panelLine: 'rgba(60, 230, 150, 0.48)',
+      panelGlow: '0 0 0 1px rgba(60,230,150,0.15), 0 0 24px rgba(47,224,138,0.20)',
+      pill: 'rgba(12, 58, 42, 0.80)',
+      pillLine: 'rgba(140, 255, 200, 0.12)',
+      slab: 'rgba(120, 255, 190, 0.13)',
+      accent: '#2fe08a',
+      pitch: '#0b6a48',
+      pitchStripe: 'rgba(255, 255, 255, 0.07)',
+      pitchLine: 'rgba(255, 255, 255, 0.60)',
+      ball: '#eaffb0',
+      goalFlood: '#00c46a',
+    },
+  },
+
+  // ── Les championnats ───────────────────────────────────────────────────────
+
+  {
+    id: 'liga',
+    name: 'Liga',
+    tokens: {
+      ...SHAPE,
+      ...NEUTRAL,
+      bgDeep: '#16285f',
+      bgMid: '#060c22',
+      glow: 'rgba(255, 107, 90, 0.26)',
+      pattern: DIAGONALS,
+      patternOpacity: '0.05',
+      panel: 'rgba(9, 16, 42, 0.94)',
+      panelLine: 'rgba(255, 130, 110, 0.46)',
+      panelGlow: '0 0 0 1px rgba(255,130,110,0.15), 0 0 24px rgba(255,107,90,0.20)',
+      pill: 'rgba(28, 44, 96, 0.80)',
+      pillLine: 'rgba(255, 170, 150, 0.12)',
+      slab: 'rgba(255, 160, 140, 0.14)',
+      accent: '#ff6b5a',
+      pitch: '#1c3a94',
+      pitchStripe: 'rgba(255, 255, 255, 0.07)',
+      pitchLine: 'rgba(255, 255, 255, 0.62)',
+      ball: '#ffd24a',
+      goalFlood: '#ff4a3c',
+    },
+  },
+  {
+    id: 'seriea',
+    name: 'Serie A',
+    tokens: {
+      ...SHAPE,
+      ...NEUTRAL,
+      bgDeep: '#063a7e',
+      bgMid: '#020b1c',
+      glow: 'rgba(73, 184, 255, 0.28)',
+      pattern: GRILLE,
+      patternOpacity: '0.05',
+      panel: 'rgba(5, 18, 40, 0.94)',
+      panelLine: 'rgba(90, 190, 255, 0.50)',
+      panelGlow: '0 0 0 1px rgba(90,190,255,0.16), 0 0 24px rgba(73,184,255,0.20)',
+      pill: 'rgba(12, 48, 96, 0.80)',
+      pillLine: 'rgba(150, 210, 255, 0.13)',
+      slab: 'rgba(140, 205, 255, 0.14)',
+      accent: '#49b8ff',
+      pitch: '#0a4e9e',
+      pitchStripe: 'rgba(255, 255, 255, 0.07)',
+      pitchLine: 'rgba(255, 255, 255, 0.62)',
+      ball: '#ffffff',
+      goalFlood: '#0a84ff',
+    },
+  },
+  {
+    id: 'bundesliga',
+    name: 'Bundesliga',
+    tokens: {
+      ...SHAPE,
+      ...NEUTRAL,
+      bgDeep: '#400b12',
+      bgMid: '#0d0507',
+      glow: 'rgba(255, 59, 74, 0.26)',
+      pattern: CHEVRONS,
+      patternOpacity: '0.045',
+      panel: 'rgba(22, 8, 11, 0.94)',
+      panelLine: 'rgba(255, 90, 100, 0.48)',
+      panelGlow: '0 0 0 1px rgba(255,90,100,0.15), 0 0 24px rgba(255,59,74,0.20)',
+      pill: 'rgba(62, 18, 24, 0.80)',
+      pillLine: 'rgba(255, 150, 160, 0.12)',
+      slab: 'rgba(255, 140, 150, 0.13)',
+      accent: '#ff3b4a',
+      pitch: '#8c1420',
+      pitchStripe: 'rgba(255, 255, 255, 0.07)',
+      pitchLine: 'rgba(255, 255, 255, 0.60)',
+      ball: '#ffffff',
+      goalFlood: '#e2001a',
+    },
+  },
+
+  // ── Les coupes nationales ──────────────────────────────────────────────────
+
+  {
+    id: 'coupedefrance',
+    name: 'Coupe de France',
+    tokens: {
+      ...SHAPE,
+      ...NEUTRAL,
+      bgDeep: '#0d2f78',
+      bgMid: '#04102c',
+      glow: 'rgba(255, 77, 90, 0.24)',
+      // Le rideau vertical : une coupe, c'est un soir de gala.
+      pattern: CURTAIN,
+      patternOpacity: '0.05',
+      panel: 'rgba(7, 18, 46, 0.94)',
+      panelLine: 'rgba(255, 110, 120, 0.44)',
+      panelGlow: '0 0 0 1px rgba(255,110,120,0.14), 0 0 24px rgba(255,77,90,0.18)',
+      pill: 'rgba(20, 48, 108, 0.80)',
+      pillLine: 'rgba(255, 255, 255, 0.10)',
+      slab: 'rgba(255, 255, 255, 0.12)',
+      accent: '#ff4d5a',
+      pitch: '#14409c',
+      pitchStripe: 'rgba(255, 255, 255, 0.075)',
+      pitchLine: 'rgba(255, 255, 255, 0.66)',
+      ball: '#ffffff',
+      goalFlood: '#ef3340',
     },
   },
 ];
