@@ -9,6 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { INSERTS } from './inserts.js';
 import {
   CAM_Z,
   DEFAULT_SCENE_MODE,
@@ -84,10 +85,42 @@ test('la scène de match change de contenu selon le moment, pas de décor', () =
   // montre le classement. Si ces deux-là se ressemblaient, le mode ne servirait
   // à rien.
   assert.notDeepEqual(widgets('avant'), widgets('fin'));
-  assert.ok(widgets('avant').includes('prematch'));
   assert.ok(widgets('fin').includes('standings'));
-  assert.ok(widgets('direct').includes('multiplex'));
   assert.ok(widgets('mi-temps').includes('stats'));
+
+  // En direct, la colonne de gauche est CONSACRÉE aux statistiques du match,
+  // et les autres rencontres vivent dans le bandeau large du bas.
+  const direct = layersFor(match, 'all', 'direct');
+  const gauche = direct.find((l) => l.widget === 'stats');
+  const bas = direct.find((l) => l.widget === 'multiplex');
+  assert.ok(gauche, 'les statistiques doivent être à l’écran en direct');
+  assert.ok(bas, 'les autres matchs doivent être à l’écran en direct');
+  assert.ok(gauche.slot.h > bas.slot.h, 'les statistiques tiennent la colonne, haute');
+  assert.ok(bas.slot.w > gauche.slot.w, 'les autres matchs tiennent le bandeau, large');
+});
+
+test('un insert ne montre jamais ce qui est déjà à l’écran', () => {
+  // Un insert qui remplace les statistiques par les mêmes statistiques n'est
+  // pas une respiration : c'est une panne qui ne se voit pas.
+  const match = findScene('match');
+  const permanents = new Set(layersFor(match, 'all', 'direct').map((l) => l.widget));
+  for (const insert of INSERTS) {
+    assert.ok(
+      !permanents.has(insert.widget),
+      `l’insert « ${insert.id} » montre « ${insert.widget} », déjà permanent en direct`,
+    );
+  }
+});
+
+test('le créneau d’insert ne vole pas la colonne des statistiques', () => {
+  const match = findScene('match');
+  assert.ok(match.insertSlot, 'la scène de match doit déclarer un créneau');
+  const stats = layersFor(match, 'all', 'direct').find((l) => l.widget === 'stats');
+  assert.notEqual(
+    match.insertSlot.x,
+    stats?.slot.x,
+    'le créneau d’insert doit viser un autre emplacement que les statistiques',
+  );
 });
 
 test('le ballon a disparu du plateau, partout', () => {

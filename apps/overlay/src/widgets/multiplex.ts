@@ -29,7 +29,11 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
   let signature: string | null = null;
 
   /** Hauteur d'un bloc de match, gouttière comprise. */
-  const BLOCK = 84;
+  // Un bandeau large et court n'a pas la même économie qu'une colonne haute :
+  // à hauteur de bloc égale, il n'afficherait que quatre matchs là où il y a la
+  // place pour huit. On resserre, comme un bandeau de résultats à la télévision.
+  const BLOC_NORMAL = 84;
+  const BLOC_DENSE = 62;
   /** Ce que mange l'en-tête du panneau. */
   const CHROME = 76 + 24;
 
@@ -41,6 +45,12 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
       // Douze matchs écrasés dans une colonne ne se lisent plus : chaque bloc
       // perd la séparation qui en fait un match distinct. On montre ce qui
       // tient en gardant les blocs lisibles.
+      //
+      // Un emplacement nettement plus large que haut est un BANDEAU, pas une
+      // colonne : on y resserre les blocs, sinon il reste à moitié vide.
+      const dense = slot.h > 0 && slot.w / slot.h > 2;
+      setAttr(list, 'data-dense', dense ? '1' : '0');
+      const BLOCK = dense ? BLOC_DENSE : BLOC_NORMAL;
       const perColumn =
         slot.h > 0 ? Math.max(2, Math.floor((slot.h - CHROME) / BLOCK)) : state.otherMatches.length;
       const capacity = large ? perColumn * 2 : perColumn;

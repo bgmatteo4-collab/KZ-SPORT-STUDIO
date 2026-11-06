@@ -47,8 +47,15 @@ const SEC = 1_000;
  * Le catalogue. Ajouter un insert, c'est ajouter une entrée ici — pas écrire
  * de la logique.
  */
+/**
+ * Un insert ne doit montrer que ce qui n'est PAS déjà à l'écran.
+ *
+ * Les statistiques ont quitté cette liste le jour où elles ont pris la colonne
+ * de gauche en permanence : un insert qui remplace les statistiques par les
+ * mêmes statistiques n'est pas une respiration, c'est une panne qui ne se voit
+ * pas.
+ */
 export const INSERTS: InsertSpec[] = [
-  { id: 'stats', widget: 'stats', holdMs: 15 * SEC },
   { id: 'classement', widget: 'standings', holdMs: 14 * SEC },
   { id: 'momentum', widget: 'momentum', holdMs: 12 * SEC },
 ];
@@ -82,6 +89,35 @@ function choisir(graine: number, interdit?: string): InsertSpec {
   const possibles = interdit ? INSERTS.filter((i) => i.id !== interdit) : INSERTS;
   const liste = possibles.length > 0 ? possibles : INSERTS;
   return liste[Math.floor(melange(graine) * liste.length) % liste.length]!;
+}
+
+/**
+ * L'insert du énième tour de rotation.
+ *
+ * ── Pourquoi une marche, et pas un tirage ───────────────────────────────────
+ *
+ * La première version tirait le tour `i` en lui interdisant le résultat d'un
+ * tour `i-1` RECALCULÉ sans sa propre contrainte. Les deux chaînes
+ * divergeaient, et le panneau pouvait se répéter. Avec trois panneaux le
+ * défaut passait inaperçu ; en tombant à deux, il est devenu systématique.
+ *
+ * Ici, chaque tour avance d'un pas compris entre 1 et n-1. Un pas ne peut donc
+ * jamais être un multiple de n : deux tours voisins tombent toujours sur deux
+ * panneaux différents, par CONSTRUCTION et non par chance. Le pas varie avec le
+ * numéro du tour, ce qui évite un cycle trop régulier.
+ *
+ * La boucle repart de zéro à chaque appel : quarante-cinq tours au plus pour un
+ * match, c'est moins cher que la mémoire qu'il faudrait pour les retenir — et
+ * ça garde la fonction PURE, donc identique sur les deux sources d'OBS.
+ */
+function choixRotation(tour: number): InsertSpec {
+  const n = INSERTS.length;
+  if (n <= 1) return INSERTS[0]!;
+  let index = 0;
+  for (let k = 1; k <= tour; k += 1) {
+    index = (index + 1 + Math.floor(melange(k * 13) * (n - 1))) % n;
+  }
+  return INSERTS[index]!;
 }
 
 interface Fenetre {
@@ -143,7 +179,7 @@ function fenetres(state: MatchState, t: number): Fenetre[] {
   // à chaque image serait payer pour rien dans OBS.
   for (let i = Math.max(1, tours - 1); i <= tours; i += 1) {
     const debut = t + (i * PERIODE_ROTATION - depuisDebut);
-    const spec = choisir(i * 13, choisir((i - 1) * 13).id);
+    const spec = choixRotation(i);
     out.push({
       spec,
       from: debut,

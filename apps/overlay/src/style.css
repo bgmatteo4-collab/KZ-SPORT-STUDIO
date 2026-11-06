@@ -1515,3 +1515,24 @@ html {
   text-align: center;
   color: var(--ink-dim);
 }
+
+/* Le multiplex en BANDEAU : nettement plus large que haut. On resserre les
+   blocs, sinon la moitié de la place reste vide. */
+.multiplex[data-dense='1'] .mx {
+  grid-template-columns: 40px 1fr;
+  padding: 5px var(--s2);
+}
+
+.multiplex[data-dense='1'] .mx__row {
+  grid-template-columns: 22px 1fr 34px;
+}
+
+.multiplex[data-dense='1'] .mx__crest {
+  width: 22px;
+  height: 23px;
+  font-size: 8px;
+}
+
+.multiplex[data-dense='1'] .mx__name { font-size: 15px; }
+.multiplex[data-dense='1'] .mx__goals { font-size: 19px; }
+.multiplex[data-dense='1'] .mx__minute { font-size: 14px; }

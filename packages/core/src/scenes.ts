@@ -221,11 +221,23 @@ const MATCH_AVANT: SceneLayer[] = [
   { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
 ];
 
-/** Le jeu. Les autres matchs à gauche, le rapport de force au centre. */
+/**
+ * Le jeu.
+ *
+ * La colonne de gauche est CONSACRÉE au match qu'on commente : ses
+ * statistiques, rien d'autre. Le bandeau large du bas porte les autres
+ * rencontres en cours — c'est la place d'un multiplex à la télévision, en bas
+ * de l'écran, et non dans une colonne qui vole la vedette au match principal.
+ *
+ * Le momentum n'a plus sa place ici : il raconte ce qui S'EST PASSÉ, donc il
+ * appartient aux moments où l'on analyse — la mi-temps et la fin. Il revient
+ * en insert quand la régie automatique le juge motivé.
+ */
 const MATCH_DIRECT: SceneLayer[] = [
   ...CHROME_MATCH,
-  { widget: 'multiplex', slot: SLOT.colonneGauche, z: 20 },
-  { widget: 'momentum', slot: SLOT.radar, z: 20 },
+  // La colonne entière pour les statistiques : autant les donner toutes.
+  { widget: 'stats', slot: SLOT.colonneGauche, z: 20, opts: { large: true } },
+  { widget: 'multiplex', slot: SLOT.radar, z: 20, opts: { large: true } },
   { widget: 'lineups', slot: SLOT.colonneDroite, z: 20 },
   { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
 ];
@@ -296,9 +308,11 @@ export const SCENES: Scene[] = [
     name: 'Match',
     cam: CAM.case,
     camStyle: 'framed',
-    // Le multiplex tient la colonne de gauche, et la cède aux inserts de la
-    // régie automatique : statistiques, classement, momentum.
-    insertSlot: SLOT.colonneGauche,
+    // Les inserts prennent le bandeau du bas, pas la colonne de gauche : celle-ci
+    // est consacrée aux statistiques du match et ne doit pas être volée. C'est
+    // donc le multiplex qui cède sa place quelques secondes, comme une carte
+    // qu'un réalisateur insère avant de rendre l'antenne.
+    insertSlot: SLOT.radar,
     transition: SLIDE,
     // Le plateau ne bouge pas d'un mode à l'autre — seul son CONTENU change.
     // La caméra reste au même endroit, les cadres aussi : l'opérateur passe de
