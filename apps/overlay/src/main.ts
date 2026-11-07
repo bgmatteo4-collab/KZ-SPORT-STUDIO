@@ -304,7 +304,22 @@ function placeHost(host: HTMLElement, spec: SceneLayer, phase: 'enter' | 'in' | 
   const part = phase === 'enter' ? 1 : phase === 'exit' ? 0.5 : 0;
   const vx = part === 0 ? 0 : parseFloat(host.style.getPropertyValue('--vx') || '0') * part;
   const vy = part === 0 ? 0 : parseFloat(host.style.getPropertyValue('--vy') || '0') * part;
-  host.style.transform = `translate3d(${box.x + vx}px, ${box.y + vy}px, 0)`;
+  // Un soupçon d'échelle avec le décalage. Un panneau qui arrive uniquement
+  // par translation garde la taille qu'il aura : il GLISSE à l'écran. En
+  // partant d'un pour cent plus petit, il s'APPROCHE — c'est très peu, et
+  // c'est ce qui fait la différence entre « une image qui bouge » et « un
+  // objet qui se pose ». Appliqué aussi à la sortie, en sens inverse.
+  const echelle = phase === 'enter' ? 0.985 : phase === 'exit' ? 0.975 : 1;
+  // Le point de pivot est le centre du créneau, pas l'origine de la page :
+  // la couche est posée en 0,0 et déplacée par transformée, donc un
+  // `transform-origin` en CSS ne servirait à rien.
+  const cx = box.w / 2;
+  const cy = box.h / 2;
+  const t = `translate3d(${box.x + vx}px, ${box.y + vy}px, 0)`;
+  host.style.transform =
+    echelle === 1
+      ? t
+      : `${t} translate(${cx}px, ${cy}px) scale(${echelle}) translate(${-cx}px, ${-cy}px)`;
   host.style.width = `${box.w}px`;
   host.style.height = `${box.h}px`;
   host.style.zIndex = String(spec.z);

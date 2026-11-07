@@ -108,10 +108,18 @@ test('la rotation ne répète pas deux fois de suite le même panneau', () => {
     ev(0, 'phase', { phase: 'first_half' }),
     ev(0, 'clock', { matchMs: 0, running: true, phase: 'first_half' }),
   ];
+  // On balaie le match seconde par seconde et on note chaque OUVERTURE de
+  // fenêtre, au lieu de sonder quatre instants choisis à la main : ceux-là
+  // étaient calés sur la période de rotation d'alors, et le test est tombé
+  // le jour où elle a changé — alors que le comportement qu'il vérifie,
+  // lui, n'avait pas bougé d'un iota.
   const vus: string[] = [];
-  for (const t of [2 * MIN + SEC, 4 * MIN + SEC, 6 * MIN + SEC, 8 * MIN + SEC]) {
+  let precedent: string | null = null;
+  for (let t = SEC; t <= 20 * MIN; t += SEC) {
     const actif = insertActif(reduce(events, T0 + t), T0 + t);
-    if (actif) vus.push(actif.spec.id);
+    const id = actif && actif.motif === 'temps mort' ? actif.spec.id : null;
+    if (id !== null && precedent === null) vus.push(id);
+    precedent = id;
   }
   assert.ok(vus.length >= 3, `trop peu d'inserts vus : ${vus.join(', ')}`);
   for (let i = 1; i < vus.length; i += 1) {

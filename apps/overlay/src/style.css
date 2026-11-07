@@ -2602,14 +2602,16 @@ html {
 
 /* Combien de pages, et laquelle. Absents s'il n'y en a qu'une : trois points
    sous un seul buteur feraient croire à quelque chose de caché. */
-.banner__points {
+.banner__points,
+.fil__points {
   display: flex;
   gap: 3px;
   flex: none;
   align-self: center;
 }
 
-.banner__points u {
+.banner__points u,
+.fil__points u {
   width: 5px;
   height: 5px;
   border-radius: 50%;
@@ -2617,7 +2619,8 @@ html {
   text-decoration: none;
 }
 
-.banner__points u[data-on='1'] { background: var(--accent); }
+.banner__points u[data-on='1'],
+.fil__points u[data-on='1'] { background: var(--accent); }
 
 @media (prefers-reduced-motion: reduce) {
   .banner__scorers[data-neuf] span { animation: none; }

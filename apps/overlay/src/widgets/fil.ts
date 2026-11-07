@@ -57,6 +57,26 @@ const LIGNE_UNE_RANGEE = 36;
 const CHROME = 76 + 24;
 
 /**
+ * ── Le panneau TOURNE ──────────────────────────────────────────────────────
+ *
+ * Le bandeau permanent tient deux lignes. Un match en produit quarante. On
+ * montrait donc les deux dernières, indéfiniment : passé la dixième minute,
+ * le bloc le plus présent à l'écran était aussi le plus immobile, et ce qui
+ * s'était passé entre-temps n'existait nulle part.
+ *
+ * Il feuillette maintenant. Trois pages au plus — remonter plus loin que ça
+ * n'est plus « ce qui vient de se passer », c'est le fil du match, et c'est
+ * l'autre mode de ce widget.
+ *
+ * La rotation se mesure sur le temps RÉEL et non sur le chrono, pour la même
+ * raison que le rouleau des buteurs : en rejeu à vingt fois la vitesse, un
+ * compte en temps de match ferait tourner les pages vingt fois trop vite.
+ * La lisibilité, elle, se mesure en secondes d'horloge murale.
+ */
+const TOUR_FAITS_MS = 5_600;
+const PAGES_MAX = 3;
+
+/**
  * La marque d'un fait. Volontairement dessinée en CSS et pas en icône :
  * l'alphabet visuel est celui de la carte des tirs, et deux blocs qui parlent
  * du même ballon doivent le dessiner pareil.
@@ -84,6 +104,11 @@ export const fil: WidgetFactory = (ctx): Widget => {
   const vide = h('p', { class: 'fil__vide t-caption' }, ['Aucun fait de jeu pour l’instant']);
   box.body.append(liste, vide);
 
+  // Combien de pages, et laquelle. Dans l'en-tête, à droite : sans ce repère,
+  // un fil qui change tout seul ressemble à un panneau qui perd ses lignes.
+  const points = h('i', { class: 'fil__points' });
+  box.el.querySelector('.panel__aside')?.append(points);
+
   /*
    * Le fil pousse par le HAUT : un fait arrive, tous les autres descendent
    * d'un cran, et le dernier sort par le bas.
@@ -98,31 +123,72 @@ export const fil: WidgetFactory = (ctx): Widget => {
   const defile = listeAnimee(liste);
 
   let signature: string | null = null;
+  /** La page affichée, et quand elle cède la place. */
+  let page = 0;
+  let prochain = 0;
+  /** Le fait le plus récent déjà vu, pour revenir en tête quand il en arrive un. */
+  let tete: number | null = null;
 
   return {
     el: box.el,
 
-    update({ state, box: slot }: WidgetContext) {
+    update({ state, box: slot, realNow }: WidgetContext) {
       // La capacité vient du créneau, pas d'une constante : le même widget
       // sert un bandeau de trois lignes et une colonne de douze.
       const ligne = recent ? LIGNE_UNE_RANGEE : LIGNE_DEUX_RANGEES;
       const parColonne = slot.h > 0 ? Math.max(1, Math.floor((slot.h - CHROME) / ligne)) : 8;
       const capacite = large ? parColonne * 2 : parColonne;
+      // On en demande de quoi remplir plusieurs pages, pas seulement l'écran.
+      const reserve = capacite * PAGES_MAX;
       const faits = recent
-        ? derniersFaits(state.feed, capacite)
-        : filDuMatch(state.feed, capacite);
+        ? derniersFaits(state.feed, reserve)
+        : filDuMatch(state.feed, reserve);
 
       // Le plus récent EN HAUT. Un fil qui pousse vers le bas déplace la ligne
       // importante à chaque fait : l'œil doit la rechercher, alors qu'en haut
       // elle est toujours au même endroit.
-      const ordre = [...faits].reverse();
+      const tout = [...faits].reverse();
+      const nbPages = Math.max(1, Math.min(PAGES_MAX, Math.ceil(tout.length / capacite)));
+
+      // Un fait vient d'arriver : RETOUR EN TÊTE, immédiatement. Laisser la
+      // rotation finir son tour pendant qu'un but est annoncé ailleurs sur le
+      // plateau serait le seul moment où ce panneau a vraiment quelque chose
+      // à dire, et où il parlerait d'autre chose.
+      const sommet = tout[0]?.seq ?? null;
+      if (sommet !== tete) {
+        tete = sommet;
+        page = 0;
+        prochain = realNow + TOUR_FAITS_MS;
+      } else if (nbPages <= 1) {
+        page = 0;
+        prochain = 0;
+      } else if (prochain === 0) {
+        prochain = realNow + TOUR_FAITS_MS;
+      } else if (realNow >= prochain) {
+        prochain = realNow + TOUR_FAITS_MS;
+        page = (page + 1) % nbPages;
+      }
+      if (page >= nbPages) page = 0;
+
+      const ordre = tout.slice(page * capacite, page * capacite + capacite);
 
       const cellule = large ? slot.w / 2 : slot.w;
-      const next = `${capacite}|${Math.round(cellule)}|${state.meta?.id ?? ''}|${ordre.map((f) => `${f.seq}:${f.kind}:${f.x ?? ''}`).join(',')}`;
+      const next = `${capacite}|${Math.round(cellule)}|${state.meta?.id ?? ''}|${page}/${nbPages}|${ordre.map((f) => `${f.seq}:${f.kind}:${f.x ?? ''}`).join(',')}`;
       if (next === signature) return;
       signature = next;
 
       vide.hidden = ordre.length > 0;
+
+      // Les points ne s'affichent que s'il y a vraiment plusieurs pages :
+      // un seul point sous un panneau laisserait croire à du contenu caché.
+      points.replaceChildren();
+      if (nbPages > 1) {
+        for (let i = 0; i < nbPages; i += 1) {
+          const p = h('u');
+          if (i === page) p.dataset.on = '1';
+          points.append(p);
+        }
+      }
       // La grille a besoin du nombre de rangées pour remplir la première
       // colonne avant d'attaquer la seconde. Le dire en CSS seul demanderait
       // un nombre fixe, qui ne survivrait pas au changement de créneau.

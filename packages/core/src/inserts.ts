@@ -81,8 +81,20 @@ const PHASES_ACTIVES: MatchPhase[] = ['first_half', 'second_half', 'extra_first'
 const APRES_BUT = 14 * SEC;
 /** Le carton de but dure un peu plus de cinq secondes. */
 const SILENCE_APRES_FAIT = 8 * SEC;
-/** Le fond de roulement : un insert toutes les deux minutes de jeu. */
-const PERIODE_ROTATION = 120 * SEC;
+/**
+ * Le fond de roulement.
+ *
+ * Une rotation toutes les DEUX MINUTES laissait la colonne de gauche sur les
+ * mêmes statistiques cent quatre secondes sur cent vingt. Un panneau qui ne
+ * change pas pendant deux minutes n'est pas un panneau d'antenne, c'est une
+ * capture d'écran : au bout d'un quart d'heure, le spectateur a cessé de le
+ * regarder, et tout ce qu'on y met ensuite est perdu.
+ *
+ * Soixante-quinze secondes : l'insert tient seize secondes, la colonne
+ * reprend la main pour une minute, et il revient. Assez pour qu'on ait le
+ * temps de lire, assez souvent pour que l'œil y retourne.
+ */
+const PERIODE_ROTATION = 75 * SEC;
 
 /**
  * Suite déterministe à partir d'un entier. Donne de la variété sans hasard :
