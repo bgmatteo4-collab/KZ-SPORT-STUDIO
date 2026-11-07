@@ -17,6 +17,9 @@ import type { Widget, WidgetContext, WidgetFactory } from './types.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 
+/** Combien de temps chaque équipe reste affichée, en mode alterné. */
+const TOUR_EQUIPE_MS = 9_000;
+
 /**
  * Le demi-terrain, vu depuis la ligne de but : surface de réparation en bas,
  * rond central entamé en haut. Sans tracé, onze maillots alignés ne sont
@@ -73,7 +76,20 @@ function positions(formation: string, count: number): { x: number; y: number }[]
 }
 
 export const lineups: WidgetFactory = (ctx): Widget => {
-  const side: Side = ctx.opts.side === 'away' ? 'away' : 'home';
+  const fixe: Side = ctx.opts.side === 'away' ? 'away' : 'home';
+  /**
+   * Alterner entre les deux équipes.
+   *
+   * ── Pourquoi ──────────────────────────────────────────────────────────
+   *
+   * Le panneau montrait la composition de l'équipe à domicile, et rien
+   * d'autre, pendant quatre-vingt-dix minutes. L'extérieur n'apparaissait
+   * nulle part : la moitié du match était invisible sur le plateau. Deux
+   * panneaux côte à côte ne tiennent pas dans la colonne ; un panneau qui
+   * bascule, si.
+   */
+  const alterne = ctx.opts.alterne === true;
+  let side: Side = fixe;
   const large = ctx.opts.large === true;
   // Avant le coup d'envoi, on annonce une composition PROBABLE. ESPN ne publie
   // la vraie qu'environ une heure avant ; tant qu'elle n'est pas là, un terrain
@@ -82,7 +98,7 @@ export const lineups: WidgetFactory = (ctx): Widget => {
 
   const box = panel({
     icon: 'lineup',
-    kicker: side === 'home' ? 'Domicile' : 'Extérieur',
+    kicker: 'Domicile',
     // Le titre reste court : « Composition probable » déborde de l'en-tête et
     // s'affiche « Composition prob… ». Le mot « probable » vit dans un badge,
     // où il est lu aussi bien et ne rogne rien.
@@ -119,10 +135,29 @@ export const lineups: WidgetFactory = (ctx): Widget => {
   // `null` et non `''` : une liste vide produit la signature `''`, donc une
   // sentinelle vide empêcherait le widget de dessiner son état vide.
   let signature: string | null = null;
+  /** Prochain basculement d'équipe, en temps RÉEL. */
+  let bascule = 0;
 
   return {
     el: box.el,
-    update({ state, box: slot }: WidgetContext) {
+    update({ state, box: slot, realNow }: WidgetContext) {
+      // ── L'alternance ──────────────────────────────────────────────────
+      //
+      // Mesurée sur le temps réel et non sur le chrono : un rejeu à vingt
+      // fois la vitesse ferait clignoter le panneau d'une équipe à l'autre,
+      // alors que la lisibilité se mesure en secondes d'horloge murale.
+      if (alterne) {
+        if (bascule === 0) bascule = realNow + TOUR_EQUIPE_MS;
+        else if (realNow >= bascule) {
+          bascule = realNow + TOUR_EQUIPE_MS;
+          side = side === 'home' ? 'away' : 'home';
+          // Le panneau glisse : sans ce signal, les onze maillots changent de
+          // nom d'un coup et on croit à un défaut d'affichage.
+          box.el.dataset.bascule = side;
+          requestAnimationFrame(() => requestAnimationFrame(() => delete box.el.dataset.bascule));
+        }
+      }
+
       // Les maillots grandissent avec le panneau. À taille fixe, onze maillots
       // de 50 px dans un panneau de 900 font une composition qui flotte.
       // « COMPOSITIONS » ne tient pas dans l'en-tête d'une colonne étroite :
@@ -139,6 +174,7 @@ export const lineups: WidgetFactory = (ctx): Widget => {
       }
 
       const team = side === 'home' ? state.meta?.home : state.meta?.away;
+      box.el.dataset.cote = side;
       box.setCrests([team]);
       box.setHead(
         team?.short ?? (side === 'home' ? 'Domicile' : 'Extérieur'),
@@ -147,6 +183,12 @@ export const lineups: WidgetFactory = (ctx): Widget => {
         etroit ? 'Compo' : 'Compositions',
       );
 
+      // Sans composition pour ce camp mais une pour l'autre, on bascule : un
+      // panneau vide une seconde sur deux vaut moins qu'un panneau qui montre
+      // toujours la seule équipe dont on ait la feuille.
+      if (alterne && !state.lineups[side] && state.lineups[side === 'home' ? 'away' : 'home']) {
+        side = side === 'home' ? 'away' : 'home';
+      }
       const lineup = state.lineups[side];
       // Règle n°6 : pas de composition, pas d'affichage — et surtout pas d'erreur.
       setText(formation, lineup?.formation ?? '—');
@@ -258,8 +300,19 @@ export const lineups: WidgetFactory = (ctx): Widget => {
     ]);
     if (remplace) {
       man.dataset.entre = '1';
-      // Invisible à l'antenne, mais présent dans le document : c'est ce qui
-      // permet de vérifier une composition sur une capture d'écran.
+      // ── Dire le remplacement en ENTIER ────────────────────────────────
+      //
+      // Une version précédente se contentait d'écrire le nom de l'entrant en
+      // vert. On savait donc qu'il y avait eu un changement, mais pas lequel :
+      // le spectateur qui revient après dix minutes voit un nom inconnu sans
+      // comprendre qui a disparu. Les deux noms sont donc là, avec le sens de
+      // la flèche — l'entrant en premier parce que c'est lui qui joue.
+      man.append(
+        h('span', { class: 'lineup__sortant' }, [
+          h('i', { class: 'lineup__fleche' }, ['↓']),
+          remplace.short.toUpperCase(),
+        ]),
+      );
       man.title = `entré à la place de ${remplace.short}`;
     }
     if (expulse) man.dataset.out = '1';

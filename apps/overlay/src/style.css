@@ -2189,3 +2189,150 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .fil__ligne[data-neuf='1'] { animation: none; }
 }
+
+/* ══════════════════════════ Le bloc réseaux ═══════════════════════════════
+
+   Quatre réseaux côte à côte dans une case de 246 px donnent quatre lignes de
+   six pixels que personne ne lit. Ils passent donc chacun leur tour, cinq
+   secondes, en pleine taille : on en lit UN, et on le lit vraiment.          */
+
+.reseaux {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  box-shadow: var(--panel-glow);
+}
+
+.reseaux__piste { position: absolute; inset: 0; }
+
+/* Les deux cartes se croisent verticalement. La position vient du ressort,
+   en JavaScript : une transition CSS repartirait de zéro si une bascule
+   arrivait avant la fin de la précédente. */
+.reseaux__carte {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 0 var(--s5);
+  will-change: transform, opacity;
+}
+
+.reseaux__logo {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+
+.reseaux__marque {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex: none;
+}
+
+.reseaux__marque b {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.reseaux__pseudo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 19px;
+  font-weight: 800;
+  font-stretch: var(--width-tight);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+/* Le rouleau des buteurs. Au-delà de deux noms ils passent par deux : à
+   trois, tout se chevauchait dans la pastille et on ne lisait plus rien —
+   y compris le nom de celui qui venait de marquer. */
+.banner__scorers[data-neuf] span {
+  animation: buteur-entre var(--dur-base) var(--ease) both;
+}
+
+@keyframes buteur-entre {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Combien de pages, et laquelle. Absents s'il n'y en a qu'une : trois points
+   sous un seul buteur feraient croire à quelque chose de caché. */
+.banner__points {
+  display: flex;
+  gap: 3px;
+  flex: none;
+  align-self: center;
+}
+
+.banner__points u {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink-dim);
+  text-decoration: none;
+}
+
+.banner__points u[data-on='1'] { background: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .banner__scorers[data-neuf] span { animation: none; }
+}
+
+/* ── Un remplacement, dit en entier ─────────────────────────────────────────
+   Écrire seulement le nom de l'entrant en vert disait qu'il y avait eu un
+   changement, pas lequel : un spectateur qui revient après dix minutes voyait
+   un nom inconnu sans comprendre qui avait disparu. */
+.lineup__sortant {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  max-width: var(--largeur-nom, 90px);
+  margin-top: 1px;
+  overflow: hidden;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink-dim);
+  text-decoration: line-through;
+  text-decoration-color: var(--lose);
+}
+
+.lineup__fleche {
+  font-style: normal;
+  text-decoration: none;
+  color: var(--lose);
+}
+
+/* ── La bascule d'une équipe à l'autre ──────────────────────────────────────
+   Sans ce glissement, les onze maillots changent de nom d'un coup et on croit
+   à un défaut d'affichage. */
+@keyframes compo-entre {
+  from { opacity: 0; transform: translateX(22px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.panel[data-bascule] .lineup,
+.panel[data-bascule] .panel__titles {
+  animation: compo-entre var(--dur-slow) var(--ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel[data-bascule] .lineup,
+  .panel[data-bascule] .panel__titles { animation: none; }
+}

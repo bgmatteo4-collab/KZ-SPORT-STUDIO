@@ -17,6 +17,7 @@ import { multiplex } from './multiplex.js';
 import { odds } from './odds.js';
 import { prematch } from './prematch.js';
 import { radar2d } from './radar2d.js';
+import { reseaux } from './reseaux.js';
 import { sheet } from './sheet.js';
 import { shotmap } from './shotmap.js';
 import { scoreBanner } from './scoreBanner.js';
@@ -38,7 +39,11 @@ export const REGISTRY: Record<string, WidgetFactory> = {
   'score-banner': scoreBanner,
   'cam-frame': camFrame,
   'stream-counters': streamCounters,
-  social,
+  // `social` montrait une note de musique et « KZ TV ». Un pictogramme de
+  // TikTok sur un plateau de football ne dit rien, et un pseudo seul ne donne
+  // aucune raison d'aller quelque part.
+  social: reseaux,
+  reseaux,
   title,
   'score-recap': scoreRecap,
   flash,

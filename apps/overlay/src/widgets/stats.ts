@@ -59,8 +59,6 @@ interface Row {
    * 34 %, soit l'inverse exact de ce que le chiffre raconte.
    */
   invert?: boolean;
-  /** Le nom de la donnée manquante, pour la note du bas. */
-  absent?: string;
 }
 
 /** Les frappes d'un camp dont on connaît la position. */
@@ -85,7 +83,6 @@ const DANGER: Row[] = [
     label: 'Dans la surface',
     read: (s) =>
       pairePlacee(s, (shots) => (shots.length === 0 ? null : shots.filter(dansLaSurface).length)),
-    absent: 'la position des frappes',
   },
   {
     label: 'Distance moyenne',
@@ -97,9 +94,8 @@ const DANGER: Row[] = [
         return total / shots.length;
       }),
     format: (v) => `${Math.round(v)} m`,
-    absent: 'la position des frappes',
   },
-  { label: 'xG', read: (s) => s.stats.xg, format: (v) => v.toFixed(2), absent: 'les buts attendus' },
+  { label: 'xG', read: (s) => s.stats.xg, format: (v) => v.toFixed(2) },
 ];
 
 const MAITRISE: Row[] = [
@@ -110,14 +106,13 @@ const MAITRISE: Row[] = [
       ? undefined
       : s.stats.passAccuracy),
     format: (v) => `${Math.round(v)} %`,
-    absent: 'la précision de passe',
   },
-  { label: 'Passes', read: (s) => s.stats.passes, absent: 'le nombre de passes' },
+  { label: 'Passes', read: (s) => s.stats.passes },
 ];
 
 const LE_JEU: Row[] = [
   { label: 'Corners', read: (s) => s.stats.corners },
-  { label: 'Fautes', read: (s) => s.stats.fouls, absent: 'les fautes' },
+  { label: 'Fautes', read: (s) => s.stats.fouls },
   { label: 'Hors-jeu', read: (s) => s.stats.offsides },
   { label: 'Cartons jaunes', read: (s) => s.stats.yellowCards },
 ];
@@ -208,11 +203,7 @@ export const stats: WidgetFactory = (ctx): Widget => {
     corps.append(el);
   }
 
-  // Ce que la source ne publie pas. Une phrase, en bas, plutôt que des lignes
-  // de tirets au milieu du tableau.
-  const note = h('p', { class: 'stats__note t-caption', hidden: '' }, ['']);
-
-  const wrap = h('div', { class: large ? 'stats stats--large' : 'stats' }, [ring, corps, note]);
+  const wrap = h('div', { class: large ? 'stats stats--large' : 'stats' }, [ring, corps]);
   box.body.append(wrap);
 
   /** Hauteur en dessous de laquelle l'anneau et les barres doivent maigrir. */
@@ -225,7 +216,6 @@ export const stats: WidgetFactory = (ctx): Widget => {
    */
   const SERRE_SOUS = 46;
 
-  let signatureNote: string | null = null;
   let signatureParts = '';
 
   return {
@@ -247,16 +237,15 @@ export const stats: WidgetFactory = (ctx): Widget => {
         arc.setAttribute('stroke-dashoffset', next);
       }
 
-      const manquantes: string[] = [];
       for (const { row, home, away, fill, node } of built) {
         const paire = row.read(state);
         if (!paire) {
-          // La ligne s'efface, et la note du bas dira ce qui manque. Afficher
-          // « 0.00 » affirmerait que les deux équipes n'ont rien produit, ce
-          // qui est un mensonge ; un tiret permanent, lui, ressemble à une
-          // panne.
+          // La ligne s'efface, et RIEN ne la remplace. Une version précédente
+          // écrivait « non publié par la source : les buts attendus » en bas
+          // du panneau : c'est du texte de développeur à l'antenne, qui parle
+          // d'un fournisseur dont le spectateur ignore jusqu'au nom. Une
+          // donnée absente est simplement absente.
           node.hidden = true;
-          if (row.absent && !manquantes.includes(row.absent)) manquantes.push(row.absent);
           continue;
         }
         node.hidden = false;
@@ -268,14 +257,6 @@ export const stats: WidgetFactory = (ctx): Widget => {
         const somme = a + b;
         if (somme === 0) setScaleX(fill, 0.5);
         else setScaleX(fill, row.invert ? b / somme : a / somme);
-      }
-
-      const texte =
-        manquantes.length === 0 ? '' : `Non publié par la source : ${manquantes.join(', ')}.`;
-      if (texte !== signatureNote) {
-        signatureNote = texte;
-        note.hidden = texte === '';
-        setText(note, texte);
       }
 
       // ── La répartition de la hauteur ──────────────────────────────────────

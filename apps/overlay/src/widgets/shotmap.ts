@@ -94,9 +94,7 @@ export const shotmap: WidgetFactory = (): Widget => {
   const sensDom = h('span', { class: 'tirs__sens tirs__sens--home' }, ['—']);
   const sens = h('div', { class: 'tirs__sens-ligne t-caption' }, [sensExt, sensDom]);
 
-  const absents = h('p', { class: 'tirs__absents t-caption', hidden: '' }, ['']);
-
-  box.body.append(scene, sens, bilan, absents);
+  box.body.append(scene, sens, bilan);
 
   let signature: string | null = null;
 
@@ -134,15 +132,17 @@ export const shotmap: WidgetFactory = (): Widget => {
       setText(butsE, compter('away', (s) => s.outcome === 'goal'));
 
       // ── La carte, qui ne montre que ce qu'elle sait placer ────────────────
+      //
+      // Une frappe sans position est absente de la carte, et c'est tout. Une
+      // version précédente écrivait « 2 tirs sans position connue, comptés
+      // dans le bilan » : c'est une phrase qui parle du fournisseur à un
+      // spectateur qui ignore jusqu'à son nom. Le bilan, lui, continue de
+      // compter TOUTES les frappes — il vient du relevé officiel du match.
       pastilles.replaceChildren();
-      let sansPlace = 0;
 
       for (const shot of shots) {
         const où = place(shot);
-        if (!où) {
-          sansPlace += 1;
-          continue;
-        }
+        if (!où) continue;
         const point = h('i', {
           class: `tirs__point tirs__point--${shot.outcome ?? 'off_target'}`,
           'data-side': shot.side,
@@ -154,15 +154,6 @@ export const shotmap: WidgetFactory = (): Widget => {
         pastilles.append(point);
       }
 
-      // Dire ce qui manque plutôt que de le poser au hasard : une pastille
-      // inventée mentirait sur la seule chose que cette carte montre.
-      absents.hidden = sansPlace === 0;
-      if (sansPlace > 0) {
-        setText(
-          absents,
-          `${sansPlace} tir${sansPlace > 1 ? 's' : ''} sans position connue, compté${sansPlace > 1 ? 's' : ''} dans le bilan`,
-        );
-      }
     },
   };
 };

@@ -16,7 +16,7 @@
  * invisible de même largeur à gauche garde le score exactement au centre.
  */
 
-import { clockLabel, embleme, PHASE_LABEL } from '@kz/core';
+import { clockLabel, embleme, type GoalEntry, PHASE_LABEL } from '@kz/core';
 import { h, setAttr, setText } from '../dom.js';
 import { crestEl, paintCrest } from './crest.js';
 import type { Widget, WidgetContext, WidgetFactory } from './types.js';
@@ -44,6 +44,8 @@ export const scoreBanner: WidgetFactory = (): Widget => {
 
   const scorersHome = h('div', { class: 'banner__scorers banner__scorers--home' });
   const scorersAway = h('div', { class: 'banner__scorers' });
+  const rouleauDom = rouleau(scorersHome);
+  const rouleauExt = rouleau(scorersAway);
   const clockMain = h('span', {}, ['0:00']);
   const clockAdded = h('span', { class: 'banner__added' });
   const liveDot = h('div', { class: 'banner__live', 'data-on': '0' }, [
@@ -74,7 +76,7 @@ export const scoreBanner: WidgetFactory = (): Widget => {
 
   return {
     el,
-    update({ state, clockMs }: WidgetContext) {
+    update({ state, clockMs, realNow }: WidgetContext) {
       const meta = state.meta;
       paintCrest(crestHome, meta?.home);
       paintCrest(crestAway, meta?.away);
@@ -114,9 +116,11 @@ export const scoreBanner: WidgetFactory = (): Widget => {
       const latest = state.goals.length === 0 ? -1 : state.goals[state.goals.length - 1]!.seq;
       if (latest !== lastGoalSeq) {
         lastGoalSeq = latest;
-        fillScorers(scorersHome, state, 'home');
-        fillScorers(scorersAway, state, 'away');
+        rouleauDom.poser(state.goals.filter((g) => g.side === 'home').map(ligneButeur));
+        rouleauExt.poser(state.goals.filter((g) => g.side === 'away').map(ligneButeur));
       }
+      rouleauDom.avancer(realNow);
+      rouleauExt.avancer(realNow);
     },
   };
 };
@@ -128,11 +132,89 @@ function splitCompetition(competition?: string, round?: string): [string, string
   return [competition, round ?? ''];
 }
 
-function fillScorers(host: HTMLElement, state: WidgetContext['state'], side: 'home' | 'away'): void {
-  host.replaceChildren();
-  for (const goal of state.goals.filter((g) => g.side === side)) {
-    const name = goal.ownGoal ? 'csc' : (goal.scorer?.short ?? 'But');
-    const suffix = goal.penalty ? ' (sp)' : goal.ownGoal ? ' (csc)' : '';
-    host.append(h('span', {}, [h('b', {}, [name.toUpperCase()]), ` ${goal.minute}'${suffix}`]));
-  }
+/** « CASTILLO 90' » — ce qu'on écrit pour un but. */
+function ligneButeur(goal: GoalEntry): { nom: string; suite: string } {
+  const nom = goal.ownGoal ? 'csc' : (goal.scorer?.short ?? 'But');
+  const suffixe = goal.penalty ? ' (sp)' : goal.ownGoal ? ' (csc)' : '';
+  return { nom: nom.toUpperCase(), suite: ` ${goal.minute}'${suffixe}` };
+}
+
+/**
+ * Le rouleau des buteurs.
+ *
+ * ── Le défaut ───────────────────────────────────────────────────────────────
+ *
+ * Les buteurs s'écrivaient les uns derrière les autres dans une pastille de
+ * 420 px. Un but, ça tient. Deux, c'est serré. À partir de trois, tout se
+ * chevauche et on ne lit plus rien — y compris le nom de celui qui vient de
+ * marquer, c'est-à-dire la seule chose qu'on regarde à cet instant.
+ *
+ * ── La réponse ──────────────────────────────────────────────────────────────
+ *
+ * Au-delà de deux noms, ils passent par deux, en roulant vers le haut. Le
+ * dernier but marqué ouvre toujours la série : on voit d'abord ce qui vient
+ * d'arriver, puis le reste.
+ *
+ * La rotation se mesure sur le temps RÉEL et non sur le chrono du match : un
+ * rejeu à vingt fois la vitesse ferait défiler les noms vingt fois plus vite,
+ * donc illisibles — alors que la lisibilité, elle, se mesure en secondes
+ * d'horloge murale.
+ */
+const PAR_PAGE = 2;
+const TOUR_BUTEURS_MS = 4_200;
+
+function rouleau(hote: HTMLElement): {
+  poser(lignes: { nom: string; suite: string }[]): void;
+  avancer(realNow: number): void;
+} {
+  let pages: { nom: string; suite: string }[][] = [];
+  let page = 0;
+  let prochain = 0;
+
+  const dessiner = (): void => {
+    hote.replaceChildren();
+    for (const ligne of pages[page] ?? []) {
+      hote.append(h('span', {}, [h('b', {}, [ligne.nom]), ligne.suite]));
+    }
+    // Les points ne sont là que s'il y a vraiment plusieurs pages : trois
+    // points sous un seul buteur feraient croire à quelque chose de caché.
+    if (pages.length > 1) {
+      const points = h('i', { class: 'banner__points' });
+      for (let i = 0; i < pages.length; i += 1) {
+        const p = h('u');
+        if (i === page) p.dataset.on = '1';
+        points.append(p);
+      }
+      hote.append(points);
+    }
+    hote.dataset.neuf = '1';
+    // Le retrait de l'attribut relance l'animation d'entrée au tour suivant.
+    requestAnimationFrame(() => requestAnimationFrame(() => delete hote.dataset.neuf));
+  };
+
+  return {
+    poser(lignes) {
+      // Le dernier but en tête : c'est lui qu'on cherche quand ça vient de
+      // marquer. Les pages suivantes remontent le temps.
+      const ordre = [...lignes].reverse();
+      pages = [];
+      for (let i = 0; i < ordre.length; i += PAR_PAGE) {
+        pages.push(ordre.slice(i, i + PAR_PAGE));
+      }
+      page = 0;
+      prochain = 0;
+      dessiner();
+    },
+    avancer(realNow) {
+      if (pages.length <= 1) return;
+      if (prochain === 0) {
+        prochain = realNow + TOUR_BUTEURS_MS;
+        return;
+      }
+      if (realNow < prochain) return;
+      prochain = realNow + TOUR_BUTEURS_MS;
+      page = (page + 1) % pages.length;
+      dessiner();
+    },
+  };
 }

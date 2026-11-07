@@ -150,7 +150,7 @@ const SLOT = {
   colonneDroiteBas: { x: 0.746, y: 0.668, w: 0.246, h: 0.19 },
   /** La colonne droite d'un seul tenant, quand un panneau mérite toute la hauteur. */
   colonneDroiteTout: { x: 0.746, y: 0.172, w: 0.246, h: 0.686 },
-  /** Pseudo social, tout en bas à droite. */
+  /** Le bloc réseaux, tout en bas à droite. */
   social: { x: 0.746, y: 0.878, w: 0.246, h: 0.062 },
 
   /**
@@ -245,7 +245,10 @@ const MATCH_DIRECT: SceneLayer[] = [
   // La colonne entière pour les statistiques : autant les donner toutes.
   { widget: 'stats', slot: SLOT.colonneGauche, z: 20, opts: { large: true } },
   { widget: 'multiplex', slot: SLOT.radar, z: 20, opts: { large: true } },
-  { widget: 'lineups', slot: SLOT.colonneDroite, z: 20 },
+  // La composition ALTERNE entre les deux équipes : le panneau montrait
+  // celle de l'équipe à domicile pendant quatre-vingt-dix minutes, et la
+  // moitié du match n'apparaissait nulle part sur le plateau.
+  { widget: 'lineups', slot: SLOT.colonneDroite, z: 20, opts: { alterne: true } },
   { widget: 'fil-recent', slot: SLOT.colonneDroiteBas, z: 20, opts: { recent: true } },
 ];
 
@@ -452,7 +455,8 @@ export const NOM_WIDGET: Record<string, string> = {
   'score-banner': 'Bannière de score',
   'cam-frame': 'Cadre caméra',
   'stream-counters': 'Vues et likes',
-  social: 'Pseudo',
+  social: 'Réseaux',
+  reseaux: 'Réseaux',
   title: 'Titre',
   'score-recap': 'Rappel du score',
   flash: 'Carton plein écran',
