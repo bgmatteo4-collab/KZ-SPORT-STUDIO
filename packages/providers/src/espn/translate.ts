@@ -114,6 +114,15 @@ export interface SourceEspn {
   summary?: EspnSummary;
   /** Les autres rencontres de la soirée, pour le multiplex. */
   autres?: EspnEvent[];
+  /**
+   * La compétition de chaque autre rencontre, par identifiant de match.
+   *
+   * Le tableau de bord global d'ESPN ne dit PAS à quel championnat appartient
+   * un match : il faut le déduire d'un lien, ce qui demande un second appel
+   * réseau pour le catalogue. La traduction devant rester pure, c'est le
+   * fournisseur qui résout, et cette table qui transporte le résultat.
+   */
+  autresLigues?: Record<string, { id: string; nom: string }>;
   /** L'identifiant de championnat ESPN, pour nommer la compétition. */
   ligue?: string;
   /** Le bloc « leagues » du tableau de bord : il porte l'emblème officiel. */
@@ -443,7 +452,9 @@ function cotes(liste: EspnOdds[] | undefined): Odds | null {
 export function minuteAffichee(st?: EspnStatus): string {
   const phase = phaseDepuisEtat(st);
   if (phase === 'half_time') return 'MT';
-  if (phase === 'full_time') return 'FT';
+  // « FIN », pas « FT » : l'abréviation anglaise d'ESPN n'a rien à faire à
+  // l'antenne d'une chaîne francophone.
+  if (phase === 'full_time') return 'FIN';
   if (phase === 'pre') return '—';
   const brut = (st?.displayClock ?? '').replace(/'/g, '').trim();
   if (brut) return brut;
@@ -906,13 +917,21 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
       const sc = lireScore(c?.competitors);
       if (!ed || !ee || !sc) continue;
       const st = a.status ?? c?.status;
+      const id = a.id ?? `${ed.id}-${ee.id}`;
+      // La compétition vient du fournisseur, qui seul peut la résoudre. Sans
+      // elle, un multiplex ouvert à tout le football affiche « 2-1 » sans
+      // qu'on sache s'il s'agit de la Ligue 1 ou d'une D2 scandinave.
+      const ligue = a.id ? src.autresLigues?.[a.id] : undefined;
+      const coupDEnvoi = a.date ? Date.parse(a.date) : NaN;
       matches.push({
-        id: a.id ?? `${ed.id}-${ee.id}`,
+        id,
         minute: minuteAffichee(st),
         live: st?.type?.state === 'in',
         home: bref(ed),
         away: bref(ee),
         score: sc,
+        ...(Number.isFinite(coupDEnvoi) ? { kickoff: coupDEnvoi } : {}),
+        ...(ligue ? { competition: ligue.nom, competitionId: ligue.id } : {}),
       });
     }
     if (matches.length > 0) {

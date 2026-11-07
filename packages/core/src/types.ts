@@ -264,6 +264,27 @@ export interface OtherMatch {
   home: TeamBrief;
   away: TeamBrief;
   score: Pair;
+  /**
+   * Coup d'envoi prévu, en temps mural UTC.
+   *
+   * Un match qui n'a pas commencé n'a pas de minute : la marge affichait donc
+   * un tiret, répété quinze fois dans la colonne. L'heure de coup d'envoi, en
+   * revanche, est exactement ce qu'on regarde dans un multiplex d'avant-match.
+   */
+  kickoff?: number;
+  /** Le nom d'antenne de la compétition : « Premier League ». */
+  competition?: string;
+  /** Son code chez le fournisseur : « eng.1 ». Sert à la hiérarchiser. */
+  competitionId?: string;
+  /**
+   * L'instant du dernier changement de score, en temps mural.
+   *
+   * C'est ce qui permet de dire « ça vient de marquer à Lens » — l'unique
+   * raison d'avoir un multiplex à l'écran plutôt qu'une liste de résultats.
+   * Calculé par le réducteur en comparant deux instantanés, donc identique
+   * sur les deux sources d'OBS et conservé après un rechargement.
+   */
+  scoreChangedAt?: number;
 }
 
 /** Le minimum pour dessiner un écu et un nom. */

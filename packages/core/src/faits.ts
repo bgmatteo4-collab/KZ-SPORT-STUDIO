@@ -97,7 +97,11 @@ export const VALEUR_FIL: Record<FaitKind, number> = {
   penalty_awarded: 4,
   shot_on: 3,
   yellow: 3,
-  sub: 3,
+  // Un remplacement vaut moins qu'un tir cadré, et c'est une correction tirée
+  // de l'écran : à la fin d'un match, les six derniers faits sont presque
+  // toujours des changements, et le fil n'affichait plus qu'eux. Ils racontent
+  // la gestion d'une fin de match, pas le match.
+  sub: 2,
   shot_blocked: 2,
   shot_off: 2,
   corner: 1,

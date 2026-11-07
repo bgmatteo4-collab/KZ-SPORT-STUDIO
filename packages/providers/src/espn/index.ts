@@ -62,6 +62,27 @@ export interface EspnOptions {
   summaryMs?: number;
   /** Inclure les autres rencontres de la soirée, pour le multiplex. */
   avecMultiplex?: boolean;
+  /**
+   * Jusqu'où va le multiplex.
+   *
+   * `tout` — tout le football du jour, toutes compétitions. C'est le défaut,
+   * parce que l'inverse se voit tout de suite : un vendredi de Brasileirão,
+   * le panneau restait vide toute la soirée alors que trente rencontres se
+   * jouaient ailleurs.
+   *
+   * `ligue` — le seul championnat qu'on suit. Un appel réseau de moins, utile
+   * pour un soir de Coupe d'Europe où seule la compétition en cours compte.
+   */
+  multiplexPortee?: 'ligue' | 'tout';
+  /**
+   * Cadence du tableau global. Quarante-cinq secondes par défaut.
+   *
+   * Les scores d'ailleurs n'ont pas besoin de la précision de dix secondes
+   * qu'on accorde au match commenté, et le délai anti-spoiler lisse de toute
+   * façon l'écart. Interroger tout le football toutes les dix secondes
+   * triplerait le trafic sans rien apporter à l'antenne.
+   */
+  multiplexMs?: number;
   /** Écrire chaque réponse dans ce fichier, une par ligne. */
   recordTo?: string;
 }
@@ -306,6 +327,9 @@ export class EspnProvider implements Provider {
   private dernierAppel: number | null = null;
   private derniereErreur: string | null = null;
   private appels = 0;
+  private dernierMultiplex = 0;
+  private multiplexEnCache: { events: EspnEvent[]; ligues: Record<string, LigueConnue> } | null =
+    null;
 
   constructor(private readonly options: EspnOptions) {
     this.eventId = options.eventId ?? null;
@@ -347,14 +371,14 @@ export class EspnProvider implements Provider {
           }
         }
 
+        const multiplex = await this.autresRencontres(tous, maintenant);
+
         const src: SourceEspn = {
           event,
           ligue: this.options.ligue,
           ...(bord.leagues?.[0] ? { ligueInfos: bord.leagues[0] } : {}),
           ...(this.resumeEnCache ? { summary: this.resumeEnCache } : {}),
-          ...(this.options.avecMultiplex
-            ? { autres: tous.filter((e) => e.id !== this.eventId) }
-            : {}),
+          ...multiplex,
         };
 
         if (this.options.recordTo) this.enregistrer(src);
@@ -372,6 +396,66 @@ export class EspnProvider implements Provider {
 
     await interroger();
     this.timer = setInterval(() => void interroger(), this.options.pollMs ?? 10_000);
+  }
+
+  /**
+   * Les autres rencontres à verser au multiplex.
+   *
+   * ── Pourquoi une seconde cadence ────────────────────────────────────────
+   *
+   * Le tableau de bord d'un championnat ne contient QUE ce championnat : un
+   * vendredi de Brasileirão, le multiplex restait vide alors que trente
+   * matchs se jouaient ailleurs. Le tableau global, lui, couvre tout — mais
+   * il est plus lourd, et un score d'ailleurs n'a pas besoin de la précision
+   * de dix secondes qu'on accorde au match commenté. D'où un cache à part,
+   * rafraîchi toutes les quarante-cinq secondes.
+   *
+   * En cas d'échec, on rend le dernier tableau connu plutôt que rien : un
+   * multiplex figé de trente secondes vaut mieux qu'un panneau qui se vide.
+   */
+  private async autresRencontres(
+    duChampionnat: EspnEvent[],
+    maintenant: number,
+  ): Promise<Pick<SourceEspn, 'autres' | 'autresLigues'>> {
+    if (!this.options.avecMultiplex) return {};
+
+    const local = (): Pick<SourceEspn, 'autres'> => ({
+      autres: duChampionnat.filter((e) => e.id !== this.eventId),
+    });
+    if (this.options.multiplexPortee === 'ligue') return local();
+
+    if (
+      this.multiplexEnCache === null ||
+      maintenant - this.dernierMultiplex >= (this.options.multiplexMs ?? 45_000)
+    ) {
+      try {
+        const [parId, global] = await Promise.all([
+          catalogueLigues(),
+          json<EspnScoreboard>(`${BASE}/all/scoreboard`),
+        ]);
+        const events = global.events ?? [];
+        const ligues: Record<string, LigueConnue> = {};
+        for (const e of events) {
+          const l = ligueDuMatch(e, parId);
+          if (e.id && l) ligues[e.id] = { slug: l.slug, nom: LIGUES[l.slug]?.nom ?? l.nom };
+        }
+        this.multiplexEnCache = { events, ligues };
+        this.dernierMultiplex = maintenant;
+      } catch {
+        // Le tableau global est un CONFORT : son absence ne doit pas priver
+        // l'antenne du multiplex de son propre championnat.
+        if (this.multiplexEnCache === null) return local();
+      }
+    }
+
+    const cache = this.multiplexEnCache;
+    if (!cache) return local();
+    return {
+      autres: cache.events.filter((e) => e.id !== this.eventId),
+      autresLigues: Object.fromEntries(
+        Object.entries(cache.ligues).map(([id, l]) => [id, { id: l.slug, nom: l.nom }]),
+      ),
+    };
   }
 
   async stop(): Promise<void> {

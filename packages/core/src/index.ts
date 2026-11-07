@@ -2,6 +2,7 @@ export * from './types.js';
 export * from './faits.js';
 export * from './classement.js';
 export * from './couleurs.js';
+export * from './multiplex.js';
 export * from './clock.js';
 export * from './ecu.js';
 export * from './reduce.js';

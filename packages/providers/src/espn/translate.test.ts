@@ -285,7 +285,7 @@ test('la minute d’antenne d’un autre match', () => {
   assert.equal(minuteAffichee({ type: { state: 'in' }, period: 2, displayClock: "69'" }), '69');
   assert.equal(minuteAffichee({ type: { state: 'in' }, period: 1, displayClock: "45'+2'" }), '45+2');
   assert.equal(minuteAffichee({ type: { state: 'in', name: 'STATUS_HALFTIME' } }), 'MT');
-  assert.equal(minuteAffichee({ type: { state: 'post', name: 'STATUS_FULL_TIME' } }), 'FT');
+  assert.equal(minuteAffichee({ type: { state: 'post', name: 'STATUS_FULL_TIME' } }), 'FIN');
   assert.equal(minuteAffichee({ type: { state: 'pre' } }), '—');
 });
 

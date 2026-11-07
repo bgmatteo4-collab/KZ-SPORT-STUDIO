@@ -397,7 +397,10 @@ export const SCENES: Scene[] = [
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'multiplex', slot: SLOT.pleinPrincipal, z: 20, opts: { large: true } },
+      // Plein écran, le multiplex GROUPE par compétition : vingt lignes de dix
+      // championnats différents ne se lisent plus, parce qu'on ne sait plus
+      // si « 2-1 » est un match de Ligue 1 ou de troisième division.
+      { widget: 'multiplex', slot: SLOT.pleinPrincipal, z: 20, opts: { large: true, groupe: true } },
       { widget: 'standings', slot: SLOT.pleinSecondaire, z: 20 },
       { widget: 'social', slot: SLOT.social, z: 20 },
       { widget: 'cam-frame', slot: CAM.coin, z: 110 },

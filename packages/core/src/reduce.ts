@@ -299,7 +299,26 @@ function applyInto(draft: MatchState, event: MatchEvent): void {
     }
 
     case 'other_matches': {
-      draft.otherMatches = event.payload.matches;
+      // Le fournisseur envoie un INSTANTANÉ complet, sans dire ce qui a
+      // changé. On le compare au précédent : c'est la seule façon de savoir
+      // que ça vient de marquer ailleurs, et c'est tout l'intérêt d'avoir un
+      // multiplex à l'antenne plutôt qu'une liste de résultats.
+      //
+      // Calculé ICI et pas dans le widget, pour trois raisons : les deux
+      // sources navigateur d'OBS doivent allumer la même ligne au même
+      // instant, un rechargement ne doit pas effacer le signal, et l'instant
+      // retenu est celui de l'ÉVÉNEMENT, donc décalé comme le reste par le
+      // délai anti-spoiler.
+      const avant = new Map(draft.otherMatches.map((m) => [m.id, m]));
+      draft.otherMatches = event.payload.matches.map((m) => {
+        const vieux = avant.get(m.id);
+        const bouge =
+          vieux !== undefined && (vieux.score[0] !== m.score[0] || vieux.score[1] !== m.score[1]);
+        // Un match vu pour la première fois n'a PAS marqué : au démarrage,
+        // tout le tableau s'allumerait d'un coup.
+        const quand = bouge ? event.t : vieux?.scoreChangedAt;
+        return quand === undefined ? m : { ...m, scoreChangedAt: quand };
+      });
       break;
     }
 

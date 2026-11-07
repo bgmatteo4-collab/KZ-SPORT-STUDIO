@@ -124,10 +124,17 @@ export const momentum: WidgetFactory = (): Widget => {
  * en reprise de serveur, le coup d'envoi annoncé peut être loin derrière les
  * données qu'on a réellement.
  */
-function fenetre(state: MatchState): { from: number; span: number } {
+function fenetre(state: MatchState): { from: number; to: number; span: number } {
   const premier = state.pressureLog[0]?.t ?? state.meta?.kickoff ?? state.t - SPAN_MIN;
-  const span = Math.max(SPAN_MIN, state.t - premier);
-  return { from: state.t - span, span };
+  // Une fois le match fini, le temps continue d'avancer mais plus rien ne se
+  // produit : garder `state.t` pour borne droite étire la courbe dans le vide
+  // et finit par la réduire à un trait plat collé à gauche. On s'arrête peu
+  // après le dernier fait.
+  const dernier = state.pressureLog[state.pressureLog.length - 1]?.t ?? state.t;
+  const to =
+    state.phase === 'full_time' ? Math.min(state.t, dernier + 2 * 60_000) : state.t;
+  const span = Math.max(SPAN_MIN, to - premier);
+  return { from: to - span, to, span };
 }
 
 /** La pression de chaque camp à l'instant `at`, décroissance exponentielle. */
@@ -188,7 +195,7 @@ function draw(
   c.clearRect(0, 0, w, h);
 
   const mid = h / 2;
-  const { from, span } = fenetre(state);
+  const { from, to, span } = fenetre(state);
 
   // Ligne médiane : l'équilibre.
   c.strokeStyle = tokens.panelLine;
@@ -259,7 +266,7 @@ function draw(
   // Les buts : des repères verticaux sur la courbe. Ce sont eux qui donnent
   // l'échelle de temps — sans eux, la courbe n'a pas de date.
   for (const goal of state.goals) {
-    if (goal.t < from || goal.t > state.t) continue;
+    if (goal.t < from || goal.t > to) continue;
     const x = ((goal.t - from) / span) * w;
     c.beginPath();
     c.moveTo(x, 0);

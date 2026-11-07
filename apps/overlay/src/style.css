@@ -969,13 +969,83 @@ html {
 
 .mx {
   display: grid;
-  grid-template-columns: 48px 1fr;
+  /* La marge porte la minute ET le nom de la compétition depuis que le
+     multiplex voit tout le football : « Premier League » sur 48 px se coupait
+     en plein milieu. */
+  grid-template-columns: 62px 1fr;
   align-items: center;
   align-content: center;
   padding: var(--s2) var(--s3);
   border-radius: var(--radius-card);
   background: var(--slab);
   min-height: 0;
+}
+
+.mx__marge { min-width: 0; }
+
+/* La compétition, sous la minute. « 2-1 » ne dit rien si on ignore s'il
+   s'agit de la Ligue 1 ou d'une D2 scandinave — et depuis que le multiplex
+   voit tout le football du jour, c'est le cas une ligne sur deux. */
+.mx__ligue {
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: var(--ink-dim);
+  overflow: hidden;
+  display: block;
+  max-height: 24px;
+}
+
+/* Le titre d'une compétition, dans le mode groupé. */
+.mx__groupe {
+  grid-column: 1 / -1;
+  padding: var(--s1) 0 0 2px;
+  color: var(--ink-soft);
+}
+
+.mx__groupe:first-child { padding-top: 0; }
+
+/* ── Ça vient de marquer ailleurs ─────────────────────────────────────────
+   La seule chose qu'un multiplex apporte qu'une liste de résultats n'apporte
+   pas. Vingt-cinq secondes, puis la ligne reprend sa place. */
+.mx[data-but='1'] {
+  background: linear-gradient(90deg, rgba(227, 168, 59, 0.26), var(--slab) 70%);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* Dans la marge, sous la minute. Jamais par-dessus le score : le score est
+   l'information, et la première version posait justement l'étiquette dessus. */
+.mx__but {
+  display: block;
+  margin: 3px auto 0;
+  width: fit-content;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: #10131c;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  animation: mx-but 1.4s var(--ease) infinite;
+}
+
+@keyframes mx-but {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mx__but { animation: none; }
+}
+
+.mx__reste {
+  margin: var(--s2) 0 0;
+  flex: none;
+  color: var(--ink-dim);
+  text-align: center;
 }
 
 /* La minute vit dans la marge, en rouge et SANS pastille : une pastille pleine

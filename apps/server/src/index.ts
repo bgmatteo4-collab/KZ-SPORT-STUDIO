@@ -80,6 +80,10 @@ function creerEspn(ligue: string, eventId: string | null): EspnProvider {
     // qu'on veut neuf fois sur dix en lançant pendant une soirée.
     ...(eventId ? { eventId } : {}),
     avecMultiplex: process.env.KZ_MULTIPLEX !== '0',
+    // Tout le football du jour par défaut. `KZ_MULTIPLEX=ligue` le ramène au
+    // seul championnat suivi : un appel réseau de moins, pour les soirs où
+    // seule la compétition en cours compte.
+    multiplexPortee: process.env.KZ_MULTIPLEX === 'ligue' ? 'ligue' : 'tout',
     // Enregistrer pendant qu'on diffuse ne coûte rien et sauve la soirée
     // suivante : chaque match réel devient une fixture rejouable.
     ...(process.env.KZ_RECORD ? { recordTo: process.env.KZ_RECORD } : {}),
