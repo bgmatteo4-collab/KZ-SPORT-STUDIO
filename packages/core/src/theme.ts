@@ -33,6 +33,15 @@ export interface ThemeTokens {
 
   /** L'or. Soulignement du chrono, gardien, détails. Jamais en aplat large. */
   accent: string;
+  /**
+   * Le teal et le teal clair de la marque.
+   *
+   * Le teal clair porte les surtitres — tout ce qui oriente la lecture sans
+   * être l'information. C'est la seule couleur, avec l'accent, qui sorte du
+   * gris sur un panneau : deux repères, pas douze.
+   */
+  teal: string;
+  tealClair: string;
   live: string;
   win: string;
   lose: string;
@@ -96,9 +105,22 @@ export interface Theme {
  * reconnaît la chaîne sous l'habillage.
  */
 const SHAPE = {
-  font: '"Archivo", system-ui, -apple-system, sans-serif',
-  widthDisplay: '96%',
-  widthTight: '84%',
+  /*
+   * Rubik, la police de la marque.
+   *
+   * Archivo tenait l'antenne jusqu'ici, et c'était un choix par défaut : une
+   * grotesque variable, large, sans rapport avec le studio. Rubik a le même
+   * aplomb en graisse 900 et des formes plus rondes, qui vont avec le motif
+   * d'encre et les angles adoucis de la finition sticker.
+   */
+  font: '"Rubik", system-ui, -apple-system, sans-serif',
+  /*
+   * Rubik n'a pas d'axe de chasse. Les deux jetons restent — une quarantaine
+   * de règles les emploient — mais ils ne font plus rien. Les retirer
+   * demanderait de toucher à tout l'habillage pour un gain nul.
+   */
+  widthDisplay: '100%',
+  widthTight: '100%',
   weightDisplay: '900',
 
   radiusPanel: '28px',
@@ -113,8 +135,9 @@ const SHAPE = {
   s5: '24px',
   s6: '32px',
 
-  shadow: '0 20px 56px rgba(0, 0, 0, 0.48)',
-  shadowSoft: '0 6px 20px rgba(0, 0, 0, 0.28)',
+  /* La finition sticker : une ombre PLEINE, pas un halo diffus. */
+  shadow: '0 18px 44px rgba(0, 0, 0, 0.5)',
+  shadowSoft: '0 6px 18px rgba(0, 0, 0, 0.32)',
 
   durFast: '160ms',
   durBase: '320ms',
@@ -122,307 +145,100 @@ const SHAPE = {
   ease: 'cubic-bezier(0.22, 1, 0.36, 1)',
 } as const;
 
-const NEUTRAL = {
-  ink: '#ffffff',
-  inkSoft: 'rgba(196, 206, 238, 0.72)',
-  inkDim: 'rgba(196, 206, 238, 0.42)',
-  accent: '#e8b45c',
-  live: '#ff4d4d',
-  win: '#3ddc84',
-  lose: '#ef4444',
+/*
+ * ── Les cinq couleurs du studio ─────────────────────────────────────────────
+ *
+ * Elles ne changent JAMAIS. Un habillage de compétition ne remplace plus le
+ * fond, les panneaux ni le texte : il ne colore que l'ACCENT.
+ *
+ * Pourquoi ce choix : un plateau qui change entièrement de couleurs d'une
+ * soirée à l'autre n'appartient à personne — on reconnaît la Ligue des
+ * Champions, pas la chaîne. En gardant la nuit, le papier, le motif d'encre
+ * et Rubik sur toutes les scènes, c'est le studio qu'on reconnaît d'abord, et
+ * la compétition ensuite. C'est aussi la différence entre un habillage à soi
+ * et la copie d'un produit existant.
+ */
+const MARQUE = {
+  /** La nuit : le fond, partout. */
+  nuit: '#0f1519',
+  /** Les cartes et les panneaux, d'un cran plus clair. */
+  nuit2: '#16222a',
+  teal: '#1e5b57',
+  /** Le teal clair : les surtitres, ce qui oriente la lecture. */
+  tealClair: '#3fd3c2',
+  /** Le miel : l'accent par défaut. UNE seule couleur d'emphase à la fois. */
+  miel: '#e0a93b',
+  /** Le papier : le texte. Jamais un blanc pur, qui brûle sur la nuit. */
+  papier: '#f1ece3',
+  /** La brume : le texte secondaire. */
+  brume: '#9fb0b3',
 } as const;
 
-/** Trame de points, façon habillage de chaîne. */
-const DOTS =
-  'radial-gradient(rgba(255,255,255,0.9) 1.4px, transparent 1.5px)';
-/** Diagonales fines. */
-const DIAGONALS =
-  'repeating-linear-gradient(135deg, rgba(255,255,255,0.9) 0 2px, transparent 2px 22px)';
-/** Bandes verticales larges, façon rideau de plateau. */
-const CURTAIN =
-  'repeating-linear-gradient(90deg, rgba(255,255,255,0.8) 0 3px, transparent 3px 70px)';
 /**
- * Chevrons : deux trames croisées en biais.
+ * Ce que tous les habillages partagent.
  *
- * `pattern` finit en `background-image`, qui accepte une LISTE séparée par des
- * virgules — on superpose donc deux dégradés répétés sans ajouter de couche au
- * document. Plus anguleux que les diagonales, pour les compétitions qui ont du
- * tranchant.
+ * Le dégradé de fond reste très sombre et très court : c'est le motif d'encre
+ * qui donne la profondeur, pas une lueur colorée.
  */
-const CHEVRONS =
-  'repeating-linear-gradient(45deg, rgba(255,255,255,0.9) 0 2px, transparent 2px 26px),' +
-  ' repeating-linear-gradient(-45deg, rgba(255,255,255,0.55) 0 2px, transparent 2px 26px)';
-/** Grille fine : la rigueur d'un tableau, pour les championnats. */
-const GRILLE =
-  'repeating-linear-gradient(0deg, rgba(255,255,255,0.8) 0 1px, transparent 1px 34px),' +
-  ' repeating-linear-gradient(90deg, rgba(255,255,255,0.8) 0 1px, transparent 1px 34px)';
+const BASE = {
+  bgDeep: '#121b20',
+  bgMid: MARQUE.nuit,
+  /** La lueur : du teal très dilué, à peine. */
+  glow: 'rgba(30, 91, 87, 0.42)',
+  /** Le motif d'encre diluée, la signature. Posé par `encre.css`. */
+  pattern: 'var(--encre, none)',
+  patternOpacity: '0.14',
+
+  panel: 'rgba(22, 34, 42, 0.94)',
+  /** La finition sticker : un contour NUIT, pas un filet clair. */
+  panelLine: 'rgba(15, 21, 25, 0.9)',
+  panelGlow: '0 0 0 1px rgba(241, 236, 227, 0.07)',
+  pill: 'rgba(15, 21, 25, 0.66)',
+  pillLine: 'rgba(241, 236, 227, 0.08)',
+  slab: 'rgba(241, 236, 227, 0.09)',
+
+  ink: MARQUE.papier,
+  inkSoft: MARQUE.brume,
+  inkDim: 'rgba(159, 176, 179, 0.6)',
+
+  teal: MARQUE.teal,
+  tealClair: MARQUE.tealClair,
+
+  live: '#ff4d4d',
+  win: '#3fd3c2',
+  lose: '#ef4444',
+
+  pitch: '#17403c',
+  pitchStripe: 'rgba(241, 236, 227, 0.05)',
+  pitchLine: 'rgba(241, 236, 227, 0.55)',
+  ball: MARQUE.miel,
+  goalFlood: MARQUE.teal,
+} as const;
+
+/**
+ * Un habillage ne décide plus que d'une chose : sa couleur d'emphase.
+ *
+ * Les couleurs retenues sont celles sous lesquelles chaque compétition se
+ * présente elle-même, ramenées à une valeur qui tient sur la nuit — un violet
+ * de Premier League posé tel quel y disparaîtrait.
+ */
+function habillage(id: string, name: string, accent: string): Theme {
+  return { id, name, tokens: { ...SHAPE, ...BASE, accent } };
+}
 
 export const THEMES: Theme[] = [
-  {
-    id: 'kztv',
-    name: 'KZ TV',
-    tokens: {
-      ...SHAPE,
-      ...NEUTRAL,
-      bgDeep: '#2a1a63',
-      bgMid: '#141a4e',
-      glow: 'rgba(124, 92, 255, 0.40)',
-      pattern: DOTS,
-      patternOpacity: '0.05',
-      panel: 'rgba(13, 17, 50, 0.93)',
-      panelLine: 'rgba(150, 128, 255, 0.58)',
-      panelGlow: '0 0 0 1px rgba(150,128,255,0.18), 0 0 26px rgba(124,92,255,0.22)',
-      pill: 'rgba(41, 48, 110, 0.78)',
-      pillLine: 'rgba(255, 255, 255, 0.08)',
-      slab: 'rgba(255, 255, 255, 0.10)',
-      pitch: '#2440c8',
-      pitchStripe: 'rgba(255, 255, 255, 0.07)',
-      pitchLine: 'rgba(255, 255, 255, 0.62)',
-      ball: '#ffc93c',
-      goalFlood: '#b4209b',
-    },
-  },
-  {
-    id: 'ucl',
-    name: 'Ligue des Champions',
-    tokens: {
-      ...SHAPE,
-      ...NEUTRAL,
-      bgDeep: '#0d1b5c',
-      bgMid: '#061034',
-      glow: 'rgba(66, 153, 255, 0.38)',
-      pattern: DOTS,
-      patternOpacity: '0.06',
-      panel: 'rgba(8, 16, 54, 0.94)',
-      panelLine: 'rgba(96, 170, 255, 0.62)',
-      panelGlow: '0 0 0 1px rgba(96,170,255,0.18), 0 0 26px rgba(66,153,255,0.26)',
-      pill: 'rgba(22, 42, 108, 0.80)',
-      pillLine: 'rgba(120, 170, 255, 0.14)',
-      slab: 'rgba(130, 180, 255, 0.14)',
-      accent: '#7fd0ff',
-      pitch: '#1639b8',
-      pitchStripe: 'rgba(255, 255, 255, 0.075)',
-      pitchLine: 'rgba(255, 255, 255, 0.64)',
-      ball: '#ffd24a',
-      goalFlood: '#7b2fd0',
-    },
-  },
-  {
-    id: 'ligue1',
-    name: 'Ligue 1',
-    tokens: {
-      ...SHAPE,
-      ...NEUTRAL,
-      bgDeep: '#111a3d',
-      bgMid: '#070b1d',
-      glow: 'rgba(217, 255, 60, 0.20)',
-      pattern: DIAGONALS,
-      patternOpacity: '0.05',
-      panel: 'rgba(11, 16, 40, 0.94)',
-      panelLine: 'rgba(217, 255, 60, 0.46)',
-      panelGlow: '0 0 0 1px rgba(217,255,60,0.14), 0 0 24px rgba(217,255,60,0.16)',
-      pill: 'rgba(24, 34, 74, 0.82)',
-      pillLine: 'rgba(255, 255, 255, 0.08)',
-      slab: 'rgba(217, 255, 60, 0.14)',
-      accent: '#d9ff3c',
-      pitch: '#15327e',
-      pitchStripe: 'rgba(217, 255, 60, 0.07)',
-      pitchLine: 'rgba(255, 255, 255, 0.6)',
-      ball: '#d9ff3c',
-      goalFlood: '#0b4f9e',
-    },
-  },
-  {
-    id: 'premier',
-    name: 'Premier League',
-    tokens: {
-      ...SHAPE,
-      ...NEUTRAL,
-      bgDeep: '#3d0a52',
-      bgMid: '#1a0430',
-      glow: 'rgba(0, 255, 135, 0.22)',
-      pattern: CURTAIN,
-      patternOpacity: '0.045',
-      panel: 'rgba(27, 8, 50, 0.94)',
-      panelLine: 'rgba(0, 255, 135, 0.46)',
-      panelGlow: '0 0 0 1px rgba(0,255,135,0.14), 0 0 24px rgba(0,255,135,0.18)',
-      pill: 'rgba(60, 16, 96, 0.80)',
-      pillLine: 'rgba(255, 255, 255, 0.09)',
-      slab: 'rgba(0, 255, 135, 0.14)',
-      accent: '#00ff87',
-      pitch: '#4a1370',
-      pitchStripe: 'rgba(255, 255, 255, 0.07)',
-      pitchLine: 'rgba(255, 255, 255, 0.62)',
-      ball: '#00ff87',
-      goalFlood: '#c2185b',
-    },
-  },
-
-  // ── Les coupes d'Europe ────────────────────────────────────────────────────
-  //
-  // Chacune a une identité que le spectateur reconnaît avant de lire le nom :
-  // le bleu nuit de la Ligue des Champions, l'orange de l'Europa, le vert de la
-  // Conférence. On ne copie pas les chartes — on en prend la LUMIÈRE, qui est
-  // ce qu'on reconnaît à l'antenne.
-
-  {
-    id: 'europa',
-    name: 'Ligue Europa',
-    tokens: {
-      ...SHAPE,
-      ...NEUTRAL,
-      bgDeep: '#49230a',
-      bgMid: '#140a04',
-      glow: 'rgba(255, 138, 31, 0.30)',
-      pattern: CHEVRONS,
-      patternOpacity: '0.05',
-      panel: 'rgba(28, 16, 8, 0.94)',
-      panelLine: 'rgba(255, 160, 70, 0.52)',
-      panelGlow: '0 0 0 1px rgba(255,160,70,0.16), 0 0 26px rgba(255,138,31,0.22)',
-      pill: 'rgba(74, 42, 18, 0.80)',
-      pillLine: 'rgba(255, 180, 110, 0.14)',
-      slab: 'rgba(255, 190, 130, 0.14)',
-      accent: '#ff9b35',
-      pitch: '#8f4409',
-      pitchStripe: 'rgba(255, 255, 255, 0.07)',
-      pitchLine: 'rgba(255, 255, 255, 0.60)',
-      ball: '#ffd24a',
-      goalFlood: '#ff6a00',
-    },
-  },
-  {
-    id: 'conference',
-    name: 'Ligue Conférence',
-    tokens: {
-      ...SHAPE,
-      ...NEUTRAL,
-      bgDeep: '#07402c',
-      bgMid: '#021410',
-      glow: 'rgba(47, 224, 138, 0.26)',
-      pattern: DOTS,
-      patternOpacity: '0.055',
-      panel: 'rgba(6, 26, 20, 0.94)',
-      panelLine: 'rgba(60, 230, 150, 0.48)',
-      panelGlow: '0 0 0 1px rgba(60,230,150,0.15), 0 0 24px rgba(47,224,138,0.20)',
-      pill: 'rgba(12, 58, 42, 0.80)',
-      pillLine: 'rgba(140, 255, 200, 0.12)',
-      slab: 'rgba(120, 255, 190, 0.13)',
-      accent: '#2fe08a',
-      pitch: '#0b6a48',
-      pitchStripe: 'rgba(255, 255, 255, 0.07)',
-      pitchLine: 'rgba(255, 255, 255, 0.60)',
-      ball: '#eaffb0',
-      goalFlood: '#00c46a',
-    },
-  },
-
-  // ── Les championnats ───────────────────────────────────────────────────────
-
-  {
-    id: 'liga',
-    name: 'Liga',
-    tokens: {
-      ...SHAPE,
-      ...NEUTRAL,
-      bgDeep: '#16285f',
-      bgMid: '#060c22',
-      glow: 'rgba(255, 107, 90, 0.26)',
-      pattern: DIAGONALS,
-      patternOpacity: '0.05',
-      panel: 'rgba(9, 16, 42, 0.94)',
-      panelLine: 'rgba(255, 130, 110, 0.46)',
-      panelGlow: '0 0 0 1px rgba(255,130,110,0.15), 0 0 24px rgba(255,107,90,0.20)',
-      pill: 'rgba(28, 44, 96, 0.80)',
-      pillLine: 'rgba(255, 170, 150, 0.12)',
-      slab: 'rgba(255, 160, 140, 0.14)',
-      accent: '#ff6b5a',
-      pitch: '#1c3a94',
-      pitchStripe: 'rgba(255, 255, 255, 0.07)',
-      pitchLine: 'rgba(255, 255, 255, 0.62)',
-      ball: '#ffd24a',
-      goalFlood: '#ff4a3c',
-    },
-  },
-  {
-    id: 'seriea',
-    name: 'Serie A',
-    tokens: {
-      ...SHAPE,
-      ...NEUTRAL,
-      bgDeep: '#063a7e',
-      bgMid: '#020b1c',
-      glow: 'rgba(73, 184, 255, 0.28)',
-      pattern: GRILLE,
-      patternOpacity: '0.05',
-      panel: 'rgba(5, 18, 40, 0.94)',
-      panelLine: 'rgba(90, 190, 255, 0.50)',
-      panelGlow: '0 0 0 1px rgba(90,190,255,0.16), 0 0 24px rgba(73,184,255,0.20)',
-      pill: 'rgba(12, 48, 96, 0.80)',
-      pillLine: 'rgba(150, 210, 255, 0.13)',
-      slab: 'rgba(140, 205, 255, 0.14)',
-      accent: '#49b8ff',
-      pitch: '#0a4e9e',
-      pitchStripe: 'rgba(255, 255, 255, 0.07)',
-      pitchLine: 'rgba(255, 255, 255, 0.62)',
-      ball: '#ffffff',
-      goalFlood: '#0a84ff',
-    },
-  },
-  {
-    id: 'bundesliga',
-    name: 'Bundesliga',
-    tokens: {
-      ...SHAPE,
-      ...NEUTRAL,
-      bgDeep: '#400b12',
-      bgMid: '#0d0507',
-      glow: 'rgba(255, 59, 74, 0.26)',
-      pattern: CHEVRONS,
-      patternOpacity: '0.045',
-      panel: 'rgba(22, 8, 11, 0.94)',
-      panelLine: 'rgba(255, 90, 100, 0.48)',
-      panelGlow: '0 0 0 1px rgba(255,90,100,0.15), 0 0 24px rgba(255,59,74,0.20)',
-      pill: 'rgba(62, 18, 24, 0.80)',
-      pillLine: 'rgba(255, 150, 160, 0.12)',
-      slab: 'rgba(255, 140, 150, 0.13)',
-      accent: '#ff3b4a',
-      pitch: '#8c1420',
-      pitchStripe: 'rgba(255, 255, 255, 0.07)',
-      pitchLine: 'rgba(255, 255, 255, 0.60)',
-      ball: '#ffffff',
-      goalFlood: '#e2001a',
-    },
-  },
-
-  // ── Les coupes nationales ──────────────────────────────────────────────────
-
-  {
-    id: 'coupedefrance',
-    name: 'Coupe de France',
-    tokens: {
-      ...SHAPE,
-      ...NEUTRAL,
-      bgDeep: '#0d2f78',
-      bgMid: '#04102c',
-      glow: 'rgba(255, 77, 90, 0.24)',
-      // Le rideau vertical : une coupe, c'est un soir de gala.
-      pattern: CURTAIN,
-      patternOpacity: '0.05',
-      panel: 'rgba(7, 18, 46, 0.94)',
-      panelLine: 'rgba(255, 110, 120, 0.44)',
-      panelGlow: '0 0 0 1px rgba(255,110,120,0.14), 0 0 24px rgba(255,77,90,0.18)',
-      pill: 'rgba(20, 48, 108, 0.80)',
-      pillLine: 'rgba(255, 255, 255, 0.10)',
-      slab: 'rgba(255, 255, 255, 0.12)',
-      accent: '#ff4d5a',
-      pitch: '#14409c',
-      pitchStripe: 'rgba(255, 255, 255, 0.075)',
-      pitchLine: 'rgba(255, 255, 255, 0.66)',
-      ball: '#ffffff',
-      goalFlood: '#ef3340',
-    },
-  },
+  habillage('kztv', 'KZ TV', MARQUE.miel),
+  habillage('ucl', 'Ligue des Champions', '#4d8dff'),
+  habillage('europa', 'Ligue Europa', '#ff8a1f'),
+  habillage('conference', 'Ligue Conférence', '#2bd97e'),
+  habillage('ligue1', 'Ligue 1', '#5bc2ff'),
+  habillage('premier', 'Premier League', '#f0369b'),
+  habillage('liga', 'Liga', '#ff5a4d'),
+  habillage('seriea', 'Serie A', '#36a9e8'),
+  habillage('bundesliga', 'Bundesliga', '#ff3b3b'),
+  habillage('coupedefrance', 'Coupe de France', '#7f9cff'),
 ];
+
 
 export const DEFAULT_THEME_ID = 'kztv';
 

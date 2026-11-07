@@ -21,15 +21,20 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-# Deux cibles, deux rôles.
+# Deux cibles, une seule police de marque.
 #
-# L'ANTENNE tient par l'unité : une seule famille, dont la hiérarchie vient de
-# la graisse et de la chasse. C'est Archivo, et ça ne bouge pas.
+# La direction artistique du studio tient en cinq couleurs et UNE police :
+# Rubik. Elle vaut donc pour l'antenne comme pour l'outil — c'est elle qu'on
+# reconnaît avant de reconnaître le match.
 #
-# L'OUTIL est un logiciel, pas une émission : il lui faut la police de la
-# marque — Inter Tight pour l'interface, JetBrains Mono pour tout ce qui est
-# chiffre ou chemin de fichier. Un nombre en chasse fixe ne danse pas quand il
-# change, et un décalage qu'on lit en direct ne doit pas danser.
+# Archivo, qui tenait l'antenne jusqu'ici, était un choix par défaut : une
+# grotesque variable, large, sans rapport avec la marque. Rubik a le même
+# aplomb en graisse 900 et des formes plus rondes, qui vont avec le motif
+# d'encre et les angles adoucis de la finition sticker.
+#
+# La régie garde JetBrains Mono EN PLUS, pour les chemins de fichiers et les
+# diagnostics : c'est un usage technique, pas un choix de marque, et une
+# adresse en chasse fixe se recopie sans se tromper de caractère.
 #
 # Les trois familles sont sous licence SIL OFL 1.1, qui autorise explicitement
 # l'incorporation dans un logiciel ; le dépôt est public, d'où la mention dans
@@ -37,13 +42,16 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 CIBLES = (
     {
         'sortie': 'apps/overlay/src/font.css',
-        'quoi': "Archivo, pour l'antenne",
-        'familles': ('Archivo:wdth,wght@62..125,100..900',),
+        'quoi': "Rubik, la police de la marque",
+        'familles': ('Rubik:ital,wght@0,300..900;1,300..900',),
     },
     {
         'sortie': 'apps/regie/src/font.css',
-        'quoi': 'Inter Tight et JetBrains Mono, pour la régie',
-        'familles': ('Inter+Tight:wght@400..800', 'JetBrains+Mono:wght@400..700'),
+        'quoi': 'Rubik, et JetBrains Mono pour les chemins',
+        'familles': (
+            'Rubik:ital,wght@0,400;0,500;0,700;0,900;1,400',
+            'JetBrains+Mono:wght@400..700',
+        ),
     },
 )
 # `latin` couvre les accents courants (É, Ã, Ú) ; `latin-ext` les diacritiques

@@ -1,4 +1,5 @@
 @import './font.css';
+@import './encre.css';
 
 /*
  * L'habillage du plateau. Voir docs/HABILLAGE.md.
@@ -91,7 +92,10 @@ html {
 .t-l       { font-size: 28px; font-weight: 800; font-stretch: var(--width-display); font-variant-numeric: tabular-nums; line-height: 1.1; }
 .t-title   { font-size: 24px; font-weight: 800; font-stretch: var(--width-display); letter-spacing: 0.055em; line-height: 1.1; text-transform: uppercase; }
 .t-body    { font-size: 19px; font-weight: 700; letter-spacing: 0.01em; line-height: 1.2; }
-.t-kicker  { font-size: 17px; font-weight: 500; line-height: 1.2; color: var(--ink-soft); }
+/* Le surtitre prend le teal clair de la marque : c'est lui qui ORIENTE la
+   lecture sans porter l'information. Avec l'accent, ce sont les deux seules
+   couleurs qui sortent du gris sur un panneau — deux repères, pas douze. */
+.t-kicker  { font-size: 17px; font-weight: 500; line-height: 1.2; color: var(--teal-clair); }
 .t-label   { font-size: 16px; font-weight: 600; letter-spacing: 0.045em; line-height: 1.2; color: var(--ink-soft); }
 .t-caption { font-size: 14px; font-weight: 700; letter-spacing: 0.12em; line-height: 1.2; text-transform: uppercase; color: var(--ink-dim); }
 
@@ -105,11 +109,23 @@ html {
     linear-gradient(152deg, var(--bg-deep) 0%, var(--bg-mid) 62%, var(--bg-mid) 100%);
 }
 
+/*
+ * Le motif d'encre diluée : la signature de la marque.
+ *
+ * Il remplace la trame géométrique — points, diagonales, chevrons — qui
+ * changeait à chaque compétition. Une trame de points n'appartient à
+ * personne ; cette encre-là, si. Elle est la même sur toutes les scènes et
+ * toutes les compétitions, c'est tout l'intérêt.
+ *
+ * Étalée en `cover` et très diluée : on ne doit pas la reconnaître comme une
+ * image, seulement sentir que le fond n'est pas un aplat.
+ */
 .backdrop__pattern {
   position: absolute;
   inset: 0;
   background-image: var(--pattern);
-  background-size: 26px 26px;
+  background-size: cover;
+  background-position: 18% 12%;
   opacity: var(--pattern-opacity);
 }
 
@@ -137,9 +153,16 @@ html {
   border-radius: var(--radius-panel);
   /* Une arête de lumière en haut plutôt qu'un filet tout autour : c'est ce qui
      fait une surface posée, et non une carte détourée. */
+  /*
+   * La finition sticker de la marque : un contour couleur NUIT et une ombre
+   * pleine. C'est ce qui détoure les surfaces du studio — sur l'affiche, la
+   * bannière, les panneaux, et jusqu'ici. Un filet clair ferait carte
+   * d'interface ; un contour sombre fait objet posé.
+   */
   box-shadow:
+    0 0 0 3px var(--panel-line),
     var(--shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(241, 236, 227, 0.08);
   overflow: hidden;
 }
 
@@ -718,10 +741,13 @@ html {
   /* Rembourrage et corps suivent la taille du maillot : dans une colonne
      étroite, onze noms à quatre de front n'ont que quatre-vingts pixels
      chacun. À corps fixe, « GACINOVIC » déborderait sur son voisin. */
-  padding: 3px clamp(5px, calc(var(--jersey) * 0.12), 12px);
+  /* Rembourrage et corps resserrés depuis le passage à Rubik : à chasse
+     égale elle est plus large qu'Archivo, et « BARALHAS » se coupait en
+     « BARALH… » dans une colonne de quatre de front. */
+  padding: 3px clamp(4px, calc(var(--jersey) * 0.09), 10px);
   border-radius: var(--radius-pill);
-  background: rgba(8, 11, 24, 0.86);
-  font-size: clamp(12px, calc(var(--jersey) * 0.24), 23px);
+  background: rgba(15, 21, 25, 0.88);
+  font-size: clamp(11px, calc(var(--jersey) * 0.215), 22px);
   font-weight: 800;
   font-stretch: var(--width-tight);
   letter-spacing: 0.03em;
@@ -1590,6 +1616,17 @@ html {
 
 /* ══════════════════════════ Carton plein écran ════════════════════════════ */
 
+/* ── Le carton plein écran ─────────────────────────────────────────────────
+
+   Sur un but : une vague aux couleurs du club traverse l'écran en diagonale,
+   depuis le côté qui a marqué, et dépose une plaque qui tourne dans l'espace
+   avant de se stabiliser.
+
+   Les transformations sont posées par le JavaScript, pas par des transitions :
+   un second but pendant que le premier se pose doit prendre la suite du
+   mouvement, pas le couper net pour repartir de zéro. Et ça arrive pour de
+   vrai — deux buts en trente secondes, ce n'est pas rare.                   */
+
 .flash {
   position: absolute;
   inset: 0;
@@ -1597,25 +1634,49 @@ html {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  overflow: hidden;
   opacity: 0;
-  will-change: transform, opacity;
-  transition: opacity var(--dur-base) var(--ease), transform var(--dur-slow) var(--ease);
-  transform: translate3d(0, 26px, 0);
+  transition: opacity var(--dur-fast) var(--ease);
 }
 
-.flash[data-on='1'] { opacity: 1; transform: translate3d(0, 0, 0); }
+.flash[data-on='1'] { opacity: 1; }
+
+/* La vague. Hors champ tant qu'il ne s'agit pas d'un but : un carton jaune
+   n'a pas à déclencher le même événement visuel qu'un but. */
+.flash__onde {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 170%;
+  transform: translateX(-180%) skewX(-18deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--teinte, var(--accent)) 34%,
+    var(--teinte, var(--accent)) 66%,
+    transparent
+  );
+  opacity: 0.92;
+  will-change: transform;
+}
+
+.flash[data-onde='0'] .flash__onde { display: none; }
 
 .flash__card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--s6);
   padding: var(--s6) 64px;
   background: var(--panel);
   border: 1px solid var(--panel-line);
-  border-left: 10px solid var(--accent);
+  border-left: 10px solid var(--teinte, var(--accent));
   border-radius: var(--radius-panel);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(6px);
+  opacity: 0;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
 }
 
 .flash__card[data-kind='card'] { border-left-color: #ffd43b; }
@@ -1627,6 +1688,25 @@ html {
 .flash__kicker { font-size: 22px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--accent); }
 .flash__title { font-size: 70px; font-weight: 800; font-stretch: var(--width-display); line-height: 1; text-transform: uppercase; }
 .flash__sub { font-size: 25px; font-weight: 400; color: var(--ink-soft); }
+
+/* La minute, à droite et en grand : dans la même ligne que le reste, elle se
+   battait pour la place avec le score et le passeur. */
+.flash__minute {
+  margin-left: var(--s6);
+  padding-left: var(--s6);
+  border-left: 1px solid var(--panel-line);
+  font-size: 58px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+/* Mouvement réduit : la vague ne traverse pas, la plaque ne tourne pas. Le
+   carton apparaît, et c'est tout. */
+@media (prefers-reduced-motion: reduce) {
+  .flash__onde { display: none; }
+  .flash__card { transform: none !important; }
+}
 
 /* ═══════════════════════════════ Débogage ═════════════════════════════════ */
 
@@ -2049,11 +2129,14 @@ html {
   height: 25px;
 }
 
+/* Le libellé ne cède JAMAIS avant le détail : « Tir non cad… » suivi d'un
+   détail complet est le mauvais arbitrage — c'est la nature du fait qu'on lit
+   en premier. */
 .fil__quoi {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
   overflow: hidden;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -2089,10 +2172,10 @@ html {
    lieu de passer en dessous. Il cède la place en premier quand le nom de
    l'équipe et le score ont besoin de la leur. */
 .fil__detail--meme-ligne {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   margin: 0;
-  font-size: 13px;
+  font-size: 12.5px;
   letter-spacing: 0.02em;
 }
 

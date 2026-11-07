@@ -39,29 +39,43 @@
    * 10,0 s ne doit pas faire bouger ce qu'il y a autour, et une adresse en
    * chasse fixe se recopie à l'œil sans se tromper de caractère.
    */
-  --font: 'Inter Tight', system-ui, -apple-system, sans-serif;
+  /*
+   * Rubik, la police de la marque — la même qu'à l'antenne. La direction
+   * artistique tient en cinq couleurs et UNE police ; l'outil n'y échappe
+   * pas, c'est lui qu'on ouvre en premier.
+   */
+  --font: 'Rubik', system-ui, -apple-system, sans-serif;
+  /* JetBrains Mono reste, mais pour un usage TECHNIQUE seulement : chemins de
+     fichiers, adresses, diagnostics. Une adresse en chasse fixe se recopie
+     sans se tromper de caractère ; ce n'est pas un choix de marque. */
   --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  /* Encre, puis deux paliers vers le teal forêt. */
-  --bg: #061c1b;
-  --surface: #0a2726;
-  --surface-2: #0f3d3a;
-  --line: #16514c;
-  --line-strong: #1f6f66;
+  /* Les cinq couleurs du studio, telles quelles. */
+  --nuit: #0f1519;
+  --nuit-2: #16222a;
+  --teal: #1e5b57;
+  --teal-clair: #3fd3c2;
+  --miel: #e0a93b;
+  --papier: #f1ece3;
+  --brume: #9fb0b3;
 
-  --ink: #eaf4f1;
-  --ink-soft: #a9c4bf;
-  --ink-dim: #6c8d88;
+  --bg: var(--nuit);
+  --surface: #131d23;
+  --surface-2: var(--nuit-2);
+  --line: #1f3038;
+  --line-strong: var(--teal);
 
-  /* L'or miel : l'état actif, le soulignement, le point de la marque. */
-  --accent: #e3a83b;
-  --accent-clair: #f2c76e;
+  --ink: var(--papier);
+  --ink-soft: var(--brume);
+  --ink-dim: rgba(159, 176, 179, 0.62);
+
+  /* Le miel : UNE seule couleur d'emphase. Le teal clair oriente, il
+     n'accentue pas. */
+  --accent: var(--miel);
+  --accent-clair: #f0c878;
   --live: #ff4d4d;
-  --ok: #5fa89c;
+  --ok: var(--teal-clair);
 
-  /* 28 px, le rayon de la marque. Il ne se discute pas plus que la couleur :
-     c'est à ça qu'on reconnaît une surface du studio. Les cartes intérieures
-     descendent par paliers, jamais librement. */
   --r-panel: 28px;
   --r-card: 16px;
   --r-chip: 11px;
@@ -89,9 +103,9 @@
    * s'offrir `backdrop-filter`, que le contrôle de compatibilité CEF 103
    * interdit à l'habillage.
    */
-  --verre: blur(22px) saturate(170%);
-  --verre-fond: rgba(10, 39, 38, 0.72);
-  --verre-fond-2: rgba(15, 61, 58, 0.6);
+  --verre: blur(22px) saturate(165%);
+  --verre-fond: rgba(22, 34, 42, 0.76);
+  --verre-fond-2: rgba(15, 21, 25, 0.5);
   --verre-bord: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
@@ -156,8 +170,8 @@ body {
   /* Deux lueurs très sourdes : sans elles, le verre flouterait un aplat et
      ne se verrait pas. C'est ce qui donne la profondeur. */
   background:
-    radial-gradient(1200px 600px at 12% -10%, rgba(31, 111, 102, 0.3), transparent 60%),
-    radial-gradient(900px 500px at 92% 110%, rgba(227, 168, 59, 0.07), transparent 60%),
+    radial-gradient(1200px 600px at 12% -10%, rgba(30, 91, 87, 0.34), transparent 60%),
+    radial-gradient(900px 500px at 92% 110%, rgba(224, 169, 59, 0.08), transparent 60%),
     var(--bg);
   color: var(--ink);
   font-family: var(--font);
@@ -831,7 +845,7 @@ button[data-on='1'] {
 
 /* Celui qui est à l'antenne, et le temps qu'il lui reste. */
 .insert[data-on='1'] {
-  background: rgba(227, 168, 59, 0.14);
+  background: rgba(224, 169, 59, 0.14);
   color: var(--accent-clair);
 }
 
@@ -1324,7 +1338,7 @@ button[data-on='1'] {
   flex: none;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 4px rgba(227, 168, 59, 0.16);
+  box-shadow: 0 0 0 4px rgba(224, 169, 59, 0.16);
   /* Le texte « KZ » reste dans le document pour les lecteurs d'écran, mais
      n'occupe plus la place : c'est le nom à côté qui le dit. */
   overflow: hidden;
@@ -1353,9 +1367,9 @@ button[data-on='1'] {
   padding-bottom: var(--s2);
   border-bottom: 1px solid var(--line);
   font-size: 11px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--teal-clair);
 }
 
 /* Le bouton de choix du match : il porte le match à l'antenne. */
@@ -1423,7 +1437,7 @@ button[data-on='1'] {
 .scene--mode[data-on='1'] {
   background: var(--accent);
   border-color: var(--accent);
-  color: #10201e;
+  color: var(--nuit);
   box-shadow: none;
 }
 
