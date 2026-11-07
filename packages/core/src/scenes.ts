@@ -439,16 +439,32 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'feuille',
-    name: 'Feuille de match',
+    /*
+     * LA CONFRONTATION, et non plus la feuille de match.
+     *
+     * Cette scène montrait la chronologie du match en cours et la courbe de
+     * momentum. Deux blocs qui ne disent rien tant qu'il ne s'est rien passé
+     * — c'est-à-dire exactement pendant l'avant-match, le moment où l'on a le
+     * plus de temps d'antenne à tenir. Un quart d'heure devant une
+     * chronologie vide et une courbe plate.
+     *
+     * Et la chronologie n'a pas disparu du plateau : le fil du match la donne
+     * à la mi-temps et à la fin, en mieux, parce qu'il hiérarchise. Ce qui
+     * manquait vraiment, c'était l'AVANT : où en sont-ils, comment vont-ils,
+     * et que s'est-il passé la dernière fois qu'ils se sont rencontrés.
+     */
+    id: 'confrontation',
+    name: 'Confrontation',
     cam: CAM.coin,
     camStyle: 'framed',
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'sheet', slot: SLOT.pleinPrincipal, z: 20 },
-      { widget: 'momentum', slot: SLOT.pleinSecondaire, z: 20 },
+      { widget: 'confrontation', slot: SLOT.pleinPrincipal, z: 20 },
+      // Le classement à côté : le bilan comparé prend tout son sens quand on
+      // voit où les deux équipes se situent dans le tableau.
+      { widget: 'standings', slot: SLOT.pleinSecondaire, z: 20 },
       // Au-dessus de la caméra de coin, pas sous elle : à l'ancienne place
       // le bandeau passait derrière l'image et disparaissait.
       { widget: 'social', slot: SLOT.socialSurCam, z: 20 },
@@ -502,6 +518,7 @@ export const NOM_WIDGET: Record<string, string> = {
   multiplex: 'Autres matchs',
   momentum: 'Momentum',
   standings: 'Classement',
+  confrontation: 'Confrontation',
   odds: 'Cotes',
   prematch: 'Affiche',
   radar2d: 'Radar',

@@ -25,6 +25,7 @@
  */
 
 import type {
+  Confrontation,
   LineupPayload,
   MatchEvent,
   MatchPhase,
@@ -33,6 +34,7 @@ import type {
   Odds,
   Pair,
   Player,
+  RencontrePassee,
   Side,
   StandingRow,
   Team,
@@ -48,6 +50,7 @@ import {
   type EspnCompetitor,
   type EspnDetail,
   type EspnEvent,
+  type EspnLastFiveEvent,
   type EspnKeyEvent,
   type EspnOdds,
   type EspnRoster,
@@ -81,6 +84,7 @@ export interface EtatTraduction {
   vuStats: string | null;
   vuCompo: { home: string | null; away: string | null };
   vuClassement: string | null;
+  vuConfrontation: string | null;
   vuAutres: string | null;
   vuCotes: string | null;
 }
@@ -101,6 +105,7 @@ export function nouvelEtat(): EtatTraduction {
     vuStats: null,
     vuCompo: { home: null, away: null },
     vuClassement: null,
+    vuConfrontation: null,
     vuAutres: null,
     vuCotes: null,
   };
@@ -386,6 +391,119 @@ function compo(r: EspnRoster, camp: Side): LineupPayload | null {
   };
 }
 
+/**
+ * La forme et le face-à-face.
+ *
+ * ── Deux pièges, tous les deux rencontrés sur la donnée réelle ──────────────
+ *
+ * 1. LE SCORE N'EST PAS ORIENTÉ. `score: "4-0"` est toujours écrit
+ *    domicile-extérieur, jamais du point de vue de l'équipe dont on lit la
+ *    forme. Pris tel quel, une équipe battue 0-4 à l'extérieur apparaît
+ *    victorieuse 4-0. On retourne donc la paire quand l'équipe se déplaçait,
+ *    en se fiant aux identifiants et non au tiret.
+ *
+ * 2. ON NE RECALCULE PAS LE RÉSULTAT. ESPN donne `gameResult`, et c'est lui
+ *    qui fait foi : un match réglé aux tirs au but ou gagné sur tapis vert ne
+ *    se déduit pas d'un score. Un « 1-1 » peut parfaitement être une
+ *    qualification, et le déduire reviendrait à écrire un nul là où le
+ *    classement dit victoire.
+ */
+function confrontation(
+  src: SourceEspn,
+  etat: EtatTraduction,
+): Confrontation | null {
+  const sommaire = src.summary;
+  if (!sommaire) return null;
+
+  const forme: { home: RencontrePassee[]; away: RencontrePassee[] } = { home: [], away: [] };
+  for (const bloc of sommaire.lastFiveGames ?? []) {
+    const id = bloc.team?.id;
+    const camp: Side | null = id && id === etat.domicile ? 'home' : id && id === etat.exterieur ? 'away' : null;
+    if (!camp || !id) continue;
+    for (const e of bloc.events ?? []) {
+      const r = rencontrePassee(e, id);
+      if (r) forme[camp].push(r);
+    }
+  }
+
+  const face: RencontrePassee[] = [];
+  const serie = (sommaire.seasonseries ?? []).find((s) => (s.events ?? []).length > 0);
+  for (const e of serie?.events ?? []) {
+    if (e.statusType?.completed !== true) continue;
+    const d = (e.competitors ?? []).find((c) => c.homeAway === 'home');
+    const x = (e.competitors ?? []).find((c) => c.homeAway === 'away');
+    const bd = nombre(d?.score);
+    const bx = nombre(x?.score);
+    if (bd === null || bx === null) continue;
+    // Vue du DOMICILE du match de ce soir, pas du domicile de la rencontre
+    // passée : « 2-0 pour eux chez nous » et « 0-2 chez eux » racontent la
+    // même série, et les mélanger la rendrait illisible.
+    const duDomicile = d?.team?.id === etat.domicile;
+    const adverse = duDomicile ? x?.team : d?.team;
+    const eq = equipe(adverse);
+    if (!eq) continue;
+    const pour = duDomicile ? bd : bx;
+    const contre = duDomicile ? bx : bd;
+    const date = e.date ? Date.parse(e.date) : NaN;
+    face.push({
+      t: Number.isFinite(date) ? date : 0,
+      adversaire: bref(eq),
+      domicile: duDomicile,
+      score: [pour, contre],
+      resultat: pour > contre ? 'V' : pour < contre ? 'D' : 'N',
+    });
+  }
+
+  // Du plus récent au plus ancien, partout. ESPN ne garantit pas l'ordre, et
+  // une forme lue à l'envers raconte exactement le contraire du match.
+  forme.home.sort((a, b) => b.t - a.t);
+  forme.away.sort((a, b) => b.t - a.t);
+  face.sort((a, b) => b.t - a.t);
+
+  if (forme.home.length === 0 && forme.away.length === 0 && face.length === 0) return null;
+  return { forme, face };
+}
+
+/** Une sortie récente, retournée du point de vue de l'équipe `idEquipe`. */
+function rencontrePassee(e: EspnLastFiveEvent, idEquipe: string): RencontrePassee | null {
+  const adverse = equipe(e.opponent);
+  if (!adverse) return null;
+  const domicile = e.homeTeamId === idEquipe || e.atVs === 'vs';
+  const bd = nombre(e.homeTeamScore);
+  const bx = nombre(e.awayTeamScore);
+  if (bd === null || bx === null) return null;
+  const date = e.gameDate ? Date.parse(e.gameDate) : NaN;
+  // ATTENTION au « D », qui n'a pas le même sens des deux côtés : chez ESPN
+  // c'est Draw, le nul ; chez nous c'est Défaite. La défaite d'ESPN est « L ».
+  // Les confondre inverserait silencieusement une ligne sur trois.
+  const lettre = (e.gameResult ?? '').toUpperCase();
+  const pour = domicile ? bd : bx;
+  const contre = domicile ? bx : bd;
+  const resultat: RencontrePassee['resultat'] =
+    lettre === 'W'
+      ? 'V'
+      : lettre === 'L'
+        ? 'D'
+        : lettre === 'D' || lettre === 'T'
+          ? 'N'
+          : // Lettre inconnue : on retombe sur le score, faute de mieux. C'est
+            // faux pour une qualification aux tirs au but, et c'est le seul
+            // cas où l'on préfère une approximation à une case vide.
+            pour > contre
+            ? 'V'
+            : pour < contre
+              ? 'D'
+              : 'N';
+  return {
+    t: Number.isFinite(date) ? date : 0,
+    adversaire: bref(adverse),
+    domicile,
+    score: [pour, contre],
+    resultat,
+    ...(e.leagueAbbreviation ? { competition: e.leagueAbbreviation } : {}),
+  };
+}
+
 function classement(st: EspnStandings | undefined, etat: EtatTraduction): StandingRow[] | null {
   const groupes = st?.groups ?? [];
   const entrees = groupes.flatMap((g) => g.standings?.entries ?? []);
@@ -416,6 +534,16 @@ function classement(st: EspnStandings | undefined, etat: EtatTraduction): Standi
       short: nom,
       color: GRIS_INCONNU,
     };
+    // Le détail n'est ajouté que s'il EXISTE. Une coupe à élimination directe
+    // n'a pas de colonne « nuls », et mettre zéro à la place de rien ferait
+    // afficher un bilan faux avec l'aplomb d'un bilan vrai.
+    const detail = (
+      champ: string,
+      clef: 'won' | 'drawn' | 'lost' | 'goalsFor' | 'goalsAgainst',
+    ) => {
+      const v = stat(champ);
+      return v === null ? {} : { [clef]: v };
+    };
     lignes.push({
       rank: stat('rank') ?? lignes.length + 1,
       team: embleme && !base.crest ? { ...base, crest: embleme } : base,
@@ -423,6 +551,11 @@ function classement(st: EspnStandings | undefined, etat: EtatTraduction): Standi
       diff: stat('pointDifferential') ?? 0,
       points: stat('points') ?? 0,
       zone: null,
+      ...detail('wins', 'won'),
+      ...detail('ties', 'drawn'),
+      ...detail('losses', 'lost'),
+      ...detail('pointsFor', 'goalsFor'),
+      ...detail('pointsAgainst', 'goalsAgainst'),
     });
   }
 
@@ -903,6 +1036,18 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
       etat.vuClassement = signature;
       emettre('standings', now, { rows: rangs });
     }
+  }
+
+  // ── la forme et le face-à-face ────────────────────────────────────────────
+  const face = confrontation(src, etat);
+  if (face) {
+    const signature = JSON.stringify(face);
+    if (signature !== etat.vuConfrontation) {
+      etat.vuConfrontation = signature;
+      emettre('confrontation', now, face);
+    }
+  } else if (src.summary) {
+    etat.lacunes.add('forme et confrontations absentes du résumé');
   }
 
   // ── les autres matchs ─────────────────────────────────────────────────────

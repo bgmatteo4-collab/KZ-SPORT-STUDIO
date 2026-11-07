@@ -14,6 +14,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import type {
   CardKind,
+  Confrontation,
   LineupPayload,
   MatchEvent,
   MatchMeta,
@@ -22,6 +23,7 @@ import type {
   OtherMatch,
   Pair,
   Player,
+  RencontrePassee,
   Side,
   StandingRow,
   Team,
@@ -241,15 +243,86 @@ const TABLE: [string, string, string, string | undefined, number, number][] = [
   ['FUL', 'Fulham', '#000000', '#ffffff', -11, 2],
 ];
 
-const STANDINGS: StandingRow[] = TABLE.map(([abbr, short, color, alt, diff, points], i) => ({
-  rank: i + 1,
-  team: BRIEF(abbr, short, color, alt),
-  played: 6,
-  diff,
-  points,
-  // Quatre qualifiés, un barragiste, trois relégables : les zones habituelles.
-  zone: i < 4 ? 'win' : i === 4 ? 'play' : i >= 17 ? 'lose' : null,
-}));
+const STANDINGS: StandingRow[] = TABLE.map(([abbr, short, color, alt, diff, points], i) => {
+  // Le bilan détaillé est DÉDUIT des points, pas tiré au sort : 3 par
+  // victoire, 1 par nul. Un jeu de démonstration dont les colonnes ne
+  // s'additionnent pas est pire qu'un jeu pauvre — on passe une heure à
+  // chercher un bogue de calcul qui n'existe pas.
+  const won = Math.floor(points / 3);
+  const drawn = points - won * 3;
+  const lost = Math.max(0, 6 - won - drawn);
+  return {
+    rank: i + 1,
+    team: BRIEF(abbr, short, color, alt),
+    played: 6,
+    diff,
+    points,
+    won,
+    drawn,
+    lost,
+    goalsFor: Math.max(0, won * 2 + drawn + Math.max(0, diff)),
+    goalsAgainst: Math.max(0, won * 2 + drawn + Math.max(0, diff) - diff),
+    // Quatre qualifiés, un barragiste, trois relégables : les zones habituelles.
+    zone: (i < 4 ? 'win' : i === 4 ? 'play' : i >= 17 ? 'lose' : null) as StandingRow['zone'],
+  };
+});
+
+/**
+ * La forme et le face-à-face, pour que la scène Confrontation ait de quoi
+ * vivre hors ligne. Les scores sont inventés, les équipes non : elles sont
+ * prises dans le tableau ci-dessus, donc les écussons et les couleurs sont
+ * ceux du reste du plateau.
+ */
+const JOUR = 24 * 60 * 60 * 1000;
+
+function sortie(
+  joursAvant: number,
+  adversaire: TeamBrief,
+  domicile: boolean,
+  pour: number,
+  contre: number,
+): RencontrePassee {
+  return {
+    t: Date.now() - joursAvant * JOUR,
+    adversaire,
+    domicile,
+    score: [pour, contre] as Pair,
+    resultat: pour > contre ? 'V' : pour < contre ? 'D' : 'N',
+    competition: 'Premier League',
+  };
+}
+
+const EQ = (abbr: string): TeamBrief => {
+  const ligne = TABLE.find((t) => t[0] === abbr) ?? TABLE[0]!;
+  return BRIEF(ligne[0], ligne[1], ligne[2], ligne[3]);
+};
+
+const CONFRONTATION: Confrontation = {
+  forme: {
+    home: [
+      sortie(5, EQ('ARS'), false, 1, 1),
+      sortie(12, EQ('BRE'), true, 3, 0),
+      sortie(19, EQ('CHE'), false, 0, 2),
+      sortie(26, EQ('EVE'), true, 2, 1),
+      sortie(33, EQ('LIV'), true, 4, 1),
+    ],
+    away: [
+      sortie(5, EQ('TOT'), true, 2, 0),
+      sortie(12, EQ('NEW'), false, 1, 1),
+      sortie(19, EQ('AVL'), true, 3, 1),
+      sortie(26, EQ('FUL'), false, 2, 2),
+      sortie(33, EQ('MUN'), true, 1, 0),
+    ],
+  },
+  // Vues du DOMICILE, de la plus récente à la plus ancienne.
+  face: [
+    sortie(120, BRIEF(AWAY.abbr, AWAY.short, AWAY.color, AWAY.colorAlt), false, 1, 1),
+    sortie(310, BRIEF(AWAY.abbr, AWAY.short, AWAY.color, AWAY.colorAlt), true, 3, 1),
+    sortie(480, BRIEF(AWAY.abbr, AWAY.short, AWAY.color, AWAY.colorAlt), false, 0, 2),
+    sortie(690, BRIEF(AWAY.abbr, AWAY.short, AWAY.color, AWAY.colorAlt), true, 2, 2),
+    sortie(880, BRIEF(AWAY.abbr, AWAY.short, AWAY.color, AWAY.colorAlt), false, 1, 0),
+  ],
+};
 
 /** Les cotes bougent avec le score : c'est tout l'intérêt d'une cote « live ». */
 function oddsAt(score: Pair, matchMs: number): Odds {
@@ -469,6 +542,7 @@ push(-25 * MIN, 'lineup', lineup('home', '4-3-3', HOME_XI, HOME_BENCH, 'Carlo An
 push(-25 * MIN, 'lineup', lineup('away', '4-3-3', AWAY_XI, AWAY_BENCH, 'Pep Guardiola'));
 push(-20 * MIN, 'score', { score: [0, 0] });
 push(-20 * MIN, 'standings', { rows: STANDINGS });
+push(-20 * MIN, 'confrontation', CONFRONTATION);
 push(-20 * MIN, 'other_matches', { matches: multiplexAt(-20 * MIN) });
 push(-20 * MIN, 'odds', oddsAt([0, 0] as Pair, 0));
 push(-20 * MIN, 'audience', audienceAt());

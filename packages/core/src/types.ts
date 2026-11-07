@@ -182,6 +182,7 @@ export type MatchEvent =
   | (EventBase & { kind: 'rating'; payload: { side: Side; ratings: Record<string, number> } })
   | (EventBase & { kind: 'other_matches'; payload: { matches: OtherMatch[] } })
   | (EventBase & { kind: 'standings'; payload: { rows: StandingRow[] } })
+  | (EventBase & { kind: 'confrontation'; payload: Confrontation })
   | (EventBase & { kind: 'odds'; payload: Odds })
   | (EventBase & { kind: 'audience'; payload: { viewers: number; likes: number } });
 
@@ -199,7 +200,17 @@ export type MatchEventKind = MatchEvent['kind'];
  * au démarrage, le plateau reste VIDE pendant toute la durée du décalage. Et
  * un serveur relancé en pleine émission vide l'écran pendant une minute.
  */
-export const CONTEXTE: readonly MatchEventKind[] = ['meta', 'lineup', 'odds', 'standings'];
+export const CONTEXTE: readonly MatchEventKind[] = [
+  'meta',
+  'lineup',
+  'odds',
+  'standings',
+  // La forme et les confrontations passées parlent de matchs joués il y a des
+  // semaines : les retenir derrière le décalage laisserait la scène
+  // d'avant-match vide pendant toute sa durée, pour protéger un secret qui
+  // n'en est pas un.
+  'confrontation',
+];
 
 export function estContexte(kind: MatchEventKind): boolean {
   return CONTEXTE.includes(kind);
@@ -333,6 +344,50 @@ export interface StandingRow {
    * `win` qualifié, `play` barragiste, `lose` relégable.
    */
   zone: 'win' | 'play' | 'lose' | null;
+
+  /*
+   * Le détail du bilan. OPTIONNEL, et pas par facilité : un classement de
+   * coupe à élimination directe n'en a pas, et un fournisseur qui ne publie
+   * que les points reste un fournisseur valable. Un champ obligatoire
+   * obligerait à inventer des zéros, et un zéro inventé est un mensonge que
+   * personne ne distingue d'un vrai zéro.
+   */
+  won?: number;
+  drawn?: number;
+  lost?: number;
+  goalsFor?: number;
+  goalsAgainst?: number;
+}
+
+/**
+ * Un match DÉJÀ JOUÉ, raconté du point de vue d'une équipe.
+ *
+ * Le score est orienté : `[elle, l'adversaire]`. C'est ce qui permet au bloc
+ * d'affichage de n'avoir aucune logique — il lit « 2–0 » et « V », il n'a pas
+ * à savoir qui recevait.
+ */
+export interface RencontrePassee {
+  /** Le coup d'envoi, en millisecondes. */
+  t: number;
+  adversaire: TeamBrief;
+  domicile: boolean;
+  score: Pair;
+  resultat: 'V' | 'N' | 'D';
+  competition?: string;
+}
+
+/**
+ * Ce qui s'est passé AVANT ce match : la forme des deux équipes et leurs
+ * dernières oppositions directes.
+ *
+ * C'est du contexte, pas du direct : ces matchs étaient joués bien avant le
+ * coup d'envoi, donc le décalage anti-spoiler ne les retient pas.
+ */
+export interface Confrontation {
+  /** Les cinq dernières sorties de chaque équipe, de la plus récente à la plus ancienne. */
+  forme: { home: RencontrePassee[]; away: RencontrePassee[] };
+  /** Les dernières oppositions directes, vues du DOMICILE, plus récentes d'abord. */
+  face: RencontrePassee[];
 }
 
 /** Cotes 1N2. */
@@ -448,6 +503,8 @@ export interface MatchState {
   attack: { side: Side | null; intensity: AttackIntensity };
   otherMatches: OtherMatch[];
   standings: StandingRow[];
+  /** La forme des deux équipes et leur face-à-face. `null` tant qu'on n'a rien. */
+  confrontation: Confrontation | null;
   odds: Odds | null;
   audience: { viewers: number; likes: number } | null;
   /** Pression décroissante par camp, pour le pressure index. */

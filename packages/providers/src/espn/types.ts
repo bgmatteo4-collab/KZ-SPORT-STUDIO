@@ -205,6 +205,57 @@ export interface EspnSummary {
   odds?: EspnOdds[];
   header?: unknown;
   gameInfo?: { venue?: { fullName?: string }; attendance?: number };
+  /**
+   * Les cinq dernières sorties de chaque équipe, avec le résultat DÉJÀ
+   * calculé par ESPN (`gameResult`). On ne le recalcule pas : un match réglé
+   * aux tirs au but ou gagné sur tapis vert ne se déduit pas d'un score.
+   */
+  lastFiveGames?: EspnLastFive[];
+  /** Les oppositions directes récentes entre les deux équipes du jour. */
+  seasonseries?: EspnSeasonSeries[];
+}
+
+export interface EspnLastFive {
+  team?: EspnTeam;
+  events?: EspnLastFiveEvent[];
+}
+
+export interface EspnLastFiveEvent {
+  /** ISO 8601, parfois sans secondes : « 2026-10-07T23:00Z ». */
+  gameDate?: string;
+  /** « 4-0 », toujours domicile-extérieur, jamais orienté sur l'équipe. */
+  score?: string;
+  /** « W », « D », « L » — du point de vue de l'équipe de `team`. */
+  gameResult?: string;
+  /** « vs » quand l'équipe recevait, « @ » quand elle se déplaçait. */
+  atVs?: string;
+  homeTeamId?: string;
+  awayTeamId?: string;
+  homeTeamScore?: string;
+  awayTeamScore?: string;
+  leagueAbbreviation?: string;
+  competitionName?: string;
+  opponent?: EspnTeam;
+  opponentLogo?: string;
+}
+
+export interface EspnSeasonSeries {
+  type?: string;
+  /** « 2-2-1 » : victoires, nuls, défaites du premier nommé. */
+  seriesScore?: string;
+  summary?: string;
+  events?: {
+    id?: string;
+    date?: string;
+    statusType?: { completed?: boolean };
+    competitors?: {
+      homeAway?: string;
+      winner?: boolean;
+      /** Une CHAÎNE ici aussi : « 2 ». */
+      score?: string | number;
+      team?: EspnTeam;
+    }[];
+  }[];
 }
 
 export interface EspnBoxscoreTeam {

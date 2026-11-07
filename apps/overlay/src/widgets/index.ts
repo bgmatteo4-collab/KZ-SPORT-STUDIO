@@ -9,6 +9,7 @@
 import { h } from '../dom.js';
 import { attente } from './attente.js';
 import { backdrop, camFrame, scoreRecap, social, streamCounters, title } from './chrome.js';
+import { confrontation } from './confrontation.js';
 import { fil } from './fil.js';
 import { flash } from './flash.js';
 import { lineups } from './lineups.js';
@@ -65,6 +66,7 @@ export const REGISTRY: Record<string, WidgetFactory> = {
   standings,
   odds,
   prematch,
+  confrontation,
   // Plus utilisé par aucune scène : aucune source gratuite ne donne la
   // position du ballon. Gardé enregistré pour le jour où un palier payant la
   // fournit — le widget, lui, est écrit et testé.

@@ -1014,6 +1014,180 @@ html {
 
 /* ═════════════════════════ Feuille de match ══════════════════════════════ */
 
+/* ═══════════════════════════ La confrontation ══════════════════════════════
+   Trois rubriques empilées, dans l'ordre des trois questions d'un
+   avant-match : où en sont-ils, comment vont-ils, et entre eux.
+
+   Les proportions sont en `flex`, pas en pixels. Ce panneau sert aussi bien
+   une scène plein écran qu'une colonne, et compter les pixels à la main est
+   exactement ce qui faisait déborder le bloc de statistiques. */
+
+.conf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  flex: 1;
+  min-height: 0;
+}
+
+.conf__bilan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex: none;
+}
+
+/* Les barres gardent leur hauteur au lieu de se répartir le vide.
+
+   `.bar` vaut `flex: 1 1 0` pour le bloc de statistiques, qui remplit une
+   colonne entière avec dix lignes. Ici elles sont six au plus, et plusieurs
+   disparaissent quand la source ne publie pas le détail : héritées telles
+   quelles, quatre barres s'étiraient sur toute la hauteur du panneau avec
+   deux cents pixels de vide entre chacune. Une rubrique ne s'étire pas pour
+   remplir une page. */
+.conf__bilan .bar { flex: none; height: 42px; }
+
+.conf__rubrique {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding-bottom: var(--s1);
+}
+
+/* ── La forme ────────────────────────────────────────────────────────────── */
+
+.conf__forme {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex: none;
+}
+
+.conf__forme-ligne {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+/* Le liseré aux couleurs de l'équipe, comme sur le fil et la carte des tirs :
+   trois blocs qui parlent de la même équipe doivent la teinter pareil. */
+.conf__forme-ligne {
+  padding-left: var(--s3);
+  border-left: 3px solid var(--teinte, var(--accent));
+}
+
+.conf__crest { width: 30px; height: 31px; font-size: 10px; flex: none; }
+
+.conf__forme-nom {
+  flex: none;
+  width: 150px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* La pastille de résultat. Pleine pour une victoire, creuse pour un nul,
+   barrée de rouge pour une défaite : la couleur seule ne suffit pas, un
+   daltonien doit lire la même chose que les autres. */
+.conf__pastille {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-chip);
+  font-size: 14px;
+  font-weight: 900;
+  font-style: normal;
+  letter-spacing: 0;
+  background: var(--pill);
+  color: var(--ink-soft);
+  box-shadow: inset 0 0 0 1px var(--pill-line);
+}
+
+.conf__pastille[data-res='V'] {
+  background: var(--win);
+  color: #10131c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.conf__pastille[data-res='D'] {
+  background: var(--lose);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+/* ── Le face-à-face ──────────────────────────────────────────────────────── */
+
+.conf__face {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.conf__face-bilan { color: var(--ink-soft); }
+
+.conf__face-liste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.conf__face-ligne {
+  display: grid;
+  grid-template-columns: 78px 30px minmax(0, 1fr) 82px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: var(--s2);
+  flex: none;
+  height: 44px;
+  padding: 0 var(--s3);
+  border-radius: var(--radius-pill);
+  background: var(--slab);
+}
+
+.conf__face-date { color: var(--ink-dim); }
+
+.conf__face-crest { width: 28px; height: 29px; font-size: 10px; }
+
+.conf__face-nom {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.conf__face-nom--droite { text-align: right; }
+
+/* Le score au centre, en chiffres tabulaires : sans eux la colonne danse
+   d'une ligne à l'autre, et c'est elle qu'on balaie du regard. */
+.conf__face-score {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.conf__vide {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  color: var(--ink-dim);
+}
+
 .sheet {
   display: flex;
   flex-direction: column;

@@ -58,6 +58,7 @@ export function initialState(t = 0): MatchState {
     ratings: { home: {}, away: {} },
     otherMatches: [],
     standings: [],
+    confrontation: null,
     odds: null,
     audience: null,
     ball: null,
@@ -324,6 +325,11 @@ function applyInto(draft: MatchState, event: MatchEvent): void {
 
     case 'standings': {
       draft.standings = event.payload.rows;
+      break;
+    }
+
+    case 'confrontation': {
+      draft.confrontation = event.payload;
       break;
     }
 
