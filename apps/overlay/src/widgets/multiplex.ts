@@ -77,6 +77,17 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
    */
   const liste = listeAnimee(list);
 
+  /**
+   * Les matchs dont la bascule de but a DÉJÀ joué.
+   *
+   * Le signalement dure vingt-cinq secondes, et la liste se reconstruit
+   * plusieurs fois pendant ce temps — dès qu'une minute avance quelque part.
+   * Sans cette mémoire, la carte se retournerait toutes les quelques secondes
+   * jusqu'à la fin du signalement : une animation d'arrivée qui se rejoue
+   * n'est plus une arrivée, c'est un tic.
+   */
+  const dejaBascule = new Set<string>();
+
   let signature: string | null = null;
 
   /** Hauteur d'un bloc de match, gouttière comprise. */
@@ -137,6 +148,15 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
 
       vide.hidden = montres > 0;
 
+      // On oublie un match dès que son signalement s'éteint — y compris s'il
+      // a quitté la fenêtre affichée entre-temps. Sans cet élagage, un match
+      // qui marque, sort de la liste, puis y revient pour un second but ne
+      // basculerait jamais une seconde fois.
+      for (const id of [...dejaBascule]) {
+        const m = tous.find((x) => x.id === id);
+        if (!m || !vientDeMarquer(m, t)) dejaBascule.delete(id);
+      }
+
       const entrees: EntreeListe[] = [];
       for (const paquet of paquets) {
         if (groupe && paquet.competition) {
@@ -147,7 +167,11 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
           });
         }
         for (const match of paquet.matches) {
-          entrees.push({ cle: `m:${match.id}`, faire: () => bloc(match, t, groupe) });
+          // Première image du signalement : la carte se retourne. Les
+          // suivantes : elle reste simplement allumée.
+          const neuf = vientDeMarquer(match, t) && !dejaBascule.has(match.id);
+          if (neuf) dejaBascule.add(match.id);
+          entrees.push({ cle: `m:${match.id}`, faire: () => bloc(match, t, groupe, neuf) });
         }
       }
       liste.rendre(entrees);
@@ -169,8 +193,14 @@ function heure(kickoff: number | undefined): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-/** Un bloc de match : la minute dans la marge, les deux lignes à droite. */
-function bloc(match: OtherMatch, t: number, groupe: boolean): HTMLElement {
+/**
+ * Un bloc de match : la minute dans la marge, les deux lignes à droite.
+ *
+ * `neuf` ne vaut vrai qu'à la PREMIÈRE construction suivant le but : c'est
+ * elle qui porte la bascule. Les reconstructions suivantes gardent le fond
+ * allumé sans rejouer le mouvement.
+ */
+function bloc(match: OtherMatch, t: number, groupe: boolean, neuf = false): HTMLElement {
   const rows = h('div', { class: 'mx__rows' });
   for (const [team, goals] of [
     [match.home, match.score[0]],
@@ -206,7 +236,11 @@ function bloc(match: OtherMatch, t: number, groupe: boolean): HTMLElement {
   // ligne. Première version : une pastille en absolu en haut à droite, qui se
   // superposait au score. Le score est l'information ; rien ne doit jamais
   // passer dessus, surtout pas l'étiquette qui dit qu'il vient de changer.
-  if (butant) marge.append(h('span', { class: 'mx__but' }, ['BUT']));
+  if (butant) {
+    marge.append(
+      h('span', { class: 'mx__but' }, [h('i', { class: 'mx__ballon' }), 'BUT']),
+    );
+  }
   // Hors mode groupé, la compétition s'écrit sous la minute : « 2-1 » ne dit
   // rien si on ignore s'il s'agit de la Ligue 1 ou d'une D2 scandinave. Elle
   // cède la place au signalement pendant les vingt-cinq secondes qu'il dure.
@@ -230,6 +264,7 @@ function bloc(match: OtherMatch, t: number, groupe: boolean): HTMLElement {
 
   const el = h('div', { class: 'mx' }, [marge, rows]);
   if (butant) el.dataset.but = '1';
+  if (neuf) el.dataset.neuf = '1';
   return el;
 }
 
