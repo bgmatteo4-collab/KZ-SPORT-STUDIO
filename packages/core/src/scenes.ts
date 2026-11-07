@@ -150,8 +150,27 @@ const SLOT = {
   colonneDroiteBas: { x: 0.746, y: 0.668, w: 0.246, h: 0.19 },
   /** La colonne droite d'un seul tenant, quand un panneau mérite toute la hauteur. */
   colonneDroiteTout: { x: 0.746, y: 0.172, w: 0.246, h: 0.686 },
-  /** Le bloc réseaux, tout en bas à droite. */
+  /*
+   * ── Le bloc réseaux ─────────────────────────────────────────────────────
+   *
+   * Il avait UNE place, la même partout, et c'était un défaut : sur les
+   * scènes plein écran la caméra occupe le coin bas droit, donc le bandeau
+   * s'y retrouvait DERRIÈRE elle. Comme il vit en z = 20 et la caméra en
+   * z = 100, il n'écrasait rien — il disparaissait simplement, sans que rien
+   * ne le signale. Sur la scène de pause, il mordait sur le bandeau de
+   * titre de soixante-quatorze pixels.
+   *
+   * Trois places, donc, choisies par la scène selon ce qu'elle occupe. Le
+   * bloc garde la même forme et la même rotation : ce n'est pas l'objet qui
+   * change, c'est l'endroit où il tient.
+   */
+  /** Sous la colonne de droite, quand la caméra est au centre. */
   social: { x: 0.746, y: 0.878, w: 0.246, h: 0.062 },
+  /** Juste au-dessus de la caméra de coin : le bandeau de chaîne à côté de
+   *  l'animateur, comme un nom de présentateur à la télévision. */
+  socialSurCam: { x: 0.622, y: 0.578, w: 0.366, h: 0.062 },
+  /** Centré tout en bas, sur les scènes à deux moitiés et sans caméra. */
+  socialCentre: { x: 0.356, y: 0.916, w: 0.288, h: 0.056 },
 
   /**
    * Scènes plein écran. Un panneau seul au milieu d'un fond vide ne fait pas
@@ -159,12 +178,15 @@ const SLOT = {
    * droite, dont la dernière accueille la caméra.
    */
   pleinPrincipal: { x: 0.012, y: 0.172, w: 0.598, h: 0.8 },
-  pleinSecondaire: { x: 0.622, y: 0.172, w: 0.366, h: 0.468 },
+  /* Raccourci de sept centièmes pour loger le bandeau réseaux entre ce
+     panneau et la caméra de coin. Ça coûte une ligne de classement ; un
+     bandeau de chaîne invisible coûtait tout le bandeau. */
+  pleinSecondaire: { x: 0.622, y: 0.172, w: 0.366, h: 0.396 },
   pleinTertiaire: { x: 0.622, y: 0.655, w: 0.366, h: 0.317 },
 
   /** Deux panneaux à parité : les compositions des deux équipes. */
-  moitieGauche: { x: 0.012, y: 0.172, w: 0.483, h: 0.8 },
-  moitieDroite: { x: 0.505, y: 0.172, w: 0.483, h: 0.8 },
+  moitieGauche: { x: 0.012, y: 0.172, w: 0.483, h: 0.73 },
+  moitieDroite: { x: 0.505, y: 0.172, w: 0.483, h: 0.73 },
 
   /** Bandeau de titre, sous la caméra des scènes d'attente et de débrief. */
   titreCentre: { x: 0.18, y: 0.72, w: 0.64, h: 0.18 },
@@ -369,6 +391,9 @@ export const SCENES: Scene[] = [
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
       { widget: 'lineups', slot: SLOT.moitieGauche, z: 20, opts: { side: 'home', large: true } },
       { widget: 'lineups-away', slot: SLOT.moitieDroite, z: 20, opts: { side: 'away', large: true } },
+      // Centré sous les deux compositions : c'est la seule bande libre, et
+      // c'est aussi la plus naturelle sur une scène symétrique.
+      { widget: 'social', slot: SLOT.socialCentre, z: 20 },
     ],
   },
   {
@@ -387,7 +412,9 @@ export const SCENES: Scene[] = [
       // Les autres résultats de la soirée : ce sont EUX qui font bouger le
       // tableau qu'on est en train de regarder.
       { widget: 'multiplex', slot: SLOT.pleinSecondaire, z: 20 },
-      { widget: 'social', slot: SLOT.social, z: 20 },
+      // Au-dessus de la caméra de coin, pas sous elle : à l'ancienne place
+      // le bandeau passait derrière l'image et disparaissait.
+      { widget: 'social', slot: SLOT.socialSurCam, z: 20 },
       { widget: 'cam-frame', slot: CAM.coin, z: 110 },
     ],
   },
@@ -405,7 +432,9 @@ export const SCENES: Scene[] = [
       // si « 2-1 » est un match de Ligue 1 ou de troisième division.
       { widget: 'multiplex', slot: SLOT.pleinPrincipal, z: 20, opts: { large: true, groupe: true } },
       { widget: 'standings', slot: SLOT.pleinSecondaire, z: 20 },
-      { widget: 'social', slot: SLOT.social, z: 20 },
+      // Au-dessus de la caméra de coin, pas sous elle : à l'ancienne place
+      // le bandeau passait derrière l'image et disparaissait.
+      { widget: 'social', slot: SLOT.socialSurCam, z: 20 },
       { widget: 'cam-frame', slot: CAM.coin, z: 110 },
     ],
   },
@@ -420,7 +449,9 @@ export const SCENES: Scene[] = [
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
       { widget: 'sheet', slot: SLOT.pleinPrincipal, z: 20 },
       { widget: 'momentum', slot: SLOT.pleinSecondaire, z: 20 },
-      { widget: 'social', slot: SLOT.social, z: 20 },
+      // Au-dessus de la caméra de coin, pas sous elle : à l'ancienne place
+      // le bandeau passait derrière l'image et disparaissait.
+      { widget: 'social', slot: SLOT.socialSurCam, z: 20 },
       { widget: 'cam-frame', slot: CAM.coin, z: 110 },
     ],
   },
@@ -437,7 +468,9 @@ export const SCENES: Scene[] = [
       { widget: 'standings', slot: SLOT.colonneDroite, z: 20 },
       { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
       { widget: 'title', slot: SLOT.titreCentre, z: 120, opts: { text: 'Pause' } },
-      { widget: 'social', slot: SLOT.social, z: 20 },
+      // Le bandeau de titre descend jusqu'à 0,9 : à l'ancienne place, le bloc
+      // réseaux lui mordait dessus sur soixante-quatorze pixels.
+      { widget: 'social', slot: SLOT.socialCentre, z: 20 },
     ],
   },
 ];
