@@ -1,4 +1,4 @@
-@import '../../overlay/src/font.css';
+@import './font.css';
 
 /*
  * La régie.
@@ -29,8 +29,18 @@
  * une lampe de direct est rouge dans tous les studios du monde.
  */
 :root {
-  --font: 'Archivo', system-ui, sans-serif;
-  --mono: ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  /*
+   * Deux familles, deux rôles — et c'est la seule exception à la règle de
+   * l'antenne, qui n'en admet qu'une.
+   *
+   * Inter Tight porte l'interface : dessinée pour les écrans, resserrée, elle
+   * tient dans une colonne de réglages sans se tasser. JetBrains Mono porte
+   * TOUT CE QUI EST CHIFFRE OU CHEMIN : un décalage qui passe de 9,9 s à
+   * 10,0 s ne doit pas faire bouger ce qu'il y a autour, et une adresse en
+   * chasse fixe se recopie à l'œil sans se tromper de caractère.
+   */
+  --font: 'Inter Tight', system-ui, -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Encre, puis deux paliers vers le teal forêt. */
   --bg: #061c1b;
@@ -49,9 +59,12 @@
   --live: #ff4d4d;
   --ok: #5fa89c;
 
-  --r-panel: 20px;
-  --r-card: 14px;
-  --r-chip: 10px;
+  /* 28 px, le rayon de la marque. Il ne se discute pas plus que la couleur :
+     c'est à ça qu'on reconnaît une surface du studio. Les cartes intérieures
+     descendent par paliers, jamais librement. */
+  --r-panel: 28px;
+  --r-card: 16px;
+  --r-chip: 11px;
   /* La pilule d'Apple, reprise telle quelle : un bouton de cette famille se
      reconnaît à son rayon, pas à sa couleur. */
   --r-pill: 980px;
@@ -63,6 +76,54 @@
   --s5: 24px;
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /*
+   * Le verre.
+   *
+   * Pas un effet de mode : une surface translucide qui FLOUTE ce qu'il y a
+   * dessous reste lisible tout en laissant deviner la profondeur. On sait
+   * qu'un panneau est posé sur le fond, pas découpé dedans. La saturation
+   * poussée au-delà de 100 % compense le lavage que le flou produit.
+   *
+   * La régie tourne dans un navigateur de bureau, jamais dans OBS : on peut
+   * s'offrir `backdrop-filter`, que le contrôle de compatibilité CEF 103
+   * interdit à l'habillage.
+   */
+  --verre: blur(22px) saturate(170%);
+  --verre-fond: rgba(10, 39, 38, 0.72);
+  --verre-fond-2: rgba(15, 61, 58, 0.6);
+  --verre-bord: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/*
+ * Le grain.
+ *
+ * Un aplat de couleur sur un grand écran montre ses dégradés par bandes, et
+ * un fond parfaitement lisse a quelque chose de plat qu'on remarque sans
+ * savoir le nommer. Une trame très faible casse les deux. Elle est dessinée
+ * en SVG dans la feuille : aucun fichier à charger, aucune requête.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'>\
+<filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3'/>\
+</filter><rect width='160' height='160' filter='url(%23g)'/></svg>");
+}
+
+/* Tout le reste passe au-dessus du grain. */
+.bar,
+.desk,
+.statut,
+.picker,
+.toast {
+  position: relative;
+  z-index: 1;
 }
 
 /*
@@ -92,7 +153,12 @@ body {
 body {
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  /* Deux lueurs très sourdes : sans elles, le verre flouterait un aplat et
+     ne se verrait pas. C'est ce qui donne la profondeur. */
+  background:
+    radial-gradient(1200px 600px at 12% -10%, rgba(31, 111, 102, 0.3), transparent 60%),
+    radial-gradient(900px 500px at 92% 110%, rgba(227, 168, 59, 0.07), transparent 60%),
+    var(--bg);
   color: var(--ink);
   font-family: var(--font);
   font-synthesis: none;
@@ -109,14 +175,15 @@ body {
   flex: none;
   height: 62px;
   padding: 0 var(--s5);
-  background: var(--surface);
+  background: var(--verre-fond);
+  backdrop-filter: var(--verre);
+  -webkit-backdrop-filter: var(--verre);
   border-bottom: 1px solid var(--line);
 }
 
 .brand {
   font-size: 17px;
   font-weight: 500;
-  font-stretch: 108%;
   letter-spacing: 0.02em;
   color: var(--ink-soft);
   white-space: nowrap;
@@ -141,7 +208,6 @@ body {
 .now__team {
   font-size: 19px;
   font-weight: 700;
-  font-stretch: 104%;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -155,6 +221,7 @@ body {
   font-size: 22px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
 }
 
 .now__sep {
@@ -169,6 +236,7 @@ body {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--accent);
+  font-family: var(--mono);
 }
 
 .now__phase {
@@ -213,7 +281,9 @@ body {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr) 320px;
+  /* Pupitre · contenu · inspecteur. L'inspecteur gagne vingt pixels : il
+     porte maintenant des listes nommées, pas seulement des boutons. */
+  grid-template-columns: 300px minmax(0, 1fr) 340px;
   gap: var(--s3);
   padding: var(--s3);
 }
@@ -224,9 +294,12 @@ body {
   gap: var(--s2);
   min-height: 0;
   padding: var(--s4);
-  background: var(--surface);
+  background: var(--verre-fond);
+  backdrop-filter: var(--verre);
+  -webkit-backdrop-filter: var(--verre);
   border: 1px solid var(--line);
   border-radius: var(--r-panel);
+  box-shadow: var(--verre-bord), 0 24px 60px rgba(0, 0, 0, 0.35);
   overflow: hidden;
 }
 
@@ -272,54 +345,72 @@ kbd {
 
 /* ══════════════════════════ Le pupitre de scènes ══════════════════════════ */
 
+/*
+ * Les scènes : une LISTE, pas une grille de pavés.
+ *
+ * ── Ce que la grille coûtait ────────────────────────────────────────────
+ *
+ * Deux colonnes de carrés, c'est la forme d'un site web. Elle oblige à lire
+ * en zigzag pour trouver la cinquième scène, coupe les noms longs en deux
+ * lignes — « Feuille de / match » — et gaspille la hauteur dont la colonne
+ * dispose pourtant.
+ *
+ * Les logiciels qui gèrent une collection ordonnée la présentent en liste
+ * verticale : c'est le navigateur de diapositives de Keynote, la liste de
+ * scènes d'OBS, la pile de calques d'un éditeur. On descend d'un œil, le
+ * numéro de raccourci est aligné en colonne, et le nom a toute la largeur.
+ */
 .switcher {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   flex: none;
 }
 
 .scene {
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  align-items: center;
+  gap: var(--s3);
   padding: var(--s2) var(--s3);
-  min-height: 52px;
-  justify-content: center;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface-2);
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: var(--r-chip);
+  background: transparent;
   color: var(--ink-soft);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
   transition:
     border-color 140ms var(--ease),
     background 140ms var(--ease),
-    color 140ms var(--ease),
-    transform 90ms var(--ease);
+    color 140ms var(--ease);
 }
 
-.scene:hover { border-color: var(--line-strong); color: var(--ink); }
-.scene:active { transform: translateY(1px); }
+.scene:hover { background: var(--surface-2); color: var(--ink); border-color: transparent; }
+.scene:active { transform: none; }
 
+/* Le numéro de raccourci, en chasse fixe et en colonne : on le vise du
+   doigt sur le clavier, pas à la souris. */
 .scene__key {
-  font-size: 10px;
+  flex: none;
+  width: 18px;
+  font-family: var(--mono);
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  text-align: center;
   color: var(--ink-dim);
 }
 
-/* À l'antenne : rouge, sans ambiguïté possible. */
+/* À l'antenne : rouge, sans ambiguïté possible. Une barre à gauche plutôt
+   qu'un cadre complet — dans une liste, c'est le repère qui se suit le plus
+   vite du regard. */
 .scene[data-on='1'] {
-  background: color-mix(in srgb, var(--live) 18%, var(--surface-2));
-  border-color: var(--live);
+  background: rgba(255, 77, 77, 0.14);
   color: #fff;
-  box-shadow: 0 0 0 1px var(--live) inset;
+  box-shadow: inset 3px 0 0 var(--live);
 }
 
 .scene[data-on='1'] .scene__key { color: var(--live); }
@@ -408,6 +499,7 @@ kbd {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ink-dim);
+  font-family: var(--mono);
 }
 
 .ev__mark {
@@ -454,13 +546,21 @@ kbd {
 
 .delay { display: flex; flex-direction: column; gap: var(--s2); flex: none; }
 
+/*
+ * Les chiffres sont en chasse fixe, et c'est une décision, pas un goût.
+ *
+ * Un décalage qui passe de 9,9 s à 10,0 s change de largeur en police
+ * proportionnelle : le nombre saute d'un pixel ou deux à chaque quart de
+ * seconde, et on le voit danser pendant qu'on le règle aux flèches. En
+ * JetBrains Mono il ne bouge pas. Même raison pour le chrono, le score et
+ * les minutes des faits de jeu.
+ */
 output {
-  font-size: 46px;
-  font-weight: 800;
-  font-stretch: 108%;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+  font-size: 42px;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
 }
 
 /* La piste suit la palette : `accent-color` seul laissait au navigateur une
@@ -566,9 +666,10 @@ button[data-on='1'] {
   gap: var(--s2);
   flex: none;
   padding: var(--s3);
-  background: var(--surface-2);
+  background: var(--verre-fond-2);
   border: 1px solid var(--line);
   border-radius: var(--r-card);
+  box-shadow: var(--verre-bord);
 }
 
 /* Le diagnostic de source vit en bas de colonne, et peut respirer. */
@@ -673,6 +774,9 @@ button[data-on='1'] {
   cursor: pointer;
 }
 
+/* Le `transform` est posé par le ressort, en JavaScript : une transition CSS
+   repartirait de zéro à chaque bascule rapide. Seule la couleur reste au CSS,
+   parce qu'elle n'a pas de vitesse à conserver. */
 .switch i {
   position: absolute;
   top: 3px;
@@ -681,11 +785,11 @@ button[data-on='1'] {
   height: 18px;
   border-radius: 50%;
   background: var(--ink-dim);
-  transition: transform 220ms var(--ease), background 220ms var(--ease);
+  transition: background 220ms var(--ease);
 }
 
 .switch[data-on='1'] { background: var(--accent); border-color: var(--accent); }
-.switch[data-on='1'] i { transform: translateX(20px); background: #10201e; }
+.switch[data-on='1'] i { background: #10201e; }
 
 @media (prefers-reduced-motion: reduce) {
   .switch i { transition: none; }
@@ -716,6 +820,7 @@ button[data-on='1'] {
 .insert__nom { flex: none; font-weight: 600; }
 
 .insert__etat {
+  font-family: var(--mono);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1295,16 +1400,34 @@ button[data-on='1'] {
 }
 
 /* Les quatre moments. Même pupitre que les scènes, sans touche clavier. */
+/* Le moment, lui, reste une grille de quatre : ce ne sont pas des objets
+   d'une collection mais quatre états exclusifs du même objet — la forme d'un
+   sélecteur, pas d'une liste. */
 .switcher--modes {
-  grid-template-columns: repeat(2, 1fr);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s1);
 }
 
 .scene--mode {
   justify-content: center;
   text-align: center;
-  font-size: 12px;
+  font-size: 12.5px;
+  min-height: 32px;
   padding: var(--s2) var(--s2);
+  border-radius: var(--r-pill);
+  border-color: var(--line);
+  background: var(--bg);
 }
+
+.scene--mode[data-on='1'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #10201e;
+  box-shadow: none;
+}
+
+.scene--mode[data-on='1'] .scene__key { color: inherit; }
 
 /* Une scène sans variantes de mode : les boutons restent lisibles mais
    annoncent qu'ils ne changeront rien ici. */
@@ -1318,4 +1441,178 @@ button[data-on='1'] {
 .picker__row[data-inconnu='1'] {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* ═══════════════════════ La coque d'application ══════════════════════════
+
+   Disposition reprise de ce que font les logiciels de bureau, et que les
+   recommandations d'Apple décrivent pour macOS : une barre de titre, une
+   colonne de navigation à gauche, un contenu au centre, un INSPECTEUR à
+   droite, une barre d'état en bas. Keynote range exactement comme ça son
+   navigateur de diapositives, sa diapositive et son inspecteur.
+
+   Ce que ça change, concrètement : la colonne de droite cesse d'être un
+   dépotoir de réglages sans sujet. Elle décrit ce qui est sélectionné, et
+   range le reste derrière deux onglets qu'on ouvre quand on en a besoin.  */
+
+.statut {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  flex: none;
+  height: 30px;
+  padding: 0 var(--s4);
+  background: var(--verre-fond);
+  backdrop-filter: var(--verre);
+  -webkit-backdrop-filter: var(--verre);
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.statut__source { flex: none; }
+
+/* Les lacunes sont d'un autre ordre que les compteurs : « xG absent » est une
+   panne possible, « 82 appels » un chiffre. Elles sont marquées, tronquées
+   sur une ligne, et complètes au survol. */
+.statut__lacunes {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--accent);
+}
+
+.statut__lacunes::before {
+  content: '⚠ ';
+  opacity: 0.8;
+}
+
+.statut__fin {
+  display: flex;
+  gap: var(--s4);
+  flex: none;
+  margin-left: auto;
+}
+
+/* ═══════════════════════════ Les onglets ═════════════════════════════════
+
+   Un indicateur qui GLISSE, posé sur un ressort : cliquer vite sur trois
+   onglets ne produit pas trois départs à zéro, le mouvement en cours est
+   repris là où il en est. C'est tout l'intérêt d'un ressort sur une courbe
+   de durée fixe, et ça se sent à l'usage avant de se voir.                */
+
+.onglets {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  flex: none;
+  padding: 3px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+}
+
+.onglets__curseur {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  pointer-events: none;
+}
+
+.onglets button {
+  position: relative;
+  flex: 1;
+  padding: var(--s2) var(--s2);
+  background: transparent;
+  border: none;
+  border-radius: var(--r-pill);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-dim);
+}
+
+.onglets button:hover { color: var(--ink-soft); background: transparent; }
+.onglets button[aria-selected='true'] { color: var(--accent); font-weight: 700; }
+
+.volets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.volet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+/* ═════════════════════ Le contenu d'une scène ════════════════════════════
+
+   Un inspecteur décrit l'objet choisi. L'opérateur voyait jusqu'ici le nom
+   d'une scène et devait se rappeler ce qu'elle contenait — ou l'envoyer pour
+   le découvrir.                                                           */
+
+.valeur {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: right;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.valeur--douce { font-weight: 500; color: var(--ink-soft); font-size: 12px; }
+
+.couches {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+}
+
+.couche {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: 3px var(--s2);
+  border-radius: var(--r-chip);
+  background: var(--bg);
+}
+
+.couche__nom {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Où, en clair. « x 0.746 w 0.246 » ne dit rien à personne. */
+.couche__place {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-dim);
+}
+
+.couche--vide {
+  justify-content: center;
+  color: var(--ink-dim);
+  font-size: 12px;
+  font-style: italic;
 }

@@ -970,9 +970,10 @@ html {
 .mx {
   display: grid;
   /* La marge porte la minute ET le nom de la compétition depuis que le
-     multiplex voit tout le football : « Premier League » sur 48 px se coupait
-     en plein milieu. */
-  grid-template-columns: 62px 1fr;
+     multiplex voit tout le football. 62 px suffisaient à « Ligue 1 », pas à
+     « Championship » — un mot long ne se coupe pas, il se tronque, et une
+     compétition tronquée ne se reconnaît plus. */
+  grid-template-columns: 76px 1fr;
   align-items: center;
   align-content: center;
   padding: var(--s2) var(--s3);
@@ -988,6 +989,8 @@ html {
    voit tout le football du jour, c'est le cas une ligne sur deux. */
 .mx__ligue {
   margin-top: 2px;
+  /* Les mots longs passent à la ligne plutôt que de se faire couper. */
+  overflow-wrap: break-word;
   font-size: 10px;
   font-weight: 700;
   line-height: 1.1;
@@ -996,7 +999,7 @@ html {
   color: var(--ink-dim);
   overflow: hidden;
   display: block;
-  max-height: 24px;
+  max-height: 26px;
 }
 
 /* Le titre d'une compétition, dans le mode groupé. */

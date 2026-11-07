@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Embarque Archivo dans le projet, en base64.
+Embarque les polices du projet, en base64.
 
 POURQUOI. Une police chargée depuis le réseau est un pari pris à l'antenne :
 si la requête est lente ou coupée au lancement d'OBS, le direct commence avec
@@ -20,10 +20,31 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT = ROOT / 'apps/overlay/src/font.css'
-URL = (
-    'https://fonts.googleapis.com/css2'
-    '?family=Archivo:wdth,wght@62..125,100..900&display=block'
+
+# Deux cibles, deux rôles.
+#
+# L'ANTENNE tient par l'unité : une seule famille, dont la hiérarchie vient de
+# la graisse et de la chasse. C'est Archivo, et ça ne bouge pas.
+#
+# L'OUTIL est un logiciel, pas une émission : il lui faut la police de la
+# marque — Inter Tight pour l'interface, JetBrains Mono pour tout ce qui est
+# chiffre ou chemin de fichier. Un nombre en chasse fixe ne danse pas quand il
+# change, et un décalage qu'on lit en direct ne doit pas danser.
+#
+# Les trois familles sont sous licence SIL OFL 1.1, qui autorise explicitement
+# l'incorporation dans un logiciel ; le dépôt est public, d'où la mention dans
+# l'en-tête de chaque fichier généré.
+CIBLES = (
+    {
+        'sortie': 'apps/overlay/src/font.css',
+        'quoi': "Archivo, pour l'antenne",
+        'familles': ('Archivo:wdth,wght@62..125,100..900',),
+    },
+    {
+        'sortie': 'apps/regie/src/font.css',
+        'quoi': 'Inter Tight et JetBrains Mono, pour la régie',
+        'familles': ('Inter+Tight:wght@400..800', 'JetBrains+Mono:wght@400..700'),
+    },
 )
 # `latin` couvre les accents courants (É, Ã, Ú) ; `latin-ext` les diacritiques
 # slaves des noms de joueurs (Č, Ć, Ş). Les autres sous-ensembles sont inutiles
@@ -44,40 +65,53 @@ def recupere(url: str) -> bytes:
     return done.stdout
 
 
-css = recupere(URL).decode('utf-8')
+def embarque(famille: str) -> list[tuple[str, str, int]]:
+    url = f'https://fonts.googleapis.com/css2?family={famille}&display=block'
+    css = recupere(url).decode('utf-8')
+    blocs = []
+    motif = r'/\*\s*([\w-]+)\s*\*/\s*(@font-face\s*\{.*?\})'
+    for commentaire, bloc in re.findall(motif, css, re.S):
+        if commentaire not in VOULUS:
+            continue
+        lien = re.search(r'url\((https://[^)]+\.woff2)\)', bloc)
+        if not lien:
+            continue
+        woff2 = recupere(lien.group(1))
+        b64 = base64.b64encode(woff2).decode('ascii')
+        bloc = bloc.replace(
+            lien.group(0), f"url(data:font/woff2;base64,{b64}) format('woff2')"
+        )
+        bloc = bloc.replace("format('woff2') format('woff2')", "format('woff2')")
+        # `block` plutôt que `swap` : à l'antenne, mieux vaut un instant sans
+        # texte qu'un changement de police visible une seconde après.
+        bloc = bloc.replace('font-display: swap;', 'font-display: block;')
+        nom = re.search(r"font-family:\s*'([^']+)'", bloc)
+        blocs.append((f'{nom.group(1) if nom else famille} {commentaire}', bloc, len(woff2)))
+    return blocs
 
-blocs = []
-for commentaire, bloc in re.findall(r'/\*\s*([\w-]+)\s*\*/\s*(@font-face\s*\{.*?\})', css, re.S):
-    if commentaire not in VOULUS:
-        continue
-    lien = re.search(r'url\((https://[^)]+\.woff2)\)', bloc)
-    if not lien:
-        continue
-    woff2 = recupere(lien.group(1))
-    b64 = base64.b64encode(woff2).decode('ascii')
-    bloc = bloc.replace(
-        lien.group(0), f"url(data:font/woff2;base64,{b64}) format('woff2')"
+
+for cible in CIBLES:
+    blocs = []
+    for famille in cible['familles']:
+        blocs += embarque(famille)
+    if not blocs:
+        sys.exit(f"aucun sous-ensemble récupéré pour {cible['sortie']}")
+
+    entete = (
+        '/*\n'
+        f" * {cible['quoi']}. Embarquée en base64.\n"
+        ' * Générée par tools/embed-font.py — ne pas éditer à la main.\n'
+        ' *\n'
+        " * Une police chargée depuis le réseau est un pari pris à l'antenne : si la\n"
+        ' * requête est lente ou coupée au lancement, le direct commence avec la\n'
+        " * mauvaise police. C'est arrivé ici même. Embarquée, elle est toujours là.\n"
+        ' *\n'
+        ' * Licence SIL Open Font License 1.1, qui autorise explicitement\n'
+        " * l'incorporation dans un logiciel — y compris redistribué.\n"
+        ' */\n\n'
     )
-    bloc = bloc.replace("format('woff2') format('woff2')", "format('woff2')")
-    # `block` plutôt que `swap` : à l'antenne, mieux vaut un instant sans texte
-    # qu'un changement de police visible une seconde après l'apparition.
-    bloc = bloc.replace('font-display: swap;', 'font-display: block;')
-    blocs.append((commentaire, bloc, len(woff2)))
-
-if not blocs:
-    sys.exit('aucun sous-ensemble récupéré — la feuille Google a peut-être changé de forme')
-
-entete = (
-    '/*\n'
-    " * Archivo, embarquée. Générée par tools/embed-font.py — ne pas éditer.\n"
-    ' *\n'
-    " * Une police chargée depuis le réseau est un pari pris à l'antenne. Celle-ci\n"
-    " * est dans le fichier : elle est là en développement, dans OBS et dans la\n"
-    ' * page autonome, réseau ou pas.\n'
-    ' */\n\n'
-)
-OUT.write_text(entete + '\n\n'.join(b for _, b, _ in blocs) + '\n')
-
-for nom, _, taille in blocs:
-    print(f'  {nom:<10} {taille / 1024:6.1f} Ko')
-print(f'✓ {OUT.relative_to(ROOT)} — {OUT.stat().st_size / 1024:.0f} Ko en base64')
+    out = ROOT / cible['sortie']
+    out.write_text(entete + '\n\n'.join(b for _, b, _ in blocs) + '\n')
+    for nom, _, taille in blocs:
+        print(f'  {nom:<28} {taille / 1024:6.1f} Ko')
+    print(f"✓ {cible['sortie']} — {out.stat().st_size / 1024:.0f} Ko en base64\n")

@@ -28,7 +28,13 @@
  * l'œil plus que le score, qui est l'information.
  */
 
-import { grouperMultiplex, type OtherMatch, trierMultiplex, vientDeMarquer } from '@kz/core';
+import {
+  grouperMultiplex,
+  nomCourtCompetition,
+  type OtherMatch,
+  trierMultiplex,
+  vientDeMarquer,
+} from '@kz/core';
 import { h, setAttr, setText } from '../dom.js';
 import { crestEl, paintCrest } from './crest.js';
 import { panel } from './panel.js';
@@ -188,7 +194,13 @@ function bloc(match: OtherMatch, t: number, groupe: boolean): HTMLElement {
   // rien si on ignore s'il s'agit de la Ligue 1 ou d'une D2 scandinave. Elle
   // cède la place au signalement pendant les vingt-cinq secondes qu'il dure.
   else if (!groupe && match.competition) {
-    marge.append(h('div', { class: 'mx__ligue' }, [match.competition]));
+    // Le nom court : dans une marge de deux lignes, « Championship » se
+    // coupait en plein milieu d'un mot.
+    marge.append(
+      h('div', { class: 'mx__ligue' }, [
+        nomCourtCompetition(match.competitionId, match.competition),
+      ]),
+    );
   }
 
   const el = h('div', { class: 'mx' }, [marge, rows]);

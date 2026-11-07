@@ -1,9 +1,13 @@
 /*
- * Archivo, embarquée. Générée par tools/embed-font.py — ne pas éditer.
+ * Archivo, pour l'antenne. Embarquée en base64.
+ * Générée par tools/embed-font.py — ne pas éditer à la main.
  *
- * Une police chargée depuis le réseau est un pari pris à l'antenne. Celle-ci
- * est dans le fichier : elle est là en développement, dans OBS et dans la
- * page autonome, réseau ou pas.
+ * Une police chargée depuis le réseau est un pari pris à l'antenne : si la
+ * requête est lente ou coupée au lancement, le direct commence avec la
+ * mauvaise police. C'est arrivé ici même. Embarquée, elle est toujours là.
+ *
+ * Licence SIL Open Font License 1.1, qui autorise explicitement
+ * l'incorporation dans un logiciel — y compris redistribué.
  */
 
 @font-face {

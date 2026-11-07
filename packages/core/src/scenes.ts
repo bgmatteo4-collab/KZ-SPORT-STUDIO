@@ -439,6 +439,43 @@ export const SCENES: Scene[] = [
   },
 ];
 
+/**
+ * Le nom lisible de chaque widget.
+ *
+ * Les scènes désignent leurs couches par une CLÉ de registre — « score-banner »,
+ * « fil-recent ». C'est ce qu'il faut pour le code, et c'est illisible pour un
+ * opérateur qui veut savoir ce que contient la scène qu'il va envoyer. La
+ * table vit ici, avec les scènes qui s'en servent.
+ */
+export const NOM_WIDGET: Record<string, string> = {
+  backdrop: 'Fond habillé',
+  'score-banner': 'Bannière de score',
+  'cam-frame': 'Cadre caméra',
+  'stream-counters': 'Vues et likes',
+  social: 'Pseudo',
+  title: 'Titre',
+  'score-recap': 'Rappel du score',
+  flash: 'Carton plein écran',
+  attente: 'Compte à rebours',
+  stats: 'Statistiques',
+  fil: 'Fil du match',
+  'fil-recent': 'Derniers faits',
+  lineups: 'Composition',
+  'lineups-away': 'Composition (extérieur)',
+  multiplex: 'Autres matchs',
+  momentum: 'Momentum',
+  standings: 'Classement',
+  odds: 'Cotes',
+  prematch: 'Affiche',
+  radar2d: 'Radar',
+  sheet: 'Feuille de match',
+  shotmap: 'Carte des tirs',
+};
+
+export function nomWidget(cle: string): string {
+  return NOM_WIDGET[cle] ?? cle;
+}
+
 export const DEFAULT_SCENE_ID = 'match';
 
 export function findScene(id: string): Scene {

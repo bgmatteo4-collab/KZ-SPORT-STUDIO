@@ -85,6 +85,40 @@ export const INTERET: Record<string, number> = {
 
 export const INTERET_INCONNU = 30;
 
+/**
+ * Le nom court d'une compétition, pour une marge de bandeau.
+ *
+ * La marge d'un bloc de multiplex fait soixante-seize pixels et tient deux
+ * lignes d'une dizaine de caractères. « Premier League » y passe, parce qu'il
+ * se coupe à l'espace. « Championship » est un seul mot de douze lettres : il
+ * se coupait en « Champi / onship », ce qui est pire qu'un nom tronqué.
+ *
+ * Seules les compétitions qui posent problème figurent ici, avec
+ * l'abréviation que les supporters emploient — « LDC », pas « L. des Ch. ».
+ * Une compétition absente de la table garde son nom entier.
+ */
+export const NOM_COURT: Record<string, string> = {
+  'uefa.champions': 'LDC',
+  'uefa.europa': 'Europa',
+  'uefa.europa.conf': 'Conférence',
+  'uefa.wchampions': 'LDC fém.',
+  'uefa.super_cup': 'Supercoupe',
+  'uefa.nations': 'Nations',
+  'eng.2': 'Champ.',
+  'sco.1': 'Écosse',
+  'ksa.1': 'Saudi PL',
+  'fra.coupe_de_france': 'Coupe de Fr.',
+  'ger.dfb_pokal': 'Coupe d’All.',
+  'ita.coppa_italia': 'Coupe d’It.',
+  'eng.w.1': 'WSL fém.',
+  'fra.w.1': 'D1 fém.',
+};
+
+export function nomCourtCompetition(id: string | undefined, nom: string | undefined): string {
+  if (id && NOM_COURT[id]) return NOM_COURT[id];
+  return nom ?? '';
+}
+
 export function interetDe(competitionId?: string): number {
   return competitionId ? (INTERET[competitionId] ?? INTERET_INCONNU) : INTERET_INCONNU;
 }

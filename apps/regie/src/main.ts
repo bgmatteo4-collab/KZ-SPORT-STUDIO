@@ -19,6 +19,7 @@ import {
   clockLabel,
   findScene,
   insertActif,
+  nomWidget,
   INSERTS,
   PHASE_LABEL,
   SCENE_MODES,
@@ -38,6 +39,7 @@ import {
   type ServerMessage,
 } from '@kz/core';
 import { monterSelecteur } from './picker.js';
+import { anime, MOUVEMENTS } from './ressort.js';
 
 const el = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -50,7 +52,14 @@ const nowScore = el('now-score');
 const nowClock = el('now-clock');
 const nowPhase = el('now-phase');
 const sceneName = el('scene-name');
-const sourceDetail = el('source-detail');
+const statutSource = el('statut-source');
+const statutLacunes = el('statut-lacunes');
+const statutLatence = el('statut-latence');
+const statutTimeline = el('statut-timeline');
+const inspScene = el('insp-scene');
+const inspCam = el('insp-cam');
+const inspTransition = el('insp-transition');
+const inspCouches = el('insp-couches');
 const scenesBox = el('scenes');
 const modesBox = el('modes');
 const pickButton = el('pick-match');
@@ -74,6 +83,57 @@ let socket: WebSocket | null = null;
 let connected = false;
 /** Le curseur est-il saisi ? Si oui, on ne l'écrase pas sous les doigts. */
 let draggingDelay = false;
+
+// ──────────────────────────── L'inspecteur ───────────────────────────────────
+//
+// Trois onglets, parce qu'une colonne qui empile le décalage, les habillages,
+// les inserts, la caméra, les adresses OBS et un diagnostic de source n'a pas
+// de sujet : on y cherche. Un inspecteur a toujours un sujet.
+//
+//   Scène   — ce que contient ce qu'on envoie, et la régie automatique
+//   Antenne — ce qui part en direct : décalage, habillage, emblème
+//   Studio  — la machine : caméra, OBS, raccourcis
+//
+// Le curseur glisse d'un onglet à l'autre sur un RESSORT, pas sur une courbe :
+// cliquer vite sur trois onglets ne doit pas produire trois départs à zéro.
+
+const onglets = el('onglets');
+const curseurOnglet = el('onglets-curseur');
+const volets = [...document.querySelectorAll<HTMLElement>('[data-volet]')];
+const boutonsOnglet = [...onglets.querySelectorAll<HTMLButtonElement>('[data-onglet]')];
+
+const glisserCurseur = anime(0, MOUVEMENTS.vif, (x) => {
+  curseurOnglet.style.transform = `translateX(${x}px)`;
+});
+
+function placerCurseur(bouton: HTMLButtonElement, anime_ = true): void {
+  const largeur = bouton.offsetWidth;
+  curseurOnglet.style.width = `${largeur}px`;
+  if (anime_) glisserCurseur(bouton.offsetLeft);
+  else curseurOnglet.style.transform = `translateX(${bouton.offsetLeft}px)`;
+}
+
+function montrerOnglet(nom: string): void {
+  for (const b of boutonsOnglet) {
+    const actif = b.dataset.onglet === nom;
+    b.setAttribute('aria-selected', actif ? 'true' : 'false');
+    if (actif) placerCurseur(b);
+  }
+  for (const v of volets) v.hidden = v.dataset.volet !== nom;
+}
+
+for (const bouton of boutonsOnglet) {
+  bouton.addEventListener('click', () => montrerOnglet(bouton.dataset.onglet ?? 'scene'));
+}
+// La largeur d'un onglet dépend de la police : on attend qu'elle soit là.
+void document.fonts?.ready.then(() => {
+  const actif = boutonsOnglet.find((b) => b.getAttribute('aria-selected') === 'true');
+  if (actif) placerCurseur(actif, false);
+});
+new ResizeObserver(() => {
+  const actif = boutonsOnglet.find((b) => b.getAttribute('aria-selected') === 'true');
+  if (actif) placerCurseur(actif, false);
+}).observe(onglets);
 
 // ───────────────────────────── Pupitre de scènes ──────────────────────────────
 
@@ -146,6 +206,14 @@ insertSwitch.addEventListener('click', () =>
     insertMode: control.insertMode === 'auto' ? 'off' : 'auto',
   }),
 );
+
+// Le bouton de l'interrupteur glisse sur un RESSORT, pas sur une transition.
+// Un interrupteur qu'on bascule deux fois de suite doit repartir de là où il
+// en est, pas sauter à son point de départ pour recommencer.
+const bouton = insertSwitch.querySelector<HTMLElement>('i');
+const glisserBouton = anime(0, MOUVEMENTS.vif, (x) => {
+  if (bouton) bouton.style.transform = `translateX(${x}px)`;
+});
 
 const lignesInsert = INSERTS.map((spec) => {
   const nom = document.createElement('span');
@@ -422,6 +490,7 @@ function applyControl(next: ControlState): void {
   insertSwitch.setAttribute('aria-checked', auto ? 'true' : 'false');
   insertSwitch.dataset.on = auto ? '1' : '0';
   insertsBox.dataset.coupes = auto ? '0' : '1';
+  glisserBouton(auto ? 20 : 0);
   // Une scène sans variantes de mode ignore les quatre boutons : autant le
   // dire, plutôt que de laisser cliquer sur des boutons sans effet.
   modesBox.dataset.actif = findScene(next.sceneId).modes ? '1' : '0';
@@ -473,13 +542,106 @@ function refresh(): void {
   nowClock.textContent = onAir ? `${label.main}${label.added ?? ''}` : '—';
   nowPhase.textContent = PHASE_LABEL[state.phase];
 
-  setTexte(sourceDetail, provider.detail ?? provider.name);
+  majStatut();
 
   majInserts(state);
+  majInspecteur();
   majEmbleme(state.meta?.competitionId);
 
   renderFeed(state);
   requestAnimationFrame(refresh);
+}
+
+/**
+ * La barre d'état : ce qu'on surveille du coin de l'œil.
+ *
+ * Le diagnostic de source occupait un bloc dans la colonne de réglages, où
+ * il n'avait rien à faire : ce n'est pas quelque chose qu'on règle. Un
+ * logiciel met ça en bas, sur une ligne, et c'est exactement la bonne place —
+ * toujours visible, jamais dans le chemin.
+ *
+ * Les lacunes sont séparées du reste et marquées : « xG absent » n'est pas du
+ * même ordre que « 82 appels ». L'une est une panne possible, l'autre un
+ * compteur.
+ */
+function majStatut(): void {
+  const brut = provider.detail ?? provider.name;
+  const coupe = brut.indexOf('lacunes :');
+  setTexte(statutSource, coupe < 0 ? brut : brut.slice(0, coupe).replace(/[—\-\s]+$/, ''));
+  const lacunes = coupe < 0 ? '' : brut.slice(coupe + 'lacunes :'.length).trim();
+  statutLacunes.hidden = lacunes === '';
+  setTexte(statutLacunes, lacunes);
+  statutLacunes.title = lacunes;
+
+  // L'écart entre l'horloge du navigateur et celle du serveur. Un poste mal
+  // réglé affiche le match décalé de plusieurs secondes, et personne ne
+  // comprend pourquoi tant que ce chiffre n'est pas sous les yeux.
+  const ecart = sync.currentOffset;
+  setTexte(statutLatence, `horloge ${ecart >= 0 ? '+' : ''}${Math.round(ecart)} ms`);
+  setTexte(statutTimeline, `${cursor.size} événements`);
+}
+
+/**
+ * Ce que la scène sélectionnée CONTIENT.
+ *
+ * C'est le propre d'un inspecteur : décrire l'objet choisi. L'opérateur
+ * voyait jusqu'ici le nom d'une scène et devait se rappeler ce qu'il y avait
+ * dedans — ou l'envoyer pour le découvrir. Les couches sont listées par leur
+ * nom d'antenne, pas par leur clé de registre.
+ */
+let coucheSignature = '';
+
+function majInspecteur(): void {
+  const scene = findScene(control.sceneId);
+  const couches = (scene.modes?.[control.sceneMode] ?? scene.layers)
+    .filter((l) => l.widget !== 'backdrop' && l.widget !== 'cam-frame')
+    .sort((a, b) => a.z - b.z);
+
+  setTexte(inspScene, scene.name);
+  setTexte(
+    inspCam,
+    scene.cam === null
+      ? 'masquée'
+      : `${Math.round(scene.cam.w * 100)} % de large · ${scene.camStyle}`,
+  );
+  setTexte(inspTransition, `${scene.transition.kind} · ${scene.transition.ms} ms`);
+
+  const signature = `${scene.id}|${control.sceneMode}|${couches.map((l) => l.widget).join(',')}`;
+  if (signature === coucheSignature) return;
+  coucheSignature = signature;
+
+  inspCouches.replaceChildren();
+  for (const couche of couches) {
+    const li = document.createElement('li');
+    li.className = 'couche';
+    const nom = document.createElement('span');
+    nom.className = 'couche__nom';
+    nom.textContent = nomWidget(couche.widget);
+    const place = document.createElement('span');
+    place.className = 'couche__place';
+    // Où, en clair. « x 0.746 w 0.246 » ne dit rien à personne ; « droite,
+    // haut » se lit sans traduire.
+    place.textContent = situer(couche.slot);
+    li.append(nom, place);
+    inspCouches.append(li);
+  }
+  if (couches.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'couche couche--vide';
+    li.textContent = 'Aucun panneau sur cette scène.';
+    inspCouches.append(li);
+  }
+}
+
+/** Un rectangle normalisé, dit en français. */
+function situer(slot: { x: number; y: number; w: number; h: number }): string {
+  if (slot.w > 0.9 && slot.h > 0.9) return 'plein cadre';
+  const cx = slot.x + slot.w / 2;
+  const cy = slot.y + slot.h / 2;
+  const colonne = cx < 0.34 ? 'gauche' : cx > 0.66 ? 'droite' : 'centre';
+  if (slot.h < 0.2 && slot.w > 0.8) return cy < 0.5 ? 'bandeau haut' : 'bandeau bas';
+  const rangee = cy < 0.4 ? 'haut' : cy > 0.72 ? 'bas' : 'milieu';
+  return `${colonne}, ${rangee}`;
 }
 
 /**
