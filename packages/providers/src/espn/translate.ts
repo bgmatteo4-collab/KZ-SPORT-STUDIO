@@ -253,6 +253,7 @@ function equipe(t: EspnTeam | undefined, uniforme?: { color?: string; alternateC
 
 function bref(t: Team): TeamBrief {
   return {
+    id: t.id,
     abbr: t.abbr,
     short: t.short,
     color: t.color,
@@ -400,7 +401,12 @@ function classement(st: EspnStandings | undefined, etat: EtatTraduction): Standi
     // Le classement, lui, porte son propre logo : même une équipe qu'on n'a
     // pas croisée ce soir aura donc son vrai écusson.
     const embleme = e.logo?.find((l) => l.href)?.href;
-    const base: TeamBrief = connue ?? { abbr: trigramme(nom), short: nom, color: GRIS_INCONNU };
+    const base: TeamBrief = connue ?? {
+      ...(e.id ? { id: e.id } : {}),
+      abbr: trigramme(nom),
+      short: nom,
+      color: GRIS_INCONNU,
+    };
     lignes.push({
       rank: stat('rank') ?? lignes.length + 1,
       team: embleme && !base.crest ? { ...base, crest: embleme } : base,

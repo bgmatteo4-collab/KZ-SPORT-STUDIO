@@ -232,6 +232,13 @@ const MATCH_AVANT: SceneLayer[] = [
  * Le momentum n'a plus sa place ici : il raconte ce qui S'EST PASSÉ, donc il
  * appartient aux moments où l'on analyse — la mi-temps et la fin. Il revient
  * en insert quand la régie automatique le juge motivé.
+ *
+ * Les cotes ont quitté le direct, et c'est une décision éditoriale, pas un
+ * oubli : aucune source gratuite ne donne de cote VIVANTE. Afficher un 1N2
+ * d'avant-match à la 70e minute d'un 3-0 ne dit pas « voilà la probabilité »,
+ * ça dit quelque chose de faux. Leur place est l'avant-match, où elles sont
+ * exactes. Le créneau libéré va au fil des derniers faits — ce qui vient de
+ * se passer, soit exactement ce qu'un spectateur qui arrive veut savoir.
  */
 const MATCH_DIRECT: SceneLayer[] = [
   ...CHROME_MATCH,
@@ -239,22 +246,36 @@ const MATCH_DIRECT: SceneLayer[] = [
   { widget: 'stats', slot: SLOT.colonneGauche, z: 20, opts: { large: true } },
   { widget: 'multiplex', slot: SLOT.radar, z: 20, opts: { large: true } },
   { widget: 'lineups', slot: SLOT.colonneDroite, z: 20 },
-  { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
+  { widget: 'fil-recent', slot: SLOT.colonneDroiteBas, z: 20, opts: { recent: true } },
 ];
 
-/** La pause : on analyse. Les chiffres de la première période, le momentum. */
+/**
+ * La pause : on analyse.
+ *
+ * Le bandeau large du bas passe au FIL de la période écoulée, en deux
+ * colonnes. C'est le moment où l'on raconte — « deux occasions coup sur coup
+ * à la 20e, puis plus rien » — et une liste de faits dit ça infiniment mieux
+ * qu'un tableau. La courbe de momentum l'accompagne, à sa droite : l'une
+ * montre la forme du match, l'autre ce qui l'a produite.
+ */
 const MATCH_MI_TEMPS: SceneLayer[] = [
   ...CHROME_MATCH,
-  { widget: 'stats', slot: SLOT.colonneGauche, z: 20 },
-  { widget: 'momentum', slot: SLOT.radar, z: 20 },
-  { widget: 'multiplex', slot: SLOT.colonneDroite, z: 20 },
-  { widget: 'odds', slot: SLOT.colonneDroiteBas, z: 20 },
+  // La colonne est la même qu'en direct : autant donner les mêmes chiffres.
+  // C'est à la pause qu'on commente les corners, les fautes et les cartons.
+  { widget: 'stats', slot: SLOT.colonneGauche, z: 20, opts: { large: true } },
+  { widget: 'fil', slot: SLOT.radar, z: 20, opts: { large: true } },
+  // Le momentum prend la grande case : une courbe écrasée dans deux cents
+  // pixels de haut n'est plus qu'un trait, et il ne resterait que deux
+  // pourcentages — qu'une barre dirait aussi bien. Le multiplex, lui, est une
+  // liste : il se contente de la petite case en montrant moins de matchs.
+  { widget: 'momentum', slot: SLOT.colonneDroite, z: 20 },
+  { widget: 'multiplex', slot: SLOT.colonneDroiteBas, z: 20 },
 ];
 
 /** Au coup de sifflet : le bilan, et ce que ça change au classement. */
 const MATCH_FIN: SceneLayer[] = [
   ...CHROME_MATCH,
-  { widget: 'stats', slot: SLOT.colonneGauche, z: 20 },
+  { widget: 'stats', slot: SLOT.colonneGauche, z: 20, opts: { large: true } },
   { widget: 'momentum', slot: SLOT.radar, z: 20 },
   // Plus de cotes à l'arrivée : elles ne veulent plus rien dire. La colonne
   // droite passe d'un seul tenant au classement, qui vient de bouger.

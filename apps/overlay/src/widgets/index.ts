@@ -9,6 +9,7 @@
 import { h } from '../dom.js';
 import { attente } from './attente.js';
 import { backdrop, camFrame, scoreRecap, social, streamCounters, title } from './chrome.js';
+import { fil } from './fil.js';
 import { flash } from './flash.js';
 import { lineups } from './lineups.js';
 import { momentum } from './momentum.js';
@@ -45,6 +46,11 @@ export const REGISTRY: Record<string, WidgetFactory> = {
   // Les panneaux
   attente,
   stats,
+  fil,
+  // Deuxième clé pour le même widget : le bandeau du direct montre les
+  // derniers faits tandis que l'insert raconte tout le match. Deux lectures,
+  // deux couches, donc deux entrées — le compositeur identifie par la clé.
+  'fil-recent': fil,
   lineups,
   // Deuxième entrée pour le même widget : le compositeur identifie une couche
   // par sa clé, donc deux compositions à l'écran demandent deux clés.

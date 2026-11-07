@@ -20,7 +20,7 @@
  * seule chose que ce bloc est censé montrer.
  */
 
-import type { ShotEntry, Side, Team } from '@kz/core';
+import { paireCouleurs, type ShotEntry, type Side } from '@kz/core';
 import { h, setText } from '../dom.js';
 import { panel } from './panel.js';
 import type { Widget, WidgetContext, WidgetFactory } from './types.js';
@@ -86,9 +86,17 @@ export const shotmap: WidgetFactory = (): Widget => {
     ligne('Buts', butsD, butsE),
   ]);
 
+  // Sans ces deux repères, la carte est illisible : rien ne dit quelle moitié
+  // appartient à qui. L'équipe à domicile attaque vers la droite, donc ses
+  // frappes vivent dans la moitié droite — et c'est exactement ce qu'il faut
+  // écrire plutôt que laisser deviner.
+  const sensExt = h('span', { class: 'tirs__sens tirs__sens--away' }, ['—']);
+  const sensDom = h('span', { class: 'tirs__sens tirs__sens--home' }, ['—']);
+  const sens = h('div', { class: 'tirs__sens-ligne t-caption' }, [sensExt, sensDom]);
+
   const absents = h('p', { class: 'tirs__absents t-caption', hidden: '' }, ['']);
 
-  box.body.append(scene, bilan, absents);
+  box.body.append(scene, sens, bilan, absents);
 
   let signature: string | null = null;
 
@@ -99,8 +107,17 @@ export const shotmap: WidgetFactory = (): Widget => {
       const meta = state.meta;
       box.setCrests([meta?.home, meta?.away]);
 
+      // Deux maillots rouge sombre donnaient deux fois la même pastille. La
+      // paire est calculée une fois, dans le cœur, et partagée avec le fil :
+      // une frappe a la même couleur dans les deux blocs.
+      const teintes = paireCouleurs(meta?.home, meta?.away);
+      setText(sensExt, `◀ ${meta?.away.short ?? 'Extérieur'}`);
+      setText(sensDom, `${meta?.home.short ?? 'Domicile'} ▶`);
+      sensExt.style.color = teintes.away;
+      sensDom.style.color = teintes.home;
+
       const shots = state.shots;
-      const next = `${shots.length}|${shots.map((s) => `${s.seq}${s.outcome ?? ''}`).join(',')}`;
+      const next = `${shots.length}|${teintes.home}${teintes.away}|${shots.map((s) => `${s.seq}${s.outcome ?? ''}`).join(',')}`;
       if (next === signature) return;
       signature = next;
 
@@ -126,7 +143,6 @@ export const shotmap: WidgetFactory = (): Widget => {
           sansPlace += 1;
           continue;
         }
-        const equipe: Team | undefined = shot.side === 'home' ? meta?.home : meta?.away;
         const point = h('i', {
           class: `tirs__point tirs__point--${shot.outcome ?? 'off_target'}`,
           'data-side': shot.side,
@@ -134,7 +150,7 @@ export const shotmap: WidgetFactory = (): Widget => {
         });
         point.style.left = `${où.gauche.toFixed(2)}%`;
         point.style.top = `${où.haut.toFixed(2)}%`;
-        if (equipe) point.style.setProperty('--teinte', equipe.color);
+        point.style.setProperty('--teinte', shot.side === 'home' ? teintes.home : teintes.away);
         pastilles.append(point);
       }
 

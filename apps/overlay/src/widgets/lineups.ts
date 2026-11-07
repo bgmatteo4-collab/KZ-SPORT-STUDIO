@@ -150,7 +150,11 @@ export const lineups: WidgetFactory = (ctx): Widget => {
       const lineup = state.lineups[side];
       // Règle n°6 : pas de composition, pas d'affichage — et surtout pas d'erreur.
       setText(formation, lineup?.formation ?? '—');
-      setText(coach.lastElementChild as HTMLElement, lineup?.coach ?? '—');
+      // Une ligne « Entraîneur — » n'apprend rien et occupe la place d'un
+      // maillot. ESPN ne publie le nom que sur certaines compétitions : quand
+      // il manque, la ligne disparaît au lieu d'afficher un tiret.
+      setText(coach.lastElementChild as HTMLElement, lineup?.coach ?? '');
+      coach.hidden = !lineup?.coach;
 
       const next = lineup
         ? `${side}|${lineup.formation}|${lineup.starters.map((p) => p.id).join(',')}|${state.cards.length}:${state.subs.length}`
@@ -195,19 +199,32 @@ export const lineups: WidgetFactory = (ctx): Widget => {
       const cap = Math.max(60, Math.floor(largeurPiste / (plusChargee + 1)) - 6);
       pitch.style.setProperty('--largeur-nom', `${cap}px`);
 
+      // ── Qui est SUR LE TERRAIN, et pas qui a commencé ────────────────────
+      //
+      // Une composition figée sur le onze de départ affiche encore, à la 80e,
+      // un joueur sorti vingt minutes plus tôt. C'est faux, et c'est faux au
+      // moment précis où l'on en a le plus besoin : sans les images, ce
+      // panneau est la seule façon de savoir qui joue. On suit donc la chaîne
+      // des remplacements jusqu'à l'occupant actuel du poste.
+      const entres = new Set<string>();
       lineup.starters.forEach((player, index) => {
         const at = coords[index];
-        if (at) pitch.append(buildMan(player, at, index === 0, state, team));
+        if (!at) return;
+        const { actuel, remplace } = occupant(state, side, player);
+        if (remplace) entres.add(actuel.id);
+        pitch.append(buildMan(actuel, at, index === 0, state, team, remplace));
       });
 
       if (large) {
         for (const player of lineup.bench) {
-          bench.append(
-            h('span', { class: 'bench__man' }, [
-              h('b', {}, [String(player.number)]),
-              player.short,
-            ]),
-          );
+          const node = h('span', { class: 'bench__man' }, [
+            h('b', {}, [String(player.number)]),
+            player.short,
+          ]);
+          // Un remplaçant déjà entré n'est plus un remplaçant : le dire évite
+          // de chercher sur le banc un joueur qu'on vient de voir jouer.
+          if (entres.has(player.id)) node.dataset.entre = '1';
+          bench.append(node);
         }
       }
     },
@@ -219,6 +236,7 @@ export const lineups: WidgetFactory = (ctx): Widget => {
     keeper: boolean,
     state: MatchState,
     team: { color: string; colorAlt?: string; abbr: string; short: string } | undefined,
+    remplace: Player | null,
   ): HTMLElement {
     const jersey = jerseyEl(team, keeper, player.number);
 
@@ -228,16 +246,23 @@ export const lineups: WidgetFactory = (ctx): Widget => {
         h('i', { class: `lineup__mark lineup__mark--${card === 'yellow' ? 'yellow' : 'red'}` }),
       );
     }
-    const out = state.subs.find((s) => s.out?.id === player.id);
-    if (out) {
-      jersey.append(h('i', { class: 'lineup__mark lineup__mark--sub' }));
-    }
+    // Expulsé : le poste reste vide sur le terrain, et c'est une information
+    // capitale. On garde le maillot, barré, plutôt que de le faire
+    // disparaître — une case vide se lirait comme une donnée manquante.
+    const expulse = card === 'red';
+    if (remplace) jersey.append(h('i', { class: 'lineup__mark lineup__mark--sub' }));
 
     const man = h('div', { class: 'lineup__man' }, [
       jersey,
       h('span', { class: 'lineup__name' }, [player.short.toUpperCase()]),
     ]);
-    if (out) man.dataset.out = '1';
+    if (remplace) {
+      man.dataset.entre = '1';
+      // Invisible à l'antenne, mais présent dans le document : c'est ce qui
+      // permet de vérifier une composition sur une capture d'écran.
+      man.title = `entré à la place de ${remplace.short}`;
+    }
+    if (expulse) man.dataset.out = '1';
     man.style.left = `${(at.x * 100).toFixed(2)}%`;
     man.style.top = `${(at.y * 100).toFixed(2)}%`;
     return man;
@@ -248,4 +273,28 @@ function cardOf(state: MatchState, playerId: string): CardKind | null {
   const found = state.cards.filter((c) => c.player?.id === playerId);
   if (found.length === 0) return null;
   return found.some((c) => c.card !== 'yellow') ? 'red' : 'yellow';
+}
+
+/**
+ * L'occupant actuel d'un poste, en suivant la chaîne des remplacements.
+ *
+ * Un joueur entré peut ressortir : A → B → C. On remonte donc la chaîne
+ * jusqu'au bout. La borne à cinq tours n'est pas de la prudence ornementale —
+ * une source qui publierait deux fois le même changement créerait un cycle,
+ * et un cycle dans une boucle de rendu fige la page entière.
+ */
+function occupant(
+  state: MatchState,
+  side: Side,
+  depart: Player,
+): { actuel: Player; remplace: Player | null } {
+  let actuel = depart;
+  let remplace: Player | null = null;
+  for (let tour = 0; tour < 5; tour += 1) {
+    const sortie = state.subs.find((s) => s.side === side && s.out?.id === actuel.id && s.in);
+    if (!sortie?.in) break;
+    remplace = actuel;
+    actuel = sortie.in;
+  }
+  return { actuel, remplace };
 }

@@ -14,6 +14,19 @@
  * recalcul de mise en page pendant un mouvement se voit à l'antenne.
  */
 
+/*
+ * `hidden` doit GAGNER.
+ *
+ * L'attribut ne tient que par une règle de la feuille du navigateur, qu'un
+ * simple sélecteur de classe bat. Tout élément à qui l'on donne `display:
+ * flex` ignore donc `hidden` en silence — et c'est ainsi qu'une ligne « xG
+ * 0 — 0 » s'est affichée à l'antenne pour une donnée qu'aucune source ne
+ * publie, alors que le code la masquait bel et bien.
+ */
+[hidden] {
+  display: none !important;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -505,25 +518,111 @@ html {
   color: var(--ink-soft);
 }
 
+/* Les trois rubriques — Danger, Maîtrise, Le jeu — dans cet ordre, parce que
+   c'est l'ordre dans lequel on raconte un match. Sans hiérarchie, « cartons
+   jaunes » pesait autant que « tirs cadrés » et l'œil ne savait pas où aller. */
+.stats__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex: 1;
+  min-height: 0;
+  /* Garde-fou : rien ne doit jamais sortir du panneau, même si une rubrique
+     future apportait une ligne de plus que prévu. */
+  overflow: hidden;
+}
+
+/* Une rubrique prend une part de la hauteur PROPORTIONNELLE à son nombre de
+   lignes — le widget pose le `flex-grow`. C'est ce qui fait tenir dix lignes
+   et trois titres dans une colonne de 772 px sans qu'aucune constante en
+   pixels n'ait à être devinée : la première version comptait les pixels à la
+   main, se trompait de trente, et la note du bas venait se poser sur la
+   dernière ligne. */
+.stats__section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+}
+
+/* Le titre de rubrique : un filet doré, puis le mot. Discret — il ORGANISE,
+   il ne doit pas concurrencer les chiffres. */
+.stats__rubrique {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  color: var(--ink-soft);
+}
+
+.stats__rubrique::before {
+  content: '';
+  width: 14px;
+  height: 2px;
+  flex: none;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.stats__rubrique::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--panel-line);
+  opacity: 0.5;
+}
+
+.stats__note {
+  margin: 0;
+  flex: none;
+  color: var(--ink-dim);
+  text-align: center;
+}
+
 .bars {
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
-  gap: var(--s3);
+  gap: var(--s1);
   flex: 1;
   min-height: 0;
 }
 
-.bar__label { display: block; text-align: center; margin-bottom: var(--s1); }
+/* Chaque ligne prend une part égale de ce qui reste. */
+.bar {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+}
 
+/*
+ * Le libellé est DANS la piste, pas au-dessus.
+ *
+ * Au-dessus, chaque ligne coûtait sa piste plus vingt pixels de texte : dix
+ * lignes et trois rubriques ne tenaient dans aucune colonne, et les libellés
+ * finissaient posés sur la barre du dessus. Dedans, une ligne ne coûte plus
+ * que sa piste — et on y gagne la lecture d'un bandeau de télévision, où le
+ * nom de la statistique vit entre les deux chiffres qu'il compare.
+ */
 .bar__track {
   position: relative;
   display: flex;
   align-items: center;
-  height: 42px;
+  flex: 1;
+  min-height: 26px;
+  max-height: 46px;
   border-radius: var(--radius-chip);
   overflow: hidden;
   background: var(--pill);
+}
+
+.bar__label {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink-soft);
 }
 
 .bar__fill {
@@ -534,16 +633,18 @@ html {
   transition: transform var(--dur-base) var(--ease);
 }
 
-.bar__num { position: relative; flex: 1; padding: 0 var(--s4); }
-.bar__num--away { text-align: right; }
-
-/* Deux colonnes dès qu'il y a plus de quatre lignes. */
-.bars--two {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-content: space-evenly;
-  gap: var(--s3) var(--s5);
+/* Les deux chiffres gardent une largeur FIXE : sans elle, « 181 » et « 13 »
+   déplacent le libellé d'une ligne à l'autre, et une colonne de statistiques
+   dont les mots dansent se remarque immédiatement. */
+.bar__num {
+  position: relative;
+  flex: none;
+  width: 30%;
+  padding: 0 var(--s3);
+  font-variant-numeric: tabular-nums;
 }
+
+.bar__num--away { text-align: right; }
 
 /* Créneau court : tout maigrit plutôt que de déborder. */
 .stats[data-dense='1'] { gap: var(--s2); }
@@ -551,18 +652,23 @@ html {
 .stats[data-dense='1'] .ring__dial { width: 84px; height: 84px; }
 .stats[data-dense='1'] .ring__label { max-width: 58px; font-size: 11px; letter-spacing: 0.06em; }
 .stats[data-dense='1'] .ring__value { font-size: 28px; }
-.stats[data-dense='1'] .bar__track { height: 32px; }
-.stats[data-dense='1'] .bar__num { font-size: 21px; }
-.stats[data-dense='1'] .bar__label { font-size: 14px; margin-bottom: 0; }
-.stats[data-dense='1'] .bars { gap: var(--s2); }
+.stats[data-dense='1'] .bar__track { max-height: 34px; }
+.stats[data-dense='1'] .bar__num { font-size: 20px; }
+.stats[data-dense='1'] .bar__label { font-size: 13px; }
 
 /* En grand, l'anneau et les barres respirent : les proportions d'un panneau
    de colonne font maigre une fois étirées sur un demi-écran. */
-.stats--large .ring { padding: var(--s5) var(--s6); }
-.stats--large .ring__dial { width: 156px; height: 156px; }
-.stats--large .ring__label { max-width: 110px; font-size: 15px; }
-.stats--large .ring__value { font-size: 46px; }
-.stats--large .bar__track { height: 48px; }
+.stats--large .ring { padding: var(--s4) var(--s5); }
+.stats--large .ring__dial { width: 132px; height: 132px; }
+.stats--large .ring__label { max-width: 96px; font-size: 13px; }
+.stats--large .ring__value { font-size: 38px; }
+
+/* Une piste basse ne peut plus porter un chiffre de 26 px : la taille suit la
+   hauteur, sinon le nombre touche les bords. */
+.stats[data-serre='1'] .bar__label { font-size: 13px; }
+.stats[data-serre='1'] .bar__num { font-size: 19px; }
+.stats[data-serre='1'] .stats__sections { gap: var(--s1); }
+.stats[data-serre='1'] .bars { gap: 3px; }
 
 /* ═══════════════════════════ Compositions ═════════════════════════════════ */
 
@@ -655,7 +761,17 @@ html {
 
 /* Un joueur sorti s'efface : l'information reste lisible sans le faire croire
    encore sur le terrain. */
+/* Expulsé : le maillot reste, barré. Le faire disparaître laisserait une
+   case vide, qu'on lirait comme une donnée manquante plutôt que comme un
+   homme en moins. */
 .lineup__man[data-out='1'] { opacity: 0.42; }
+.lineup__man[data-out='1'] .lineup__name { text-decoration: line-through; }
+
+/* Entré en cours de match : le nom affiché est celui de l'occupant ACTUEL du
+   poste, et la flèche dit qu'il n'a pas commencé. */
+.lineup__man[data-entre='1'] .lineup__name { color: var(--win); }
+
+.bench__man[data-entre='1'] { opacity: 0.45; text-decoration: line-through; }
 
 .lineup__coach {
   display: flex;
@@ -722,15 +838,37 @@ html {
 
 .momentum__share { color: var(--ink); }
 
+/* La courbe EST le bloc : sans hauteur minimale, elle s'écrase à zéro dans un
+   créneau court et il ne reste que deux pourcentages — qu'une simple barre
+   dirait aussi bien. Un momentum sans courbe n'est pas un momentum. */
 .momentum__plot {
   position: relative;
   flex: 1;
-  min-height: 0;
+  min-height: 72px;
   border-radius: var(--radius-card);
   background: var(--slab);
   overflow: hidden;
 }
 .momentum__canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Ce qui a produit la pression, écrit. Une courbe qui monte sans raison
+   visible ressemble à une panne ; la même courbe avec sa cause en dessous
+   devient une analyse. */
+.mx__vide {
+  margin: 0;
+  padding: var(--s5) var(--s4);
+  color: var(--ink-dim);
+  text-align: center;
+}
+
+.momentum__cause {
+  margin: var(--s2) 0 0;
+  overflow: hidden;
+  color: var(--ink-dim);
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 
 /* ═════════════════════════ Feuille de match ══════════════════════════════ */
 
@@ -776,11 +914,25 @@ html {
 
 .sheet__row[data-side='home'] .sheet__fact { flex-direction: row-reverse; text-align: right; }
 
+/* Les marques de la feuille parlent la même langue que celles du fil et de la
+   carte des tirs : un but est un disque, un carton un rectangle à sa couleur
+   réelle, un tir un anneau creux. */
 .sheet__mark { width: 9px; height: 13px; flex: none; border-radius: 2px; background: var(--ink); }
-.sheet__mark[data-kind='goal'] { border-radius: var(--radius-pill); }
-.sheet__mark[data-kind='card'] { background: #ffd43b; }
-.sheet__mark[data-kind='card-red'] { background: var(--lose); }
+.sheet__mark[data-kind='goal'],
+.sheet__mark[data-kind='own_goal'],
+.sheet__mark[data-kind='penalty_goal'] { width: 13px; border-radius: var(--radius-pill); }
+.sheet__mark[data-kind='penalty_awarded'] { width: 13px; border-radius: var(--radius-pill); background: var(--accent); }
+.sheet__mark[data-kind='yellow'] { background: #ffd43b; }
+.sheet__mark[data-kind='second_yellow'] { background: linear-gradient(135deg, #ffd43b 0 50%, var(--lose) 50% 100%); }
+.sheet__mark[data-kind='red'] { background: var(--lose); }
 .sheet__mark[data-kind='sub'] { background: var(--win); }
+.sheet__mark[data-kind='shot_on'] {
+  width: 11px;
+  height: 11px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--ink-soft);
+}
 
 .sheet__who {
   font-size: 18px;
@@ -940,14 +1092,59 @@ html {
 .table__crest { width: 26px; height: 27px; font-size: 9px; }
 
 .table__name {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
   padding-left: var(--s2);
   font-size: 19px;
   font-weight: 800;
   font-stretch: var(--width-tight);
   letter-spacing: 0.03em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.table__nom { overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Le match qu'on est en train de commenter ─────────────────────────────── */
+
+/* Deux lignes sur vingt concernent le match à l'antenne. Sans ce liseré, le
+   panneau qu'on ouvre APRÈS UN BUT ne dit rien du but. */
+.table__row[data-enjeu='1'] {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.17), var(--slab) 62%);
+  box-shadow: inset 3px 0 0 var(--teinte, var(--accent));
+}
+
+.table__row[data-enjeu='1'] .table__nom { color: #fff; }
+
+/* De combien le résultat en cours la fait bouger. */
+.table__bouge {
+  flex: none;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.table__bouge[data-sens='haut'] { color: var(--win); }
+.table__bouge[data-sens='bas'] { color: var(--lose); }
+
+/* La fenêtre a sauté des places : un trait le dit. Sans lui, passer de la 3e
+   à la 12e ligne se lit comme un tableau faux. */
+.table__saut {
+  height: 10px;
+  flex: none;
+  margin: 2px auto;
+  border-top: 2px dotted var(--panel-line);
+  width: 42%;
+}
+
+.table__note {
+  margin: var(--s2) 0 0;
+  padding: 0 var(--s4);
+  flex: none;
+  color: var(--ink-dim);
+  text-align: center;
 }
 
 .table__num {
@@ -1639,6 +1836,17 @@ html {
   opacity: 0.5;
 }
 
+/* Qui attaque de quel côté. Sans ces deux repères, la carte est juste mais
+   illisible : rien ne dit à qui appartient quelle moitié. */
+.tirs__sens-ligne {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--s2) var(--s4) 0;
+  font-weight: 800;
+}
+
+.tirs__sens { letter-spacing: 0.04em; }
+
 .tirs__bilan {
   display: flex;
   flex-direction: column;
@@ -1670,4 +1878,217 @@ html {
   padding: 0 var(--s4) var(--s3);
   text-align: center;
   color: var(--ink-dim);
+}
+
+/* ─────────────────────────────── Le fil du match ─────────────────────────────
+
+   Les statistiques disent l'état du match, le score son résultat. Aucun des
+   deux ne dit qu'il ne s'est rien passé pendant vingt minutes, ni qu'une
+   expulsion a tout changé à la 68e. C'est la narration, et c'était le trou le
+   plus visible du plateau.
+
+   Les marques sont celles de la carte des tirs — disque cerclé pour un but,
+   anneau creux pour un tir contré. Deux blocs qui parlent du même ballon
+   doivent le dessiner pareil.                                                */
+
+.fil {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: var(--s2) var(--s4) var(--s4);
+  overflow: hidden;
+}
+
+/* Deux colonnes dans un bandeau large et bas : la chronologie descend la
+   première colonne puis reprend en haut de la seconde — comme une page de
+   journal, et non comme un tableau à lire en zigzag. */
+.fil--deux {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(var(--lignes, 4), auto);
+  column-gap: var(--s3);
+  align-content: start;
+}
+
+.fil__ligne {
+  position: relative;
+  padding: 6px var(--s3) 6px var(--s4);
+  border-radius: var(--radius-chip);
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+/* La teinte de l'équipe, en liseré : c'est elle qui dit le camp d'un coup
+   d'œil, avant même qu'on lise l'écusson. */
+.fil__ligne::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: var(--teinte, var(--accent));
+}
+
+/* Un but n'est pas une ligne de plus : il doit se voir depuis le canapé. */
+.fil__ligne[data-but='1'] {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+}
+
+.fil__ligne[data-but='1']::before { width: 5px; }
+
+/* Les faits de service — corner, hors-jeu, coup franc — reculent d'un plan.
+   Ils donnent le rythme du match sans voler la lecture. */
+.fil__ligne[data-valeur='1'] { opacity: 0.62; }
+
+.fil__haut {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.fil__minute {
+  flex: none;
+  min-width: 34px;
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-dim);
+}
+
+.fil__crest {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.fil__quoi {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+
+.fil__ligne[data-but='1'] .fil__quoi {
+  font-size: 18px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.fil__score {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--slab);
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.fil__detail {
+  margin: 1px 0 0 42px;
+  overflow: hidden;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.fil__vide {
+  margin: 0;
+  padding: var(--s5) var(--s4);
+  color: var(--ink-dim);
+  text-align: center;
+}
+
+/* ── Les marques, reprises de la carte des tirs ───────────────────────────── */
+
+.fil__marque {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--teinte, var(--accent));
+}
+
+.fil__marque--goal,
+.fil__marque--penalty_goal,
+.fil__marque--own_goal {
+  width: 13px;
+  height: 13px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+.fil__marque--shot_on { background: var(--teinte, var(--accent)); }
+
+/* Creux : le remplissage est réservé à ce qui a inquiété le gardien. */
+.fil__marque--shot_blocked,
+.fil__marque--shot_off,
+.fil__marque--offside,
+.fil__marque--corner,
+.fil__marque--free_kick {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--teinte, var(--accent));
+}
+
+/* Un corner part d'un angle : un quart de disque le dit mieux qu'un rond. */
+.fil__marque--corner { border-radius: 50% 0 0 0; }
+
+/* Les cartons gardent leur couleur réelle : la teinte de l'équipe serait ici
+   un contresens — un carton jaune est jaune pour tout le monde. */
+.fil__marque--yellow,
+.fil__marque--second_yellow,
+.fil__marque--red {
+  width: 9px;
+  height: 13px;
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+.fil__marque--yellow { background: #f5c13d; }
+.fil__marque--second_yellow {
+  background: linear-gradient(135deg, #f5c13d 0 50%, #e03131 50% 100%);
+}
+.fil__marque--red { background: #e03131; }
+
+.fil__marque--penalty_awarded {
+  background: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+/* Un remplacement : deux flèches opposées, dessinées au trait. */
+.fil__marque--sub {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+  border-top: 2px solid var(--win);
+  border-bottom: 2px solid var(--lose);
+}
+
+/* ── L'arrivée d'un fait ──────────────────────────────────────────────────── */
+
+@keyframes fil-entre {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fil__ligne[data-neuf='1'] {
+  animation: fil-entre var(--dur-base) var(--ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fil__ligne[data-neuf='1'] { animation: none; }
 }

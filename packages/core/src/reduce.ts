@@ -14,6 +14,7 @@
  */
 
 import { matchClockAt, minuteLabel } from './clock.js';
+import { estBut, type FaitEntry, type FaitKind, POIDS_POUSSEE, type PousseeKind } from './faits.js';
 import {
   EMPTY_STATS,
   type MatchEvent,
@@ -28,17 +29,15 @@ import {
 const PRESSURE_WINDOW_MS = 10 * 60_000;
 const PRESSURE_HALF_LIFE_MS = 2.5 * 60_000;
 
-/** Poids d'un temps fort dans le pressure index. */
-const PRESSURE_WEIGHT = {
-  goal: 4,
-  penalty_awarded: 5,
-  shot_on_target: 3,
-  shot: 2,
-  corner: 2,
-  dangerous: 2,
-  attack: 1,
-  free_kick: 1,
-} as const;
+/**
+ * Combien de faits le fil retient.
+ *
+ * Un match en produit entre cent et deux cents. On garde tout : c'est une
+ * liste d'objets plats, elle coûte quelques dizaines de kilo-octets, et la
+ * tronquer empêcherait le recap de fin de match de remonter à la 3e minute.
+ * La borne n'est là que contre une source qui déraillerait.
+ */
+const FIL_MAX = 600;
 
 export function initialState(t = 0): MatchState {
   return {
@@ -54,6 +53,7 @@ export function initialState(t = 0): MatchState {
     subs: [],
     stats: { ...EMPTY_STATS },
     shots: [],
+    feed: [],
     lineups: { home: null, away: null },
     ratings: { home: {}, away: {} },
     otherMatches: [],
@@ -122,7 +122,16 @@ function applyInto(draft: MatchState, event: MatchEvent): void {
       // Le score du fournisseur fait foi. On ne compte pas les buts soi-même :
       // un but annulé par la VAR deviendrait une divergence permanente.
       draft.score = event.payload.score;
-      pushPressure(draft, event.t, event.payload.side, PRESSURE_WEIGHT.goal);
+      inscrire(draft, {
+        seq: event.seq,
+        t: event.t,
+        minute,
+        side: event.payload.side,
+        kind: event.payload.ownGoal ? 'own_goal' : event.payload.penalty ? 'penalty_goal' : 'goal',
+        ...(event.payload.scorer ? { player: event.payload.scorer } : {}),
+        ...(event.payload.assist ? { second: event.payload.assist } : {}),
+        score: event.payload.score,
+      });
       break;
     }
 
@@ -136,22 +145,46 @@ function applyInto(draft: MatchState, event: MatchEvent): void {
         stats.redCards = bump(stats.redCards, event.payload.side);
       }
       draft.stats = stats;
+      inscrire(draft, {
+        seq: event.seq,
+        t: event.t,
+        minute,
+        side: event.payload.side,
+        kind: event.payload.card,
+        ...(event.payload.player ? { player: event.payload.player } : {}),
+      });
       break;
     }
 
     case 'substitution': {
       const minute = minuteLabel(matchClockAt(draft.clock, event.t), draft.phase);
       draft.subs = [...draft.subs, { ...event.payload, seq: event.seq, t: event.t, minute }];
+      inscrire(draft, {
+        seq: event.seq,
+        t: event.t,
+        minute,
+        side: event.payload.side,
+        kind: 'sub',
+        ...(event.payload.out ? { player: event.payload.out } : {}),
+        ...(event.payload.in ? { second: event.payload.in } : {}),
+      });
       break;
     }
 
     case 'corner': {
       draft.stats = { ...draft.stats, corners: bump(draft.stats.corners, event.payload.side) };
-      pushPressure(draft, event.t, event.payload.side, PRESSURE_WEIGHT.corner);
+      inscrire(draft, {
+        seq: event.seq,
+        t: event.t,
+        minute: minuteLabel(matchClockAt(draft.clock, event.t), draft.phase),
+        side: event.payload.side,
+        kind: 'corner',
+      });
       break;
     }
 
     case 'shot': {
+      const minute = minuteLabel(matchClockAt(draft.clock, event.t), draft.phase);
       const stats = { ...draft.stats };
       stats.shots = bump(stats.shots, event.payload.side);
       if (event.payload.onTarget) {
@@ -160,53 +193,92 @@ function applyInto(draft: MatchState, event: MatchEvent): void {
       // La frappe est CONSERVÉE, pas seulement comptée : un compteur dit
       // combien, une carte dit d'où — et c'est « d'où » qui manque le plus
       // quand on ne voit pas les images.
-      draft.shots = [
-        ...draft.shots,
-        {
-          ...event.payload,
-          seq: event.seq,
-          t: event.t,
-          minute: minuteLabel(matchClockAt(draft.clock, event.t), draft.phase),
-        },
-      ];
+      draft.shots = [...draft.shots, { ...event.payload, seq: event.seq, t: event.t, minute }];
       if (event.payload.xg) {
         // `xg` n'existe que si un fournisseur en a donné : on part de zéro au
         // premier tir chiffré, pas avant.
         stats.xg = bump(stats.xg ?? [0, 0], event.payload.side, event.payload.xg);
       }
       draft.stats = stats;
-      pushPressure(
-        draft,
-        event.t,
-        event.payload.side,
-        event.payload.onTarget ? PRESSURE_WEIGHT.shot_on_target : PRESSURE_WEIGHT.shot,
-      );
+
+      const place = {
+        ...(event.payload.x !== undefined ? { x: event.payload.x } : {}),
+        ...(event.payload.y !== undefined ? { y: event.payload.y } : {}),
+      };
+
+      // Une frappe qui FINIT au fond est déjà au fil, portée par l'événement
+      // « but » — mais sans position, parce qu'un but n'en transporte pas. On
+      // ne crée donc pas de seconde ligne : on va compléter la première. C'est
+      // ce qui fait écrire « But — Mbappé, dans la surface » plutôt que « But
+      // — Mbappé » suivi d'un « Tir cadré » qui parle du même ballon.
+      if (event.payload.outcome === 'goal') {
+        if (place.x !== undefined) attacherLaPlace(draft, event.t, event.payload.side, place);
+        break;
+      }
+
+      const kind: FaitKind =
+        event.payload.outcome === 'blocked'
+          ? 'shot_blocked'
+          : event.payload.outcome === 'on_target' || event.payload.onTarget
+            ? 'shot_on'
+            : 'shot_off';
+      inscrire(draft, {
+        seq: event.seq,
+        t: event.t,
+        minute,
+        side: event.payload.side,
+        kind,
+        ...(event.payload.player ? { player: event.payload.player } : {}),
+        ...place,
+      });
       break;
     }
 
     case 'free_kick': {
-      pushPressure(draft, event.t, event.payload.side, PRESSURE_WEIGHT.free_kick);
+      inscrire(draft, {
+        seq: event.seq,
+        t: event.t,
+        minute: minuteLabel(matchClockAt(draft.clock, event.t), draft.phase),
+        side: event.payload.side,
+        kind: 'free_kick',
+      });
       break;
     }
 
     case 'offside': {
       draft.stats = { ...draft.stats, offsides: bump(draft.stats.offsides, event.payload.side) };
+      inscrire(draft, {
+        seq: event.seq,
+        t: event.t,
+        minute: minuteLabel(matchClockAt(draft.clock, event.t), draft.phase),
+        side: event.payload.side,
+        kind: 'offside',
+      });
       break;
     }
 
     case 'penalty_awarded': {
-      pushPressure(draft, event.t, event.payload.side, PRESSURE_WEIGHT.penalty_awarded);
+      inscrire(draft, {
+        seq: event.seq,
+        t: event.t,
+        minute: minuteLabel(matchClockAt(draft.clock, event.t), draft.phase),
+        side: event.payload.side,
+        kind: 'penalty_awarded',
+      });
       break;
     }
 
     case 'attack': {
       draft.attack = { side: event.payload.side, intensity: event.payload.intensity };
       if (event.payload.side && event.payload.intensity !== 'none') {
-        const weight =
-          event.payload.intensity === 'dangerous'
-            ? PRESSURE_WEIGHT.dangerous
-            : PRESSURE_WEIGHT.attack;
-        pushPressure(draft, event.t, event.payload.side, weight);
+        // Un temps fort n'entre pas au fil : il n'a ni auteur ni instant
+        // précis. Il pèse seulement sur la courbe.
+        pousser(
+          draft,
+          event.t,
+          event.payload.side,
+          event.payload.intensity === 'dangerous' ? 'attaque_dangereuse' : 'attaque',
+        );
       }
       break;
     }
@@ -264,10 +336,53 @@ function stripUndefined(patch: Partial<MatchStats>): Partial<MatchStats> {
   return out;
 }
 
-function pushPressure(draft: MatchState, t: number, side: Side, weight: number): void {
-  draft.pressureLog.push({ t, side, weight });
+/**
+ * Inscrit un fait au fil — et, s'il crée du danger, dans la pression.
+ *
+ * UN SEUL point d'entrée, volontairement. Avant, la courbe de momentum et les
+ * listes de faits étaient remplies par deux chemins séparés : la courbe
+ * pouvait monter sans qu'aucune ligne à l'écran ne l'explique, et c'est le
+ * genre de détail qui fait passer une régie pour cassée. Ici, tout ce qui
+ * pousse la courbe a par construction sa ligne au fil, et le poids vient de
+ * la même table que le libellé.
+ */
+function inscrire(draft: MatchState, fait: FaitEntry): void {
+  draft.feed.push(fait);
+  if (draft.feed.length > FIL_MAX) draft.feed.shift();
+  if (POIDS_POUSSEE[fait.kind] > 0) pousser(draft, fait.t, fait.side, fait.kind);
+}
+
+function pousser(draft: MatchState, t: number, side: Side, kind: PousseeKind): void {
+  draft.pressureLog.push({ t, side, weight: POIDS_POUSSEE[kind], kind });
   // Borné : un match n'a pas besoin de garder une heure de temps forts.
   if (draft.pressureLog.length > 4000) draft.pressureLog.shift();
+}
+
+/** Fenêtre de rattachement d'une frappe au but qu'elle a produit. */
+const MEME_BALLON_MS = 90_000;
+
+/**
+ * Complète la dernière ligne « but » de ce camp avec la position de la frappe.
+ *
+ * Le but arrive des faits marquants, la position du fil du commentaire : deux
+ * sources pour un seul ballon. On les recoud par le camp et l'instant, et on
+ * s'arrête à la première ligne déjà placée — sinon un second but dans la même
+ * minute hériterait de la position du premier.
+ */
+function attacherLaPlace(
+  draft: MatchState,
+  t: number,
+  side: Side,
+  place: { x?: number; y?: number },
+): void {
+  for (let i = draft.feed.length - 1; i >= 0; i -= 1) {
+    const fait = draft.feed[i]!;
+    if (t - fait.t > MEME_BALLON_MS) return;
+    if (fait.side !== side || !estBut(fait.kind)) continue;
+    if (fait.x !== undefined) return;
+    Object.assign(fait, place);
+    return;
+  }
 }
 
 /** Calcule ce qui dépend de `t` plutôt que des événements. */

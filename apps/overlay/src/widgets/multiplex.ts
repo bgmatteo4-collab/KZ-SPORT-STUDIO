@@ -24,7 +24,14 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
   box.el.querySelector('.panel__aside')?.append(live);
 
   const list = h('div', { class: large ? 'multiplex multiplex--two' : 'multiplex' });
-  box.body.append(list);
+  // Un panneau vide SANS un mot ressemble à une panne. Il arrive pourtant
+  // vraiment qu'un championnat n'ait qu'un match à l'affiche — vérifié un
+  // vendredi soir de Brasileirão, où le plateau montrait un grand cadre noir
+  // et rien d'autre. Le dire transforme l'absence en information.
+  const vide = h('p', { class: 'mx__vide t-caption', hidden: '' }, [
+    'Aucun autre match en cours dans cette compétition',
+  ]);
+  box.body.append(list, vide);
 
   let signature: string | null = null;
 
@@ -60,6 +67,7 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
       signature = next;
 
       list.replaceChildren();
+      vide.hidden = matches.length > 0;
       for (const match of matches) {
         const rows = h('div', { class: 'mx__rows' });
         for (const [team, goals] of [

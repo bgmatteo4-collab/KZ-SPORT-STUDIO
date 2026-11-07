@@ -6,6 +6,8 @@
  * connaît le nom d'un fournisseur.
  */
 
+import type { FaitEntry, PousseeKind } from './faits.js';
+
 export type Side = 'home' | 'away';
 
 /** [domicile, extérieur] — partout, dans cet ordre. */
@@ -266,6 +268,16 @@ export interface OtherMatch {
 
 /** Le minimum pour dessiner un écu et un nom. */
 export interface TeamBrief {
+  /**
+   * L'identifiant du fournisseur, quand on l'a.
+   *
+   * Il sert à RECONNAÎTRE une équipe d'une liste à l'autre — retrouver au
+   * classement les deux équipes qui jouent, par exemple. Comparer les noms
+   * marche jusqu'au jour où une source écrit « Paris Saint-Germain » ici et
+   * « PSG » là, et ce jour-là le classement cesse de surligner le match qu'on
+   * est en train de commenter, sans que rien n'ait l'air cassé.
+   */
+  id?: string;
   abbr: string;
   short: string;
   color: string;
@@ -385,6 +397,17 @@ export interface MatchState {
    * qu'on rate quand on ne voit pas les images.
    */
   shots: ShotEntry[];
+  /**
+   * Le fil du match : TOUS les faits, dans l'ordre, avec leur type et leur
+   * poids de danger.
+   *
+   * Les listes au-dessus sont des projections pour un bloc donné — les buts
+   * pour le scorebug, les frappes pour la carte. Le fil, lui, est la timeline
+   * telle quelle : c'est la seule vue qui permette à un bloc de dire « ce
+   * qu'il vient de se passer », et la seule où un corner existe autrement que
+   * comme un compteur qui s'incrémente.
+   */
+  feed: FaitEntry[];
   stats: MatchStats;
   lineups: { home: LineupPayload | null; away: LineupPayload | null };
   ratings: { home: Record<string, number>; away: Record<string, number> };
@@ -409,4 +432,10 @@ export interface PressureSample {
   t: number;
   side: Side;
   weight: number;
+  /**
+   * CE QUI a poussé. Sans lui, la courbe de momentum monte sans que rien à
+   * l'écran ne l'explique, et une courbe qu'on ne peut pas justifier ressemble
+   * à un bug. Avec lui, le bloc peut écrire « 3 tirs cadrés, 2 corners ».
+   */
+  kind: PousseeKind;
 }
