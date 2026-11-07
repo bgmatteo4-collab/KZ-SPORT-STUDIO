@@ -277,6 +277,13 @@ export interface OtherMatch {
   /** Son code chez le fournisseur : « eng.1 ». Sert à la hiérarchiser. */
   competitionId?: string;
   /**
+   * L'emblème de la compétition.
+   *
+   * Un logo se reconnaît plus vite qu'un nom tronqué : « Champi… » demande
+   * une lecture, l'écusson de la Premier League non.
+   */
+  competitionCrest?: string;
+  /**
    * L'instant du dernier changement de score, en temps mural.
    *
    * C'est ce qui permet de dire « ça vient de marquer à Lens » — l'unique

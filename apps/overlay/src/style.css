@@ -389,12 +389,25 @@ html {
   object-fit: contain;
 }
 
+/*
+ * Emblème présent : le TEXTE disparaît et le logo prend toute la place.
+ *
+ * Le cartouche portait les deux, et le logo s'y trouvait réduit à cinquante
+ * pixels entre deux lignes de texte — trop petit pour qu'on le reconnaisse,
+ * trop présent pour qu'on lise le nom. Or un emblème de compétition EST son
+ * nom : le doubler d'une légende est le genre de redondance qui fait amateur.
+ * Sans emblème, le nom reprend naturellement toute la place.
+ */
 .banner__comp[data-logo='1'] .banner__comp-logo {
   display: block;
+  width: auto;
+  max-width: 100%;
+  height: 76px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
 }
 
-.banner__comp[data-logo='1'] .banner__comp-name {
-  font-size: 16px;
+.banner__comp[data-logo='1'] .banner__comp-text {
+  display: none;
 }
 
 .banner__comp-name {
@@ -1010,6 +1023,23 @@ html {
 
 .mx__marge { min-width: 0; }
 
+/*
+ * L'emblème de la compétition, sous la minute.
+ *
+ * Un logo se reconnaît plus vite qu'un nom : « Champi… » demande une lecture,
+ * l'écusson non. La taille est BORNÉE en dur — sans ces deux lignes, l'image
+ * s'affiche à sa taille naturelle, cinq cents pixels, et recouvre la carte
+ * entière. C'est arrivé dès le premier rendu.
+ */
+.mx__ligue-logo {
+  display: block;
+  width: 30px;
+  height: 30px;
+  margin: 4px auto 0;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
+}
+
 /* La compétition, sous la minute. « 2-1 » ne dit rien si on ignore s'il
    s'agit de la Ligue 1 ou d'une D2 scandinave — et depuis que le multiplex
    voit tout le football du jour, c'est le cas une ligne sur deux. */
@@ -1070,19 +1100,17 @@ html {
   .mx__but { animation: none; }
 }
 
-.mx__reste {
-  margin: var(--s2) 0 0;
-  flex: none;
-  color: var(--ink-dim);
-  text-align: center;
-}
+
 
 /* La minute vit dans la marge, en rouge et SANS pastille : une pastille pleine
    attire l'œil plus que le score, qui est l'information. */
+/* La minute. Chiffres tabulaires : sans eux, « 64' » et « 11' » n'ont pas la
+   même largeur et la colonne danse d'un bloc à l'autre. */
 .mx__minute {
-  font-size: 17px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  font-size: 19px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.01em;
   text-align: center;
   color: var(--live);
 }
@@ -1930,11 +1958,21 @@ html {
    de vingt-cinq mètres. C'est ça qu'on perd sans les images : pas le nombre
    d'occasions, leur danger.                                                  */
 
+/*
+ * Le terrain garde SES proportions, pas celles du créneau.
+ *
+ * Le bandeau d'insert est large et bas : étiré dedans, le terrain devenait
+ * une bande écrasée où les distances ne voulaient plus rien dire. Or ce bloc
+ * ne sert qu'à ça — dire d'où part une frappe. Un terrain faux est pire
+ * qu'un terrain petit.
+ */
 .tirs__scene {
   position: relative;
   flex: 1;
   min-height: 0;
-  margin: 0 var(--s4);
+  aspect-ratio: 105 / 68;
+  max-width: 100%;
+  margin: 0 auto;
   border-radius: var(--radius-card);
   background: linear-gradient(170deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.18));
   overflow: hidden;
@@ -2279,15 +2317,27 @@ html {
    six pixels que personne ne lit. Ils passent donc chacun leur tour, cinq
    secondes, en pleine taille : on en lit UN, et on le lit vraiment.          */
 
+/*
+ * La même finition que les panneaux : contour nuit et ombre pleine.
+ *
+ * Il portait un filet clair d'un pixel, ce qui faisait bordure de division
+ * HTML et non surface posée — à côté des autres blocs, il n'appartenait
+ * visiblement pas au même habillage.
+ */
 .reseaux {
   position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
   border-radius: var(--radius-pill);
-  background: var(--panel);
-  border: 1px solid var(--panel-line);
-  box-shadow: var(--panel-glow);
+  background:
+    linear-gradient(180deg, rgba(241, 236, 227, 0.05) 0%, transparent 44%),
+    var(--panel);
+  border: 0;
+  box-shadow:
+    0 0 0 3px var(--panel-line),
+    var(--shadow-soft),
+    inset 0 1px 0 rgba(241, 236, 227, 0.08);
 }
 
 .reseaux__piste { position: absolute; inset: 0; }
@@ -2418,4 +2468,25 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .panel[data-bascule] .lineup,
   .panel[data-bascule] .panel__titles { animation: none; }
+}
+
+/* ── Le ballon du buteur, sur son maillot ──────────────────────────────────
+   Savoir qui a marqué en regardant la composition est la première chose que
+   le spectateur y cherche, et elle n'y était nulle part : il fallait aller
+   lire la bannière. */
+.jersey__but {
+  position: absolute;
+  top: -4%;
+  right: -6%;
+  width: 34%;
+  height: 34%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 30%, #fff 0 42%, transparent 43%),
+    radial-gradient(circle at 70% 64%, rgba(15, 21, 25, 0.9) 0 24%, transparent 25%),
+    radial-gradient(circle at 26% 74%, rgba(15, 21, 25, 0.9) 0 20%, transparent 21%),
+    #f1ece3;
+  box-shadow:
+    0 0 0 2px var(--panel),
+    0 2px 5px rgba(0, 0, 0, 0.55);
 }

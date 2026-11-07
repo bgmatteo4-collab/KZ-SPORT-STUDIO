@@ -12,6 +12,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  buteurs,
   detailDuFait,
   distanceDuBut,
   estBut,
@@ -287,4 +288,58 @@ test('le fil ne connaît que le passé de l’instant demandé', () => {
   const state = reduce(events, T0 + 60_000);
   assert.equal(state.feed.length, 1);
   assert.equal(state.feed[0]!.side, 'home');
+});
+
+// ── Les buteurs ──────────────────────────────────────────────────────────────
+
+test('un doublé tient sur UNE ligne, avec ses deux minutes', () => {
+  // La bannière écrivait une ligne par but : « CASTILLO 23' » puis
+  // « CASTILLO 67' ». Aucune chaîne ne fait ça, et ça mange la place d'un
+  // autre buteur.
+  const b = buteurs([
+    { scorer: { id: '9', name: 'Castillo', short: 'Castillo', number: 9 }, side: 'away', minute: '23', seq: 1 },
+    { scorer: { id: '7', name: 'Hulk', short: 'Hulk', number: 7 }, side: 'home', minute: '40', seq: 2 },
+    { scorer: { id: '9', name: 'Castillo', short: 'Castillo', number: 9 }, side: 'away', minute: '67', seq: 3 },
+  ]);
+  assert.equal(b.length, 2);
+  const castillo = b.find((x) => x.nom === 'Castillo')!;
+  assert.deepEqual(castillo.minutes, ['23', '67']);
+  assert.equal(castillo.seq, 3, 'le rang suit le DERNIER but, pour l’ordre d’affichage');
+});
+
+test('un penalty parmi deux buts marque la ligne entière', () => {
+  const b = buteurs([
+    { scorer: { id: '9', name: 'M', short: 'M', number: 9 }, side: 'home', minute: '10', seq: 1 },
+    { scorer: { id: '9', name: 'M', short: 'M', number: 9 }, side: 'home', minute: '80', seq: 2, penalty: true },
+  ]);
+  assert.equal(b.length, 1);
+  assert.equal(b[0]!.penalty, true);
+});
+
+test('un but contre son camp n’est jamais regroupé avec les vrais', () => {
+  // Il n'est pas au crédit de celui qui l'a marqué : le mêler à ses buts
+  // serait une erreur de fond, pas de présentation.
+  const joueur = { id: '4', name: 'Défenseur', short: 'Défenseur', number: 4 };
+  const b = buteurs([
+    { scorer: joueur, side: 'home', minute: '12', seq: 1 },
+    { scorer: joueur, side: 'away', minute: '55', seq: 2, ownGoal: true },
+  ]);
+  assert.equal(b.length, 2);
+  assert.ok(b.some((x) => x.nom === 'csc'));
+});
+
+test('deux joueurs différents restent deux lignes', () => {
+  const b = buteurs([
+    { scorer: { id: '1', name: 'A', short: 'A', number: 1 }, side: 'home', minute: '5', seq: 1 },
+    { scorer: { id: '2', name: 'B', short: 'B', number: 2 }, side: 'home', minute: '6', seq: 2 },
+  ]);
+  assert.equal(b.length, 2);
+});
+
+test('les deux camps ne se mélangent pas, même nom identique', () => {
+  const b = buteurs([
+    { scorer: { id: '1', name: 'Silva', short: 'Silva', number: 1 }, side: 'home', minute: '5', seq: 1 },
+    { scorer: { id: '2', name: 'Silva', short: 'Silva', number: 2 }, side: 'away', minute: '6', seq: 2 },
+  ]);
+  assert.equal(b.length, 2);
 });

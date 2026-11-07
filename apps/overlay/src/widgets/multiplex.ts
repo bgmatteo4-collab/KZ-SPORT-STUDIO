@@ -29,6 +29,7 @@
  */
 
 import {
+  ecuLocal,
   grouperMultiplex,
   nomCourtCompetition,
   type OtherMatch,
@@ -61,8 +62,7 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
   ]);
   // Ce qu'on ne montre pas. Sans cette ligne, un soir de Coupe d'Europe, le
   // panneau laisse croire que huit matchs se jouent quand il y en a quarante.
-  const reste = h('p', { class: 'mx__reste t-caption', hidden: '' }, ['']);
-  box.body.append(list, vide, reste);
+  box.body.append(list, vide);
 
   let signature: string | null = null;
 
@@ -76,8 +76,6 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
   const CHROME = 76 + 24;
   /** Et un titre de compétition, dans le mode groupé. */
   const TITRE_GROUPE = 28;
-  /** Et la ligne « + N autres rencontres », presque toujours présente. */
-  const RESTE = 26;
 
   return {
     el: box.el,
@@ -95,12 +93,10 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
       const dense = slot.h > 0 && slot.w / slot.h > 2;
       setAttr(list, 'data-dense', dense ? '1' : '0');
       const BLOC = dense ? BLOC_DENSE : BLOC_NORMAL;
-      // La ligne « + N autres rencontres » est comptée D'AVANCE : depuis que
-      // le multiplex voit tout le football, elle est presque toujours là, et
-      // l'oublier coûtait exactement le bas du dernier bloc. Un seul match
-      // affiché proprement vaut mieux que deux dont l'un est tranché.
+      // Un seul match affiché proprement vaut mieux que deux dont l'un est
+      // tranché par le bas du cadre.
       const parColonne =
-        slot.h > 0 ? Math.max(1, Math.floor((slot.h - CHROME - RESTE) / BLOC)) : tous.length;
+        slot.h > 0 ? Math.max(1, Math.floor((slot.h - CHROME) / BLOC)) : tous.length;
       const capacite = large ? parColonne * 2 : parColonne;
 
       // La compétition du match commenté passe devant le reste du monde : ce
@@ -128,10 +124,6 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
 
       list.replaceChildren();
       vide.hidden = montres > 0;
-
-      const cache = tous.length - montres;
-      reste.hidden = cache <= 0;
-      if (cache > 0) setText(reste, `+ ${cache} autre${cache > 1 ? 's' : ''} rencontre${cache > 1 ? 's' : ''}`);
 
       for (const paquet of paquets) {
         if (groupe && paquet.competition) {
@@ -177,8 +169,13 @@ function bloc(match: OtherMatch, t: number, groupe: boolean): HTMLElement {
 
   // Un match qui n'a pas commencé n'a pas de minute. Afficher un tiret, quinze
   // fois dans la colonne, ne dit rien ; son heure de coup d'envoi, si.
+  //
+  // Et la minute porte son APOSTROPHE : « 64 » tout seul se lit comme un
+  // numéro, « 64' » comme un temps de jeu. C'est la convention de toutes les
+  // chaînes, et elle coûte un caractère.
+  const enJeu = match.minute !== '—' && /\d/.test(match.minute);
   const minute = h('div', { class: 'mx__minute' }, [
-    match.minute === '—' ? heure(match.kickoff) : match.minute,
+    match.minute === '—' ? heure(match.kickoff) : enJeu ? `${match.minute}'` : match.minute,
   ]);
   if (!match.live) minute.dataset.off = '1';
 
@@ -194,13 +191,21 @@ function bloc(match: OtherMatch, t: number, groupe: boolean): HTMLElement {
   // rien si on ignore s'il s'agit de la Ligue 1 ou d'une D2 scandinave. Elle
   // cède la place au signalement pendant les vingt-cinq secondes qu'il dure.
   else if (!groupe && match.competition) {
-    // Le nom court : dans une marge de deux lignes, « Championship » se
-    // coupait en plein milieu d'un mot.
-    marge.append(
-      h('div', { class: 'mx__ligue' }, [
-        nomCourtCompetition(match.competitionId, match.competition),
-      ]),
-    );
+    // L'emblème de la compétition plutôt que son nom : un logo se reconnaît
+    // plus vite qu'un mot, et « Championship » ne tient de toute façon pas
+    // dans la marge sans se couper. Le nom court reste dessous en secours,
+    // et c'est lui qu'on voit si l'image ne charge pas.
+    const url = ecuLocal(match.competitionCrest);
+    const court = nomCourtCompetition(match.competitionId, match.competition);
+    if (url) {
+      const img = h('img', { class: 'mx__ligue-logo', src: url, alt: court, loading: 'lazy' });
+      img.addEventListener('error', () => {
+        img.replaceWith(h('div', { class: 'mx__ligue' }, [court]));
+      });
+      marge.append(img);
+    } else {
+      marge.append(h('div', { class: 'mx__ligue' }, [court]));
+    }
   }
 
   const el = h('div', { class: 'mx' }, [marge, rows]);

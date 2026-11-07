@@ -176,15 +176,10 @@ export const fil: WidgetFactory = (ctx): Widget => {
 
       tete = ordre[0]?.seq ?? null;
 
-      // Dire qu'on en montre une partie, plutôt que de laisser croire que le
-      // match n'a produit que les huit faits visibles.
-      const total = state.feed.length;
-      if (!recent) {
-        box.setHead(
-          'Depuis le coup d’envoi',
-          total > ordre.length ? `Le fil — ${ordre.length} de ${total}` : 'Le fil du match',
-        );
-      }
+      // Pas de « 10 de 53 » dans le titre : c'est une information de régie,
+      // pas d'antenne. Le spectateur n'a aucune idée de ce qu'est un « fait »
+      // pour nous, et lui dire qu'il en manque quarante-trois n'ajoute rien
+      // à ce qu'il regarde.
     },
   };
 };

@@ -60,11 +60,10 @@ export const standings: WidgetFactory = (ctx): Widget => {
         state.phase,
       );
 
-      const texte = projection.projete
-        ? 'Projection : le résultat en cours est appliqué au tableau publié.'
-        : projection.raison === 'deja-compte'
-          ? 'Tableau à jour, ce match y est déjà compté.'
-          : '';
+      // Plus de note en bas : le surtitre dit déjà « si le match finissait
+      // ainsi », et répéter la même chose en petit sous le tableau est du
+      // texte de documentation à l'antenne.
+      const texte = '';
 
       // Vingt lignes ne tiennent pas dans une colonne de cinq cents pixels. On
       // montre ce qui tient, plutôt que de laisser le cadre couper une ligne

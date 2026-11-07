@@ -122,7 +122,7 @@ export interface SourceEspn {
    * réseau pour le catalogue. La traduction devant rester pure, c'est le
    * fournisseur qui résout, et cette table qui transporte le résultat.
    */
-  autresLigues?: Record<string, { id: string; nom: string }>;
+  autresLigues?: Record<string, { id: string; nom: string; logo?: string }>;
   /** L'identifiant de championnat ESPN, pour nommer la compétition. */
   ligue?: string;
   /** Le bloc « leagues » du tableau de bord : il porte l'emblème officiel. */
@@ -931,7 +931,13 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
         away: bref(ee),
         score: sc,
         ...(Number.isFinite(coupDEnvoi) ? { kickoff: coupDEnvoi } : {}),
-        ...(ligue ? { competition: ligue.nom, competitionId: ligue.id } : {}),
+        ...(ligue
+          ? {
+              competition: ligue.nom,
+              competitionId: ligue.id,
+              ...(ligue.logo ? { competitionCrest: ligue.logo } : {}),
+            }
+          : {}),
       });
     }
     if (matches.length > 0) {

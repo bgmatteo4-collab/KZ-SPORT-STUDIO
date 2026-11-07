@@ -167,7 +167,10 @@ export const lineups: WidgetFactory = (ctx): Widget => {
       box.el.dataset.etroit = etroit ? '1' : '0';
 
       if (slot.w > 0) {
-        const size = Math.round(Math.min(118, Math.max(46, slot.w * 0.105)));
+        // Plus larges : à 10,5 % de la colonne ils faisaient pictogramme. Le
+        // maillot redessiné porte un numéro, il lui faut la place de le
+        // montrer.
+        const size = Math.round(Math.min(132, Math.max(54, slot.w * 0.125)));
         if (pitch.style.getPropertyValue('--jersey') !== `${size}px`) {
           pitch.style.setProperty('--jersey', `${size}px`);
         }
@@ -178,9 +181,10 @@ export const lineups: WidgetFactory = (ctx): Widget => {
       box.setCrests([team]);
       box.setHead(
         team?.short ?? (side === 'home' ? 'Domicile' : 'Extérieur'),
-        // « COMPO » dans une colonne étroite : c'est l'abréviation qu'emploie
-        // le football français, et elle tient. « COMPOSITIO… » ne tient pas.
-        etroit ? 'Compo' : 'Compositions',
+        // « COMPO » tenait dans la colonne mais faisait note de régie, pas
+        // titre d'antenne. « Sur le terrain » dit la même chose, tient dans
+        // la même largeur, et se lit comme une phrase de télévision.
+        etroit ? 'Sur le terrain' : 'Composition de départ',
       );
 
       // Sans composition pour ce camp mais une pour l'autre, on bascule : un
@@ -280,7 +284,10 @@ export const lineups: WidgetFactory = (ctx): Widget => {
     team: { color: string; colorAlt?: string; abbr: string; short: string } | undefined,
     remplace: Player | null,
   ): HTMLElement {
-    const jersey = jerseyEl(team, keeper, player.number);
+    // A-t-il marqué ? C'est ce que le spectateur cherche d'abord sur ce
+    // panneau, et il fallait jusqu'ici aller le lire dans la bannière.
+    const aMarque = state.goals.some((g) => !g.ownGoal && g.scorer?.id === player.id);
+    const jersey = jerseyEl(team, keeper, player.number, { aMarque });
 
     const card = cardOf(state, player.id);
     if (card) {

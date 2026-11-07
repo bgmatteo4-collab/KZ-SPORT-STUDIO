@@ -118,20 +118,38 @@ function poser(
  * couleur et son numéro — c'est la convention d'antenne, et c'est ce qui fait
  * qu'on lit une composition au lieu de déchiffrer une grille d'icônes.
  */
-export function jerseyEl(team: AnyTeam | undefined, keeper = false, number?: number): HTMLElement {
+export function jerseyEl(
+  team: AnyTeam | undefined,
+  keeper = false,
+  number?: number,
+  options: { aMarque?: boolean } = {},
+): HTMLElement {
   const wrap = h('div', { class: 'jersey' });
   const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 48 46');
+  svg.setAttribute('viewBox', '0 0 56 54');
 
   const base = keeper ? '#2fd07a' : (team?.color ?? '#6b7280');
   const second = keeper ? '#1a9b55' : (team?.colorAlt ?? shade(base, -38));
   const kit = keeper ? 'plain' : (team?.kit ?? 'plain');
   const id = Math.random().toString(36).slice(2, 8);
 
-  // Corps : épaules, manches courtes, buste, et l'échancrure du col.
+  /*
+   * ── Pourquoi ce maillot a été redessiné ───────────────────────────────
+   *
+   * Le précédent était étroit — vingt unités de buste sur quarante-huit de
+   * large — avec des manches courtes et droites. À l'écran il ne ressemblait
+   * pas à un maillot mais à un pictogramme d'interface : c'est exactement ce
+   * qu'on reproche à un habillage fait « en CSS ».
+   *
+   * Celui-ci a les épaules larges, des manches qui tombent, un buste qui
+   * s'évase légèrement vers le bas et un col arrondi. Et surtout il porte le
+   * NUMÉRO du joueur, comme un vrai maillot : c'est ce détail-là qui fait
+   * basculer la lecture d'icône à vêtement.
+   */
   const SHIRT =
-    'M17 4 L11 6 L3 11 L8 20 L14 16.5 L14 43 L34 43 L34 16.5 L40 20 L45 11 L37 6 L31 4 ' +
-    'C29.5 8.5 18.5 8.5 17 4 Z';
+    'M19 3 L10 6 L1 15 L9 26 L16 21 L16 51 ' +
+    'C16 52.2 16.8 53 18 53 L38 53 C39.2 53 40 52.2 40 51 L40 21 L47 26 L55 15 L46 6 L37 3 ' +
+    'C35 9.6 21 9.6 19 3 Z';
 
   const shape = () => {
     const path = document.createElementNS(NS, 'path');
@@ -149,13 +167,13 @@ export function jerseyEl(team: AnyTeam | undefined, keeper = false, number?: num
   const motif = document.createElementNS(NS, 'g');
   motif.setAttribute('clip-path', `url(#k${id})`);
   if (kit === 'striped') {
-    for (let x = 14; x < 34; x += 7) motif.append(bar(x, 0, 3.5, 46, second));
+    for (let x = 16; x < 40; x += 8) motif.append(bar(x, 0, 4, 54, second));
   } else if (kit === 'hoops') {
-    for (let y = 10; y < 44; y += 8) motif.append(bar(0, y, 48, 4, second));
+    for (let y = 12; y < 52; y += 9) motif.append(bar(0, y, 56, 4.5, second));
   } else {
     // Uni : manches dans la seconde couleur. Suffit à identifier l'équipe sans
     // inventer un maillot qui n'existe pas.
-    motif.append(bar(2, 4, 12, 18, second), bar(34, 4, 12, 18, second));
+    motif.append(bar(1, 4, 15, 22, second), bar(40, 4, 15, 22, second));
   }
 
   // Ombrage : un dégradé sombre vers le bas, c'est ce qui donne le volume.
@@ -166,9 +184,9 @@ export function jerseyEl(team: AnyTeam | undefined, keeper = false, number?: num
   grad.setAttribute('x2', '0');
   grad.setAttribute('y2', '1');
   for (const [offset, color, opacity] of [
-    ['0%', '#ffffff', '0.26'],
-    ['46%', '#ffffff', '0'],
-    ['100%', '#000000', '0.3'],
+    ['0%', '#ffffff', '0.28'],
+    ['44%', '#ffffff', '0'],
+    ['100%', '#000000', '0.34'],
   ] as const) {
     const stop = document.createElementNS(NS, 'stop');
     stop.setAttribute('offset', offset);
@@ -179,38 +197,53 @@ export function jerseyEl(team: AnyTeam | undefined, keeper = false, number?: num
   const shade_ = shape();
   shade_.setAttribute('fill', `url(#g${id})`);
 
+  // Le col, en creux : deux traits suffisent à poser le vêtement.
+  const col = document.createElementNS(NS, 'path');
+  col.setAttribute('d', 'M19 3 C21 9.6 35 9.6 37 3');
+  col.setAttribute('fill', 'none');
+  col.setAttribute('stroke', 'rgba(0,0,0,0.34)');
+  col.setAttribute('stroke-width', '2.2');
+
   const outline = shape();
   outline.setAttribute('fill', 'none');
-  outline.setAttribute('stroke', 'rgba(0,0,0,0.5)');
-  outline.setAttribute('stroke-width', '1.4');
+  outline.setAttribute('stroke', 'rgba(0,0,0,0.55)');
+  outline.setAttribute('stroke-width', '1.6');
   outline.setAttribute('stroke-linejoin', 'round');
 
-  svg.append(grad, clip, body, motif, shade_, outline);
+  svg.append(grad, clip, body, motif, shade_, col, outline);
 
-  // L'écu sur la poitrine. Le gardien porte son numéro à la place.
-  if (keeper && number !== undefined) {
+  // Le numéro, sur la poitrine — pour TOUT LE MONDE, pas seulement le
+  // gardien. C'est ce qui distingue un maillot d'un pictogramme.
+  if (number !== undefined && number > 0) {
     const text = document.createElementNS(NS, 'text');
-    text.setAttribute('x', '24');
-    text.setAttribute('y', '30');
+    text.setAttribute('x', '28');
+    text.setAttribute('y', '38');
     text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('font-size', '15');
-    text.setAttribute('font-weight', '800');
-    text.setAttribute('font-family', 'Archivo, sans-serif');
+    text.setAttribute('font-size', '19');
+    text.setAttribute('font-weight', '900');
+    text.setAttribute('font-family', 'Rubik, sans-serif');
     text.setAttribute('fill', readable(base));
+    text.setAttribute('opacity', '0.92');
     text.textContent = String(number);
     svg.append(text);
-  } else {
-    const badge = document.createElementNS(NS, 'circle');
-    badge.setAttribute('cx', '24');
-    badge.setAttribute('cy', '24');
-    badge.setAttribute('r', '3.6');
-    badge.setAttribute('fill', 'rgba(255,255,255,0.82)');
-    badge.setAttribute('stroke', 'rgba(0,0,0,0.3)');
-    badge.setAttribute('stroke-width', '0.8');
-    svg.append(badge);
   }
 
   wrap.append(svg);
+
+  /*
+   * Le ballon du buteur.
+   *
+   * Savoir QUI a marqué en regardant la composition, c'est l'information que
+   * le spectateur cherche en premier sur ce panneau, et elle n'y était nulle
+   * part : il fallait aller lire la bannière. Une pastille suffit — elle se
+   * lit à vingt pixels, là où un texte demanderait une ligne.
+   */
+  if (options.aMarque) {
+    const ballon = h('i', { class: 'jersey__but' });
+    ballon.title = 'a marqué';
+    wrap.append(ballon);
+  }
+
   return wrap;
 }
 

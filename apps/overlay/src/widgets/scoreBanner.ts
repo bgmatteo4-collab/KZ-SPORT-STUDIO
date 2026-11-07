@@ -16,7 +16,7 @@
  * invisible de même largeur à gauche garde le score exactement au centre.
  */
 
-import { clockLabel, embleme, type GoalEntry, PHASE_LABEL } from '@kz/core';
+import { type Buteur, buteurs, clockLabel, embleme, PHASE_LABEL } from '@kz/core';
 import { h, setAttr, setText } from '../dom.js';
 import { crestEl, paintCrest } from './crest.js';
 import type { Widget, WidgetContext, WidgetFactory } from './types.js';
@@ -116,8 +116,11 @@ export const scoreBanner: WidgetFactory = (): Widget => {
       const latest = state.goals.length === 0 ? -1 : state.goals[state.goals.length - 1]!.seq;
       if (latest !== lastGoalSeq) {
         lastGoalSeq = latest;
-        rouleauDom.poser(state.goals.filter((g) => g.side === 'home').map(ligneButeur));
-        rouleauExt.poser(state.goals.filter((g) => g.side === 'away').map(ligneButeur));
+        // Regroupés par buteur : un doublé tient sur une ligne avec ses deux
+        // minutes, comme à la télévision.
+        const tous = buteurs(state.goals);
+        rouleauDom.poser(tous.filter((b) => b.side === 'home').map(ligneButeur));
+        rouleauExt.poser(tous.filter((b) => b.side === 'away').map(ligneButeur));
       }
       rouleauDom.avancer(realNow);
       rouleauExt.avancer(realNow);
@@ -132,11 +135,10 @@ function splitCompetition(competition?: string, round?: string): [string, string
   return [competition, round ?? ''];
 }
 
-/** « CASTILLO 90' » — ce qu'on écrit pour un but. */
-function ligneButeur(goal: GoalEntry): { nom: string; suite: string } {
-  const nom = goal.ownGoal ? 'csc' : (goal.scorer?.short ?? 'But');
-  const suffixe = goal.penalty ? ' (sp)' : goal.ownGoal ? ' (csc)' : '';
-  return { nom: nom.toUpperCase(), suite: ` ${goal.minute}'${suffixe}` };
+/** « CASTILLO 23' 67' » — ce qu'on écrit pour un buteur. */
+function ligneButeur(b: Buteur): { nom: string; suite: string } {
+  const suffixe = b.penalty ? ' (sp)' : b.ownGoal ? ' (csc)' : '';
+  return { nom: b.nom.toUpperCase(), suite: ` ${b.minutes.join("' ")}'${suffixe}` };
 }
 
 /**

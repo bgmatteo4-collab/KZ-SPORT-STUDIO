@@ -412,3 +412,64 @@ export function detailDuFait(fait: FaitEntry, court = false): string {
 
   return bouts.join(', ');
 }
+
+// ── Les buteurs, tels qu'on les écrit à l'antenne ───────────────────────────
+
+export interface Buteur {
+  /** Le nom d'antenne, ou « csc » pour un but contre son camp. */
+  nom: string;
+  /** Toutes ses minutes, dans l'ordre : « 23' 67' ». */
+  minutes: string[];
+  side: Side;
+  /** Au moins un de ses buts est-il sur penalty ? */
+  penalty: boolean;
+  ownGoal: boolean;
+  /** Le `seq` du DERNIER de ses buts : sert à ordonner. */
+  seq: number;
+}
+
+/**
+ * Regroupe les buts par buteur.
+ *
+ * ── Le défaut que ça corrige ────────────────────────────────────────────────
+ *
+ * La bannière écrivait une ligne par but. Un joueur qui en marque deux
+ * apparaissait donc deux fois — « CASTILLO 23' » puis « CASTILLO 67' » — ce
+ * qu'aucune chaîne ne fait et qui mange en plus la place d'un autre buteur.
+ * À la télévision, un doublé s'écrit sur une seule ligne avec ses deux
+ * minutes.
+ *
+ * Le regroupement se fait sur le NOM d'antenne et pas sur l'identifiant du
+ * joueur : un fournisseur qui ne donnerait pas d'identifiant regrouperait
+ * quand même, et deux joueurs homonymes dans la même équipe n'existent pas.
+ *
+ * Un but contre son camp n'est jamais regroupé avec les autres : il n'est pas
+ * au crédit de celui qui l'a marqué, et le mêler à ses vrais buts serait une
+ * erreur de fond.
+ */
+export function buteurs(
+  goals: readonly { scorer?: Player; side: Side; minute: string; seq: number; penalty?: boolean; ownGoal?: boolean }[],
+): Buteur[] {
+  const out: Buteur[] = [];
+  for (const but of goals) {
+    const nom = but.ownGoal ? 'csc' : (but.scorer?.short ?? 'But');
+    const trouve = out.find(
+      (b) => b.nom === nom && b.side === but.side && b.ownGoal === Boolean(but.ownGoal),
+    );
+    if (trouve) {
+      trouve.minutes.push(but.minute);
+      trouve.penalty = trouve.penalty || Boolean(but.penalty);
+      trouve.seq = Math.max(trouve.seq, but.seq);
+      continue;
+    }
+    out.push({
+      nom,
+      minutes: [but.minute],
+      side: but.side,
+      penalty: Boolean(but.penalty),
+      ownGoal: Boolean(but.ownGoal),
+      seq: but.seq,
+    });
+  }
+  return out;
+}

@@ -243,6 +243,8 @@ const CATALOGUE_MS = 3_600_000;
 export interface LigueConnue {
   slug: string;
   nom: string;
+  /** L'emblème, quand on a pu le résoudre. Voir `emblemesDeLigues`. */
+  logo?: string;
 }
 
 interface EnTete {
@@ -266,6 +268,49 @@ export async function catalogueLigues(): Promise<Map<string, LigueConnue>> {
   }
   catalogue = { at: Date.now(), parId };
   return parId;
+}
+
+/**
+ * Les emblèmes de compétition, par code.
+ *
+ * ── Pourquoi c'est si laborieux ─────────────────────────────────────────────
+ *
+ * ESPN ne publie l'emblème d'une compétition QUE dans le tableau de bord de
+ * cette compétition : le tableau global ne le porte pas, le catalogue non
+ * plus, et le CDN n'a pas d'adresse devinable — vérifié sur quatre formes
+ * différentes, toutes en 404. Il faut donc un appel par championnat.
+ *
+ * On le fait à la demande et une fois par heure, en se limitant aux
+ * championnats les plus susceptibles d'être affichés : un multiplex ouvert à
+ * tout le football croise quarante compétitions, et quarante appels au
+ * lancement d'une soirée seraient payés pour des logos qu'on ne montrera pas.
+ */
+const CACHE_LOGOS = new Map<string, string | null>();
+let logosAt = 0;
+/** Combien de championnats on accepte de résoudre par rafraîchissement. */
+const LOGOS_PAR_TOUR = 6;
+
+async function emblemesDeLigues(slugs: string[]): Promise<Map<string, string>> {
+  if (Date.now() - logosAt > CATALOGUE_MS) {
+    CACHE_LOGOS.clear();
+    logosAt = Date.now();
+  }
+  let budget = LOGOS_PAR_TOUR;
+  for (const slug of slugs) {
+    if (CACHE_LOGOS.has(slug) || budget <= 0) continue;
+    budget -= 1;
+    try {
+      const bord = await json<EspnScoreboard>(`${BASE}/${slug}/scoreboard`);
+      CACHE_LOGOS.set(slug, logoDeLigue(bord.leagues?.[0]) ?? null);
+    } catch {
+      // Un championnat sans emblème n'est pas une panne : le multiplex
+      // retombe sur son nom court, qui se lit très bien.
+      CACHE_LOGOS.set(slug, null);
+    }
+  }
+  const out = new Map<string, string>();
+  for (const [slug, url] of CACHE_LOGOS) if (url) out.set(slug, url);
+  return out;
 }
 
 /** Le code de compétition d'un match du tableau global. */
@@ -439,6 +484,16 @@ export class EspnProvider implements Provider {
           const l = ligueDuMatch(e, parId);
           if (e.id && l) ligues[e.id] = { slug: l.slug, nom: LIGUES[l.slug]?.nom ?? l.nom };
         }
+        // Les emblèmes, par ordre d'intérêt : on résout d'abord les
+        // championnats qu'on a nommés, qui sont ceux qu'on affiche.
+        const vus = [...new Set(Object.values(ligues).map((l) => l.slug))].sort(
+          (a, b) => (LIGUES[a] ? 0 : 1) - (LIGUES[b] ? 0 : 1),
+        );
+        const emblemes = await emblemesDeLigues(vus);
+        for (const l of Object.values(ligues)) {
+          const u = emblemes.get(l.slug);
+          if (u) l.logo = u;
+        }
         this.multiplexEnCache = { events, ligues };
         this.dernierMultiplex = maintenant;
       } catch {
@@ -453,7 +508,10 @@ export class EspnProvider implements Provider {
     return {
       autres: cache.events.filter((e) => e.id !== this.eventId),
       autresLigues: Object.fromEntries(
-        Object.entries(cache.ligues).map(([id, l]) => [id, { id: l.slug, nom: l.nom }]),
+        Object.entries(cache.ligues).map(([id, l]) => [
+          id,
+          { id: l.slug, nom: l.nom, ...(l.logo ? { logo: l.logo } : {}) },
+        ]),
       ),
     };
   }
