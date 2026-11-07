@@ -24,6 +24,14 @@ import type { MatchPhase, MatchState } from './types.js';
 
 export interface InsertSpec {
   id: string;
+  /**
+   * Le nom lisible, pour la régie.
+   *
+   * Elle affichait l'identifiant brut — « tirs », « classement » — ce qui
+   * oblige l'opérateur à traduire mentalement un code en panneau. Un outil
+   * professionnel nomme les choses comme elles s'appellent à l'antenne.
+   */
+  nom: string;
   /** Clé du widget dans le registre. */
   widget: string;
   /** Combien de temps il reste à l'écran, en ms de temps de match. */
@@ -58,9 +66,9 @@ const SEC = 1_000;
 export const INSERTS: InsertSpec[] = [
   // La carte des tirs en tête : c'est elle qui dit le DANGER, et le danger est
   // ce qu'on perd le plus sûrement quand on ne voit pas les images.
-  { id: 'tirs', widget: 'shotmap', holdMs: 16 * SEC },
-  { id: 'classement', widget: 'standings', holdMs: 14 * SEC },
-  { id: 'momentum', widget: 'momentum', holdMs: 12 * SEC },
+  { id: 'tirs', nom: 'Carte des tirs', widget: 'shotmap', holdMs: 16 * SEC },
+  { id: 'classement', nom: 'Classement', widget: 'standings', holdMs: 14 * SEC },
+  { id: 'momentum', nom: 'Momentum', widget: 'momentum', holdMs: 12 * SEC },
 ];
 
 /** Les périodes pendant lesquelles un insert a du sens. */

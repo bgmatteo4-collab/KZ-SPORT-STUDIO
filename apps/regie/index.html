@@ -88,91 +88,112 @@
         </ul>
       </section>
 
-      <!-- ── Colonne 3 : les réglages ────────────────────────────────────── -->
+      <!-- ── Colonne 3 : les réglages ──────────────────────────────────────
+           Des RUBRIQUES et des contrôles nommés, pas une suite de boutons.
+           Un réglage se présente toujours pareil : son nom à gauche, sa
+           valeur à droite — c'est ce qui fait qu'on lit une page de réglages
+           au lieu de la déchiffrer. ──────────────────────────────────────── -->
       <section class="col col--reglages">
         <h2 class="head head--section">Réglages</h2>
 
-        <h2 class="head">
-          Décalage anti-spoiler
-          <span class="head__note"><kbd>←</kbd><kbd>→</kbd></span>
-        </h2>
-        <div class="delay">
-          <output id="delay-value">30,0 s</output>
-          <input id="delay" type="range" min="0" max="120000" step="250" value="30000" />
-          <div class="nudges">
-            <button data-nudge="-5000">−5 s</button>
-            <button data-nudge="-1000">−1 s</button>
-            <button data-nudge="-250">−¼</button>
-            <button data-nudge="250">+¼</button>
-            <button data-nudge="1000">+1 s</button>
-            <button data-nudge="5000">+5 s</button>
+        <div class="group">
+          <h3 class="head">
+            Décalage anti-spoiler
+            <span class="head__note"><kbd>←</kbd><kbd>→</kbd></span>
+          </h3>
+          <div class="delay">
+            <output id="delay-value">30,0 s</output>
+            <input id="delay" type="range" min="0" max="120000" step="250" value="30000"
+                   aria-label="Décalage anti-spoiler" />
+            <div class="nudges">
+              <button data-nudge="-5000">−5 s</button>
+              <button data-nudge="-1000">−1 s</button>
+              <button data-nudge="-250">−¼</button>
+              <button data-nudge="250">+¼</button>
+              <button data-nudge="1000">+1 s</button>
+              <button data-nudge="5000">+5 s</button>
+            </div>
           </div>
         </div>
 
-        <h2 class="head">Habillage</h2>
-        <div class="chips" id="themes"></div>
+        <div class="group">
+          <!-- Dix habillages en dix boutons tenaient trois rangées pour un
+               réglage qu'on change une fois par soirée. Un menu dit la valeur
+               courante en une ligne et garde la place pour le reste. -->
+          <label class="field">
+            <span class="field__nom">Habillage</span>
+            <select class="menu" id="themes"></select>
+          </label>
 
-        <h2 class="head">
-          Source
-          <span class="head__note" id="source-detail">—</span>
-        </h2>
-        <div class="seg" id="speed">
-          <button data-speed="1">x1</button>
-          <button data-speed="4">x4</button>
-          <button data-speed="10">x10</button>
-          <button data-speed="20">x20</button>
+          <!-- La vitesse ne concerne qu'un rejeu : en direct, elle n'a aucun
+               sens. Un réglage sans effet dans le contexte où on le voit est
+               pire qu'un réglage absent — on croit qu'il est cassé. -->
+          <label class="field" id="field-speed" hidden>
+            <span class="field__nom">Vitesse de rejeu</span>
+            <select class="menu" id="speed"></select>
+          </label>
         </div>
 
-        <!-- La régie automatique : les panneaux secondaires viennent seuls
-             pendant le match. L'opérateur peut la couper ou imposer. -->
-        <h2 class="head">
-          Inserts
-          <span class="head__note" id="insert-motif">—</span>
-        </h2>
-        <div class="seg" id="insert-mode">
-          <button data-mode="auto">Automatiques</button>
-          <button data-mode="off">Coupés</button>
-        </div>
-        <div class="chips" id="insert-force"></div>
-
-        <h2 class="head">
-          Caméra
-          <span class="head__note" id="obs-etat">—</span>
-        </h2>
-        <div class="seg" id="cam-mode">
-          <button data-cam="browser">Navigateur</button>
-          <button data-cam="obs">OBS</button>
-        </div>
-
-        <!-- En mode OBS, la régie pilote ta vraie webcam : elle se déplace
-             avec tes filtres et ta correction couleur, au lieu d'être
-             recapturée par le navigateur. -->
-        <details class="obs" id="obs-panneau">
-          <summary>Lien OBS</summary>
-          <label>Adresse<input id="obs-adresse" type="text" placeholder="ws://127.0.0.1:4455" /></label>
-          <label>Mot de passe<input id="obs-mdp" type="password" placeholder="(vide si désactivé)" /></label>
-          <label>Scène OBS<input id="obs-scene" type="text" placeholder="Match" /></label>
-          <label>Source caméra<input id="obs-source" type="text" placeholder="Webcam" /></label>
-          <div class="seg">
-            <button id="obs-connecter">Connecter</button>
-            <button id="obs-deconnecter">Couper</button>
+        <div class="group">
+          <!-- La régie automatique. Elle n'a plus de boutons pour imposer un
+               panneau : elle décide, et elle DIT ce qu'elle fait. -->
+          <div class="field">
+            <span class="field__nom">Inserts automatiques</span>
+            <button class="switch" id="insert-switch" type="button" role="switch"
+                    aria-checked="true"><i></i></button>
           </div>
-          <p class="tip tip--inline">
-            Dans OBS : <strong>Outils → Paramètres du serveur WebSocket</strong>,
-            puis coche l'activation. Les noms doivent correspondre exactement à
-            ceux de ta liste de sources.
-          </p>
-        </details>
+          <ul class="inserts" id="inserts"></ul>
+        </div>
 
-        <h2 class="head">Sources OBS</h2>
-        <div class="urls">
-          <button class="url" data-copy="fg">
-            <span>Avant-plan</span><code id="url-fg"></code>
-          </button>
-          <div class="url url--note"><span>Webcam</span><em>entre les deux</em></div>
-          <button class="url" data-copy="bg">
-            <span>Arrière-plan</span><code id="url-bg"></code>
-          </button>
+        <div class="group">
+          <div class="field">
+            <span class="field__nom">Caméra</span>
+            <div class="seg" id="cam-mode">
+              <button data-cam="browser">Navigateur</button>
+              <button data-cam="obs">OBS</button>
+            </div>
+          </div>
+
+          <!-- En mode OBS, la régie pilote ta vraie webcam : elle se déplace
+               avec tes filtres et ta correction couleur, au lieu d'être
+               recapturée par le navigateur. -->
+          <details class="obs" id="obs-panneau">
+            <summary>Lien OBS <span class="obs__etat" id="obs-etat">—</span></summary>
+            <label>Adresse<input id="obs-adresse" type="text" placeholder="ws://127.0.0.1:4455" /></label>
+            <label>Mot de passe<input id="obs-mdp" type="password" placeholder="(vide si désactivé)" /></label>
+            <label>Scène OBS<input id="obs-scene" type="text" placeholder="Match" /></label>
+            <label>Source caméra<input id="obs-source" type="text" placeholder="Webcam" /></label>
+            <div class="seg">
+              <button id="obs-connecter">Connecter</button>
+              <button id="obs-deconnecter">Couper</button>
+            </div>
+            <p class="tip tip--inline">
+              Dans OBS : <strong>Outils → Paramètres du serveur WebSocket</strong>,
+              puis coche l'activation. Les noms doivent correspondre exactement à
+              ceux de ta liste de sources.
+            </p>
+          </details>
+        </div>
+
+        <div class="group">
+          <h3 class="head">Sources OBS</h3>
+          <div class="urls">
+            <button class="url" data-copy="fg">
+              <span>Avant-plan</span><code id="url-fg"></code>
+            </button>
+            <div class="url url--note"><span>Webcam</span><em>entre les deux</em></div>
+            <button class="url" data-copy="bg">
+              <span>Arrière-plan</span><code id="url-bg"></code>
+            </button>
+          </div>
+        </div>
+
+        <!-- L'état de la source, en bas : c'est un diagnostic, pas un réglage.
+             Il DÉBORDAIT de son en-tête, coupé à « lacun… » — or c'est
+             précisément la phrase qu'on vient lire quand quelque chose cloche. -->
+        <div class="group group--bas">
+          <h3 class="head">Source</h3>
+          <p class="etat" id="source-detail">—</p>
         </div>
       </section>
     </main>

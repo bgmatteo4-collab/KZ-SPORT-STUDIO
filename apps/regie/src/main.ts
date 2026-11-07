@@ -27,15 +27,15 @@ import {
   THEMES,
   ClockSync,
   DEFAULT_CONTROL,
-  type CardEntry,
+  detailDuFait,
+  LIBELLE,
+  VALEUR_FIL,
   type ClientMessage,
   type Command,
   type ControlState,
-  type GoalEntry,
   type MatchState,
   type ProviderStatus,
   type ServerMessage,
-  type SubEntry,
 } from '@kz/core';
 import { monterSelecteur } from './picker.js';
 
@@ -55,12 +55,12 @@ const scenesBox = el('scenes');
 const modesBox = el('modes');
 const pickButton = el('pick-match');
 const pickNow = el('pick-now');
-const themesBox = el('themes');
+const themesMenu = el<HTMLSelectElement>('themes');
 const camBox = el('cam-mode');
-const speedBox = el('speed');
-const insertModeBox = el('insert-mode');
-const insertForceBox = el('insert-force');
-const insertMotif = el('insert-motif');
+const speedMenu = el<HTMLSelectElement>('speed');
+const speedField = el('field-speed');
+const insertSwitch = el<HTMLButtonElement>('insert-switch');
+const insertsBox = el('inserts');
 const feedBox = el('feed');
 const delayInput = el<HTMLInputElement>('delay');
 const delayValue = el<HTMLOutputElement>('delay-value');
@@ -108,30 +108,59 @@ for (const mode of SCENE_MODES) {
   modesBox.append(button);
 }
 
+// ───────────────────────────── Les menus ─────────────────────────────────────
+//
+// Dix habillages en dix boutons occupaient trois rangées pour un réglage qu'on
+// touche une fois par soirée. Un menu dit sa valeur courante en une ligne.
+
 for (const theme of THEMES) {
-  const button = document.createElement('button');
-  button.textContent = theme.name;
-  button.dataset.theme = theme.id;
-  button.addEventListener('click', () => send({ name: 'set-theme', themeId: theme.id }));
-  themesBox.append(button);
+  const option = document.createElement('option');
+  option.value = theme.id;
+  option.textContent = theme.name;
+  themesMenu.append(option);
 }
+themesMenu.addEventListener('change', () =>
+  send({ name: 'set-theme', themeId: themesMenu.value }),
+);
 
-for (const button of insertModeBox.querySelectorAll<HTMLButtonElement>('[data-mode]')) {
-  button.addEventListener('click', () =>
-    send({ name: 'set-insert-mode', insertMode: button.dataset.mode as 'auto' | 'off' }),
-  );
+for (const vitesse of [1, 2, 4, 10, 20]) {
+  const option = document.createElement('option');
+  option.value = String(vitesse);
+  option.textContent = vitesse === 1 ? 'Temps réel' : `×${vitesse}`;
+  speedMenu.append(option);
 }
+speedMenu.addEventListener('change', () =>
+  send({ name: 'replay-speed', speed: Number(speedMenu.value) }),
+);
 
-// « Auto » rend la main à la régie automatique ; les autres imposent un panneau.
-for (const spec of [{ id: '', label: 'Auto' }, ...INSERTS.map((i) => ({ id: i.id, label: i.id }))]) {
-  const button = document.createElement('button');
-  button.textContent = spec.label;
-  button.dataset.force = spec.id;
-  button.addEventListener('click', () =>
-    send({ name: 'force-insert', insertId: spec.id === '' ? null : spec.id }),
-  );
-  insertForceBox.append(button);
-}
+// ──────────────────────── La régie automatique ───────────────────────────────
+//
+// Plus de boutons pour imposer un panneau. Les inserts sont MOTIVÉS — après un
+// but, dans un temps mort — et les imposer à la main revenait à défaire la
+// seule chose qui les rend crédibles. L'interrupteur les coupe, et la liste
+// dit en permanence ce qui est à l'antenne et pourquoi.
+
+insertSwitch.addEventListener('click', () =>
+  send({
+    name: 'set-insert-mode',
+    insertMode: control.insertMode === 'auto' ? 'off' : 'auto',
+  }),
+);
+
+const lignesInsert = INSERTS.map((spec) => {
+  const nom = document.createElement('span');
+  nom.className = 'insert__nom';
+  nom.textContent = spec.nom;
+  const etat = document.createElement('span');
+  etat.className = 'insert__etat';
+  etat.textContent = 'en attente';
+  const li = document.createElement('li');
+  li.className = 'insert';
+  li.dataset.on = '0';
+  li.append(nom, etat);
+  insertsBox.append(li);
+  return { spec, etat, li };
+});
 
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-nudge]')) {
   button.addEventListener('click', () =>
@@ -142,12 +171,6 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('[data-nudge]'
 for (const button of camBox.querySelectorAll<HTMLButtonElement>('[data-cam]')) {
   button.addEventListener('click', () =>
     send({ name: 'set-cam-mode', camMode: button.dataset.cam as 'obs' | 'browser' }),
-  );
-}
-
-for (const button of speedBox.querySelectorAll<HTMLButtonElement>('[data-speed]')) {
-  button.addEventListener('click', () =>
-    send({ name: 'replay-speed', speed: Number(button.dataset.speed) }),
   );
 }
 
@@ -322,12 +345,19 @@ function applyControl(next: ControlState): void {
   }
 
   mark(scenesBox, 'scene', next.sceneId);
-  mark(themesBox, 'theme', next.themeId);
   mark(camBox, 'cam', next.camMode);
-  mark(speedBox, 'speed', String(next.timeScale));
-  mark(insertModeBox, 'mode', next.insertMode);
-  mark(insertForceBox, 'force', next.insertForce ?? '');
   mark(modesBox, 'mode', next.sceneMode);
+  themesMenu.value = next.themeId;
+  speedMenu.value = String(next.timeScale);
+
+  // La vitesse ne concerne qu'un rejeu. En direct, le réglage n'a aucun effet
+  // et sa seule présence laisse croire qu'il en a un.
+  speedField.hidden = next.source.provider !== 'simulator';
+
+  const auto = next.insertMode === 'auto';
+  insertSwitch.setAttribute('aria-checked', auto ? 'true' : 'false');
+  insertSwitch.dataset.on = auto ? '1' : '0';
+  insertsBox.dataset.coupes = auto ? '0' : '1';
   // Une scène sans variantes de mode ignore les quatre boutons : autant le
   // dire, plutôt que de laisser cliquer sur des boutons sans effet.
   modesBox.dataset.actif = findScene(next.sceneId).modes ? '1' : '0';
@@ -355,11 +385,6 @@ function formatDelay(ms: number): string {
 
 // ────────────────────────────── Rafraîchissement ─────────────────────────────
 
-type FeedItem =
-  | { t: number; kind: 'goal'; entry: GoalEntry }
-  | { t: number; kind: 'card'; entry: CardEntry }
-  | { t: number; kind: 'sub'; entry: SubEntry };
-
 let feedSignature = '';
 
 function refresh(): void {
@@ -384,38 +409,73 @@ function refresh(): void {
   nowClock.textContent = onAir ? `${label.main}${label.added ?? ''}` : '—';
   nowPhase.textContent = PHASE_LABEL[state.phase];
 
-  sourceDetail.textContent = provider.detail ?? provider.name;
+  setTexte(sourceDetail, provider.detail ?? provider.name);
 
-  // Ce que la régie automatique montre en ce moment — et sa raison. Sans le
-  // motif, un panneau qui surgit ressemble à un défaut.
-  if (control.insertMode === 'off') {
-    insertMotif.textContent = 'coupés';
-  } else if (control.insertForce) {
-    insertMotif.textContent = `${control.insertForce} · imposé`;
-  } else {
-    const actif = findScene(control.sceneId).insertSlot
-      ? insertActif(state, sync.now() - control.delayMs)
-      : null;
-    insertMotif.textContent = actif ? `${actif.spec.id} · ${actif.motif}` : 'rien à l’antenne';
-  }
+  majInserts(state);
 
   renderFeed(state);
   requestAnimationFrame(refresh);
 }
 
-function renderFeed(state: MatchState): void {
-  const items: FeedItem[] = [
-    ...state.goals.map((entry) => ({ t: entry.t, kind: 'goal' as const, entry })),
-    ...state.cards.map((entry) => ({ t: entry.t, kind: 'card' as const, entry })),
-    ...state.subs.map((entry) => ({ t: entry.t, kind: 'sub' as const, entry })),
-  ].sort((a, b) => b.t - a.t);
+/**
+ * Ce que la régie automatique fait, en permanence, et pourquoi.
+ *
+ * C'est la contrepartie d'avoir retiré les boutons : un automatisme qu'on ne
+ * peut pas forcer doit au minimum être LISIBLE. Sans son motif, un panneau
+ * qui surgit à l'antenne ressemble à un défaut — y compris pour celui qui
+ * l'a programmé.
+ */
+function majInserts(state: MatchState): void {
+  const scene = findScene(control.sceneId);
+  const actif =
+    control.insertMode === 'auto' && scene.insertSlot
+      ? insertActif(state, sync.now() - control.delayMs)
+      : null;
 
-  const signature = items.map((i) => `${i.kind}${i.entry.seq}`).join(',');
+  for (const { spec, etat, li } of lignesInsert) {
+    const surLui = actif?.spec.id === spec.id;
+    li.dataset.on = surLui ? '1' : '0';
+    if (surLui && actif) {
+      // Le temps qu'il reste : un opérateur qui voit « 6 s » sait qu'il peut
+      // attendre avant de changer de scène.
+      const reste = Math.max(0, Math.round((actif.to - (sync.now() - control.delayMs)) / 1000));
+      setTexte(etat, `${actif.motif} · ${reste} s`);
+    } else {
+      // Court, parce que la colonne est étroite : une phrase complète s'y
+      // terminerait par « … », ce qui revient à ne rien dire.
+      setTexte(
+        etat,
+        control.insertMode === 'off' ? 'coupé' : scene.insertSlot ? 'en attente' : 'hors scène',
+      );
+    }
+  }
+}
+
+/** N'écrit dans le DOM que si la valeur a changé : appelé à chaque image. */
+function setTexte(node: HTMLElement, valeur: string): void {
+  if (node.textContent !== valeur) node.textContent = valeur;
+}
+
+/**
+ * Les faits de jeu, du plus récent au plus ancien.
+ *
+ * Lit `state.feed`, comme le fil du match à l'antenne. La régie fabriquait
+ * auparavant ses propres libellés — « Carton », « But », les flèches d'un
+ * remplacement — ce qui faisait un quatrième vocabulaire après ceux de la
+ * feuille de match et de la carte des tirs. L'opérateur lit maintenant
+ * exactement les mots qui partent à l'antenne, ce qui est la moindre des
+ * choses pour un moniteur de contrôle. Et il y gagne les frappes, qui
+ * n'apparaissaient nulle part de son côté.
+ */
+function renderFeed(state: MatchState): void {
+  const faits = [...state.feed].reverse();
+
+  const signature = faits.map((f) => `${f.kind}${f.seq}`).join(',');
   if (signature === feedSignature) return;
   feedSignature = signature;
 
   feedBox.replaceChildren();
-  if (items.length === 0) {
+  if (faits.length === 0) {
     const empty = document.createElement('li');
     empty.className = 'feed__empty';
     empty.textContent = 'Rien encore.';
@@ -423,23 +483,24 @@ function renderFeed(state: MatchState): void {
     return;
   }
 
-  for (const item of items) {
-    const side = item.entry.side === 'home' ? state.meta?.home.abbr : state.meta?.away.abbr;
+  for (const fait of faits) {
+    const side = fait.side === 'home' ? state.meta?.home.abbr : state.meta?.away.abbr;
     const row = document.createElement('li');
     row.className = 'ev';
+    row.dataset.valeur = String(VALEUR_FIL[fait.kind]);
 
     const minute = document.createElement('span');
     minute.className = 'ev__minute';
-    minute.textContent = `${item.entry.minute}'`;
+    minute.textContent = `${fait.minute}'`;
 
     const mark = document.createElement('i');
     mark.className = 'ev__mark';
-    mark.dataset.kind =
-      item.kind === 'card' && item.entry.card !== 'yellow' ? 'card-red' : item.kind;
+    mark.dataset.kind = fait.kind;
 
     const name = document.createElement('span');
     name.className = 'ev__name';
-    name.textContent = describe(item);
+    const detail = detailDuFait(fait, true);
+    name.textContent = detail ? `${LIBELLE[fait.kind]} · ${detail}` : LIBELLE[fait.kind];
 
     const team = document.createElement('span');
     team.className = 'ev__side';
@@ -447,19 +508,6 @@ function renderFeed(state: MatchState): void {
 
     row.append(minute, mark, name, team);
     feedBox.append(row);
-  }
-}
-
-function describe(item: FeedItem): string {
-  switch (item.kind) {
-    case 'goal':
-      return `${item.entry.scorer?.short ?? 'But'}${item.entry.penalty ? ' (sp)' : ''}${
-        item.entry.ownGoal ? ' (csc)' : ''
-      }`;
-    case 'card':
-      return item.entry.player?.short ?? 'Carton';
-    case 'sub':
-      return `${item.entry.in?.short ?? '?'} ↔ ${item.entry.out?.short ?? '?'}`;
   }
 }
 

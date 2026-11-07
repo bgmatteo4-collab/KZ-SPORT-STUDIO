@@ -12,27 +12,49 @@
  * match on ne cherche pas un réglage, on l'a sous les yeux.
  */
 
+/*
+ * ── L'identité KZ Studio ────────────────────────────────────────────────────
+ *
+ * La régie portait un gris-bleu anonyme : elle ressemblait à n'importe quel
+ * tableau de bord. L'habillage d'antenne, lui, change de couleurs à chaque
+ * compétition — c'est son travail. L'OUTIL, à l'inverse, doit avoir une
+ * identité fixe, celle qu'on reconnaît en ouvrant l'application.
+ *
+ * D'où cette palette, qui est celle de la marque et pas une variation de
+ * l'habillage : l'encre et le teal forêt pour le fond, la sauge pour ce qui
+ * va bien, l'or pour ce qui est actif. Une seule règle d'ornement, tenue
+ * partout : un point doré avant le nom, et rien d'autre.
+ *
+ * Le rouge de l'antenne est la seule couleur hors palette, et c'est délibéré :
+ * une lampe de direct est rouge dans tous les studios du monde.
+ */
 :root {
   --font: 'Archivo', system-ui, sans-serif;
+  --mono: ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, monospace;
 
-  --bg: #080a10;
-  --surface: #11141d;
-  --surface-2: #181d29;
-  --line: #242b3a;
-  --line-strong: #39435a;
+  /* Encre, puis deux paliers vers le teal forêt. */
+  --bg: #061c1b;
+  --surface: #0a2726;
+  --surface-2: #0f3d3a;
+  --line: #16514c;
+  --line-strong: #1f6f66;
 
-  --ink: #eef2f8;
-  --ink-soft: #97a1b5;
-  --ink-dim: #5f6a80;
+  --ink: #eaf4f1;
+  --ink-soft: #a9c4bf;
+  --ink-dim: #6c8d88;
 
-  --accent: #e8b45c;
-  --live: #ff3b3b;
-  --ok: #3ddc84;
+  /* L'or miel : l'état actif, le soulignement, le point de la marque. */
+  --accent: #e3a83b;
+  --accent-clair: #f2c76e;
+  --live: #ff4d4d;
+  --ok: #5fa89c;
 
-  --r-panel: 18px;
-  --r-card: 12px;
-  --r-chip: 9px;
-  --r-pill: 999px;
+  --r-panel: 20px;
+  --r-card: 14px;
+  --r-chip: 10px;
+  /* La pilule d'Apple, reprise telle quelle : un bouton de cette famille se
+     reconnaît à son rayon, pas à sa couleur. */
+  --r-pill: 980px;
 
   --s1: 4px;
   --s2: 8px;
@@ -41,6 +63,18 @@
   --s5: 24px;
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+ * `hidden` doit GAGNER.
+ *
+ * L'attribut ne tient que par une règle de la feuille du navigateur, qu'un
+ * simple sélecteur de classe bat. Tout élément en `display: flex` l'ignore
+ * donc en silence — et c'est ainsi qu'un réglage de vitesse de rejeu restait
+ * affiché en plein direct, où il n'a aucun effet.
+ */
+[hidden] {
+  display: none !important;
 }
 
 * {
@@ -383,10 +417,35 @@ kbd {
   border-radius: 2px;
 }
 
-.ev__mark[data-kind='goal'] { border-radius: var(--r-pill); background: var(--ink); }
-.ev__mark[data-kind='card'] { background: #ffd43b; }
-.ev__mark[data-kind='card-red'] { background: var(--live); }
+/* Les mêmes marques qu'à l'antenne : un but est un disque, un carton un
+   rectangle à sa couleur réelle, un tir un anneau creux. L'opérateur ne doit
+   pas avoir à traduire entre son moniteur et son écran de contrôle. */
+.ev__mark[data-kind='goal'],
+.ev__mark[data-kind='own_goal'],
+.ev__mark[data-kind='penalty_goal'] { border-radius: var(--r-pill); background: var(--ink); }
+.ev__mark[data-kind='penalty_awarded'] { border-radius: var(--r-pill); background: var(--accent); }
+.ev__mark[data-kind='yellow'] { background: #ffd43b; }
+.ev__mark[data-kind='second_yellow'] { background: linear-gradient(135deg, #ffd43b 0 50%, var(--live) 50% 100%); }
+.ev__mark[data-kind='red'] { background: var(--live); }
 .ev__mark[data-kind='sub'] { background: var(--ok); }
+.ev__mark[data-kind='shot_on'] {
+  border-radius: var(--r-pill);
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--ink-soft);
+}
+.ev__mark[data-kind='shot_blocked'],
+.ev__mark[data-kind='shot_off'],
+.ev__mark[data-kind='corner'],
+.ev__mark[data-kind='offside'],
+.ev__mark[data-kind='free_kick'] {
+  border-radius: var(--r-pill);
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--ink-dim);
+}
+
+/* Les faits de service reculent d'un plan : ils donnent le rythme du match
+   sans voler la lecture des buts et des cartons. */
+.ev[data-valeur='1'] { opacity: 0.6; }
 
 .ev__name { flex: 1; font-size: 14px; font-weight: 600; }
 .ev__side { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); }
@@ -404,13 +463,47 @@ output {
   letter-spacing: -0.02em;
 }
 
+/* La piste suit la palette : `accent-color` seul laissait au navigateur une
+   piste grise qui virait au brun sur un fond teal. */
 input[type='range'] {
   width: 100%;
+  height: 6px;
   accent-color: var(--accent);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  appearance: none;
   cursor: pointer;
 }
 
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -1px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Six pas de décalage sur une rangée. Le texte ne doit JAMAIS passer à la
+   ligne : « −5 s » coupé en « −5 » / « s » double la hauteur du pupitre et se
+   lit une fraction de seconde trop tard — or on s'en sert en direct. */
 .nudges { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--s1); }
+
+.nudges button {
+  padding: var(--s2) 2px;
+  font-size: 12px;
+  white-space: nowrap;
+}
 
 /* ═══════════════════════════ Boutons génériques ══════════════════════════ */
 
@@ -433,6 +526,14 @@ button {
 
 button:hover { border-color: var(--line-strong); color: var(--ink); }
 button:active { transform: translateY(1px); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* La pilule, sur les contrôles isolés. Les grilles — scènes, pas de décalage —
+   gardent leur rayon de carte : une rangée de pilules accolées fait collier,
+   pas pupitre. */
+.seg button,
+.nudges button,
+.obs .seg button { border-radius: var(--r-pill); }
 
 button[data-on='1'] {
   background: var(--accent);
@@ -452,40 +553,206 @@ button[data-on='1'] {
 .seg button { flex: 1; }
 .chips button { flex: 1 0 auto; }
 
+/* ═════════════════════════ Les contrôles de réglage ══════════════════════
+
+   Un réglage se présente toujours pareil : son nom à gauche, sa valeur à
+   droite. C'est ce qui fait qu'on LIT une page de réglages au lieu de la
+   déchiffrer — et c'est ce qui manquait quand tout était une rangée de
+   boutons sans étiquette.                                                 */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex: none;
+  padding: var(--s3);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+
+/* Le diagnostic de source vit en bas de colonne, et peut respirer. */
+.group--bas { margin-top: auto; }
+
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  min-height: 30px;
+}
+
+.field__nom {
+  flex: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.field .seg { flex: 0 1 auto; }
+
+/* Le menu. Dix habillages en dix boutons tenaient trois rangées pour un
+   réglage qu'on touche une fois par soirée. */
+.menu {
+  flex: 0 1 auto;
+  max-width: 62%;
+  padding: var(--s1) var(--s5) var(--s1) var(--s3);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background-color: var(--surface);
+  /* Le chevron dessiné à la main : la flèche native du navigateur ne suit ni
+     la palette ni le rayon, et se voit immédiatement dans une interface qui
+     tient par sa cohérence. */
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+  background-position: right 14px center, right 9px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  appearance: none;
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+
+.menu:hover { border-color: var(--accent); }
+.menu:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* La liste déroulée est dessinée par le système : on lui donne au moins les
+   bonnes couleurs, sinon elle arrive en blanc sur une interface sombre. */
+.menu option { background: var(--surface-2); color: var(--ink); }
+
+/* L'interrupteur. Deux boutons « Automatiques / Coupés » demandaient de lire
+   lequel était allumé ; un interrupteur se lit d'un coup d'œil. */
+.switch {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 26px;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+
+.switch i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink-dim);
+  transition: transform 220ms var(--ease), background 220ms var(--ease);
+}
+
+.switch[data-on='1'] { background: var(--accent); border-color: var(--accent); }
+.switch[data-on='1'] i { transform: translateX(20px); background: #10201e; }
+
+@media (prefers-reduced-motion: reduce) {
+  .switch i { transition: none; }
+}
+
+/* L'état de la régie automatique. Contrepartie d'avoir retiré les boutons :
+   un automatisme qu'on ne peut pas forcer doit être LISIBLE. */
+.inserts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+}
+
+.inserts[data-coupes='1'] { opacity: 0.45; }
+
+.insert {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: 3px var(--s2);
+  border-radius: var(--r-chip);
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+
+.insert__nom { flex: none; font-weight: 600; }
+
+.insert__etat {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  text-align: right;
+}
+
+/* Celui qui est à l'antenne, et le temps qu'il lui reste. */
+.insert[data-on='1'] {
+  background: rgba(227, 168, 59, 0.14);
+  color: var(--accent-clair);
+}
+
+.insert[data-on='1'] .insert__nom { color: var(--accent); }
+
+/* Un diagnostic, pas un réglage : il doit pouvoir s'étaler sur trois lignes.
+   Il débordait de son en-tête, coupé à « lacun… » — or c'est précisément la
+   phrase qu'on vient lire quand quelque chose cloche. */
+.etat {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
 /* ═══════════════════════════════ Sources OBS ═════════════════════════════ */
 
 .urls { display: flex; flex-direction: column; gap: var(--s1); flex: none; }
 
+/* L'étiquette AU-DESSUS, l'adresse en pleine largeur en dessous.
+   Côte à côte, l'adresse n'avait plus que la moitié de la colonne : elle se
+   coupait au milieu d'un nombre de port, et une adresse coupée ne se recopie
+   pas — c'est pourtant tout ce qu'on lui demande. */
 .url {
   display: flex;
-  align-items: center;
-  gap: var(--s3);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
   padding: var(--s2) var(--s3);
   text-align: left;
   width: 100%;
+  border-radius: var(--r-chip);
 }
 
 .url span {
   flex: none;
-  min-width: 82px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-dim);
 }
 
+/* Entières, sur deux lignes s'il le faut. Elles s'affichaient tronquées par
+   « … » : une adresse coupée ne se recopie pas, et c'est pourtant tout ce
+   qu'on lui demande quand on configure OBS à la main. */
 .url code {
   flex: 1;
-  font-family: ui-monospace, monospace;
-  font-size: 11.5px;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.35;
   color: var(--accent);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 
 .url--note {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
   background: transparent;
   border: 1px dashed var(--line);
   border-radius: var(--r-chip);
@@ -886,18 +1153,25 @@ button[data-on='1'] {
   gap: var(--s3);
 }
 
+/*
+ * Un point doré avant le nom, jamais d'autre ornement.
+ *
+ * C'est la seule règle d'ornement de la marque, et elle vaut qu'on y tienne :
+ * un carré « KZ » en dégradé est un logo d'application parmi dix mille ; un
+ * point, lui, ne ressemble à rien d'autre et se reconnaît à cent pixels. Le
+ * halo rappelle la lampe d'un studio.
+ */
 .brand__mark {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 11px;
+  height: 11px;
   flex: none;
-  border-radius: 9px;
-  background: linear-gradient(150deg, var(--accent) 0%, #c98e36 100%);
-  color: #10131c;
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(227, 168, 59, 0.16);
+  /* Le texte « KZ » reste dans le document pour les lecteurs d'écran, mais
+     n'occupe plus la place : c'est le nom à côté qui le dit. */
+  overflow: hidden;
+  text-indent: -999px;
 }
 
 .brand__nom {
