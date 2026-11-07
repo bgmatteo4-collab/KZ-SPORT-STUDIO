@@ -1064,12 +1064,19 @@ html {
 
 .mx__row {
   display: grid;
-  grid-template-columns: 26px 1fr 40px;
+  grid-template-columns: 34px 1fr 40px;
   align-items: center;
   gap: var(--s2);
 }
 
-.mx__crest { width: 26px; height: 27px; font-size: 9px; }
+/* 34 px, et non 26. À l'antenne, un écusson de 26 px sur un plateau de
+   1920 fait vignette de tableur : on reconnaît la couleur, pas le club — et
+   c'est le club qu'on cherche en balayant une liste de résultats. */
+.mx__crest { width: 34px; height: 35px; font-size: 11px; }
+
+/* L'écusson de l'en-tête d'un panneau : plus discret, il NOMME le panneau,
+   il n'est pas l'information. */
+.panel__crest { width: 30px; height: 31px; font-size: 10px; }
 
 .mx__name {
   font-size: 18px;
@@ -1128,7 +1135,7 @@ html {
 .table__head,
 .table__row {
   display: grid;
-  grid-template-columns: 54px 30px minmax(0, 1fr) 38px 52px 64px;
+  grid-template-columns: 54px 40px minmax(0, 1fr) 38px 52px 64px;
   align-items: center;
 }
 
@@ -1159,7 +1166,7 @@ html {
 .table__rank[data-zone='play'] { background: #e2762b; color: #fff; }
 .table__rank[data-zone='lose'] { background: var(--lose); color: #fff; }
 
-.table__crest { width: 26px; height: 27px; font-size: 9px; }
+.table__crest { width: 34px; height: 35px; font-size: 11px; }
 
 .table__name {
   display: flex;
@@ -1981,8 +1988,13 @@ html {
   align-content: start;
 }
 
+/* `flex: none` : une ligne garde sa hauteur naturelle. Sans ça, le conteneur
+   comprime ses enfants quand la place manque, et le détail disparaît sous le
+   bord inférieur — un défaut qui ressemble à une mauvaise police plutôt qu'à
+   un calcul faux, donc qu'on ne cherche pas au bon endroit. */
 .fil__ligne {
   position: relative;
+  flex: none;
   padding: 6px var(--s3) 6px var(--s4);
   border-radius: var(--radius-chip);
   background: rgba(255, 255, 255, 0.04);
@@ -2030,12 +2042,12 @@ html {
 
 .fil__crest {
   flex: none;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 25px;
 }
 
 .fil__quoi {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   font-size: 16px;
@@ -2053,6 +2065,7 @@ html {
 
 .fil__score {
   flex: none;
+  margin-left: auto;
   padding: 1px 7px;
   border-radius: var(--radius-pill);
   background: var(--slab);
@@ -2062,11 +2075,22 @@ html {
 }
 
 .fil__detail {
-  margin: 1px 0 0 42px;
+  margin: 1px 0 0 46px;
   overflow: hidden;
   color: var(--ink-dim);
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* Le bandeau permanent tient sur UNE rangée : le détail suit le libellé au
+   lieu de passer en dessous. Il cède la place en premier quand le nom de
+   l'équipe et le score ont besoin de la leur. */
+.fil__detail--meme-ligne {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.02em;
 }
 
 .fil__vide {

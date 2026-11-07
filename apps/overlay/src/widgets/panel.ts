@@ -55,7 +55,10 @@ export function panel(options: {
 
   const crests: HTMLElement[] = [];
   for (let i = 0; i < (options.crests ?? 0); i += 1) {
-    const c = crestEl('mx__crest');
+    // Sa propre classe, et pas celle du multiplex : les deux n'ont ni la même
+    // place ni la même taille, et les faire partager un réglage obligeait à
+    // choisir une taille qui ne convient ni à l'un ni à l'autre.
+    const c = crestEl('panel__crest');
     crests.push(c);
     aside.append(c);
   }

@@ -24,7 +24,7 @@ export function crestEl(extraClass = ''): HTMLElement {
 export function paintCrest(el: HTMLElement, team: AnyTeam | undefined | null): void {
   if (!team) {
     el.style.background = 'var(--pill)';
-    poser(el, '', undefined);
+    poser(el, '', undefined, 'var(--pill)');
     return;
   }
   const alt = team.colorAlt ?? shade(team.color, -28);
@@ -32,15 +32,14 @@ export function paintCrest(el: HTMLElement, team: AnyTeam | undefined | null): v
   // de contour, plus de forme de blason. Un logo de club est déjà un écusson —
   // l'enfermer dans un second cadre fait doublon et ça se voit tout de suite.
   // L'écu dessiné ne sert que tant qu'on n'a pas l'image.
+  const plaque = `linear-gradient(160deg, ${team.color} 0%, ${alt} 100%)`;
   const avecLogo = el.getAttribute('data-logo') === '1';
-  const background = avecLogo
-    ? 'transparent'
-    : `linear-gradient(160deg, ${team.color} 0%, ${alt} 100%)`;
+  const background = avecLogo ? 'transparent' : plaque;
   if (el.style.background !== background) el.style.background = background;
   el.style.color = readable(team.color);
   // On passe par notre serveur : il garde les écussons, donc l'antenne ne
   // dépend plus d'un CDN tiers une fois la première image reçue.
-  poser(el, team.abbr, ecuLocal(team.crest));
+  poser(el, team.abbr, ecuLocal(team.crest), plaque);
 }
 
 /**
@@ -50,8 +49,28 @@ export function paintCrest(el: HTMLElement, team: AnyTeam | undefined | null): v
  * donc rien de déposé n'est redistribué. Et si l'image ne charge pas — hors
  * ligne, 404, réseau coupé en pleine émission — elle se retire et l'écu dessiné
  * reste dessous. Le plateau ne montre jamais un trou.
+ *
+ * ── Le bogue que `plaque` corrige ───────────────────────────────────────────
+ *
+ * La plaque dessinée n'était effacée qu'au PASSAGE SUIVANT de `paintCrest` :
+ * on marquait `data-logo` à la fin du chargement, et c'est le prochain appel
+ * qui lisait ce drapeau pour mettre le fond en transparent.
+ *
+ * Ça marchait sur la bannière de score, qui se repeint à chaque image. Ça ne
+ * marchait PAS sur le classement ni sur le multiplex, qui ne se reconstruisent
+ * qu'au changement de données : un logo transparent y restait posé sur un
+ * dégradé aux couleurs du club, c'est-à-dire exactement le vilain contour
+ * coloré qu'on croyait avoir supprimé.
+ *
+ * Le fond est donc remis à sa valeur AU MOMENT où l'image arrive — ou échoue.
+ * C'est le seul instant où l'on sait vraiment ce qu'il faut afficher.
  */
-function poser(el: HTMLElement, abbr: string, url: string | undefined): void {
+function poser(
+  el: HTMLElement,
+  abbr: string,
+  url: string | undefined,
+  plaque: string,
+): void {
   let label = el.querySelector<HTMLElement>('.crest__abbr');
   if (!label) {
     el.textContent = '';
@@ -69,6 +88,7 @@ function poser(el: HTMLElement, abbr: string, url: string | undefined): void {
   if (img) {
     if (img.getAttribute('src') !== url) {
       el.removeAttribute('data-logo');
+      el.style.background = plaque;
       img.setAttribute('src', url);
     }
     return;
@@ -77,10 +97,14 @@ function poser(el: HTMLElement, abbr: string, url: string | undefined): void {
   n.className = 'crest__img';
   n.alt = '';
   n.decoding = 'async';
-  n.addEventListener('load', () => el.setAttribute('data-logo', '1'));
+  n.addEventListener('load', () => {
+    el.setAttribute('data-logo', '1');
+    el.style.background = 'transparent';
+  });
   n.addEventListener('error', () => {
     n.remove();
     el.removeAttribute('data-logo');
+    el.style.background = plaque;
   });
   n.setAttribute('src', url);
   el.append(n);

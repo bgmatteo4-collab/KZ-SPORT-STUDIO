@@ -179,11 +179,11 @@ export function monterSelecteur(flash: (message: string) => void): Selecteur {
       <span class="picker__comp">${img(m.ligueLogo, 'picker__complogo')}<em>${echapper(court(m.ligueNom))}</em></span>
       <span class="picker__etat">${etatTexte(m)}</span>
       <span class="picker__equipe picker__equipe--dom">
-        <b>${echapper(m.domicile.nom)}</b>${img(m.domicile.logo, 'picker__ecu')}
+        <b>${echapper(m.domicile.nom)}</b>${ecu(m.domicile, 'dom')}
       </span>
       <span class="picker__score">${score(m)}</span>
       <span class="picker__equipe picker__equipe--ext">
-        ${img(m.exterieur.logo, 'picker__ecu')}<b>${echapper(m.exterieur.nom)}</b>
+        ${ecu(m.exterieur, 'ext')}<b>${echapper(m.exterieur.nom)}</b>
       </span>
       <span class="picker__marque">${source && source.eventId === m.id ? 'À l’antenne' : ''}</span>
     `;
@@ -349,4 +349,27 @@ function img(url: string | null, classe: string): string {
   const local = ecuLocal(url);
   if (!local) return '';
   return `<img class="${classe}" src="${echapper(local)}" alt="" loading="lazy" onerror="this.remove()">`;
+}
+
+/**
+ * L'écu d'une équipe dans la liste : le vrai logo, ou son trigramme.
+ *
+ * ── Pourquoi un repli, alors qu'à l'antenne on s'en passait ici ────────────
+ *
+ * Un logo manquant ne laissait rien du tout. Dans une liste de cent matchs
+ * balayée au clavier, les quelques lignes sans logo n'ont pas la même largeur
+ * que les autres : les noms ne s'alignent plus, et l'œil perd la colonne
+ * qu'il suivait. Une pastille au trigramme occupe exactement la même place
+ * qu'un écusson — c'est tout ce qu'on lui demande.
+ *
+ * Les couleurs du club quand on les a, un gris franc sinon : jamais une
+ * couleur plausible et fausse.
+ */
+function ecu(equipe: EquipeListe, cote: 'dom' | 'ext'): string {
+  const logo = img(equipe.logo, 'picker__ecu');
+  if (logo) return logo;
+  const teinte = equipe.couleur ? `background:${echapper(equipe.couleur)}` : '';
+  return `<span class="picker__ecu picker__ecu--texte picker__ecu--${cote}" style="${teinte}">${echapper(
+    equipe.abbr.slice(0, 3),
+  )}</span>`;
 }

@@ -9,7 +9,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { resolve } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
@@ -238,6 +238,26 @@ const EMBLEME_TYPES: [string, string][] = [
   ['.jpeg', 'image/jpeg'],
 ];
 
+/**
+ * Les codes de compétition pour lesquels un fichier a été déposé.
+ *
+ * Lu à chaque appel, et c'est voulu : on veut qu'un fichier ajouté pendant une
+ * émission se voie au rafraîchissement suivant, sans redémarrer le serveur.
+ * Le dossier contient au plus quelques dizaines d'entrées.
+ */
+function emblemesDeposes(): string[] {
+  if (!existsSync(EMBLEME_DIR)) return [];
+  const connus = new Set(EMBLEME_TYPES.map(([ext]) => ext));
+  const out = new Set<string>();
+  for (const nom of readdirSync(EMBLEME_DIR)) {
+    const point = nom.lastIndexOf('.');
+    if (point <= 0) continue;
+    if (!connus.has(nom.slice(point).toLowerCase())) continue;
+    out.add(nom.slice(0, point));
+  }
+  return [...out].sort();
+}
+
 function servirEmbleme(slug: string, repli: string | null, res: ServerResponse): void {
   // Cette valeur devient un chemin de fichier : on n'accepte que la forme d'un
   // code de compétition, et jamais de quoi remonter dans l'arborescence.
@@ -421,6 +441,21 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
 
   if (parts[0] === 'embleme' && parts.length === 2) {
     servirEmbleme(parts[1]!, url.searchParams.get('de'), res);
+    return;
+  }
+
+  // Quels emblèmes sont déposés localement, et où les déposer.
+  //
+  // Le dossier et son mode d'emploi existaient déjà ; personne ne les voyait.
+  // « La Ligue 1 n'est toujours pas bonne » est resté vrai une semaine parce
+  // que la seule façon de l'apprendre était d'ouvrir un README. La régie le
+  // dit maintenant à l'écran, avec le nom de fichier exact.
+  if (parts[0] === 'emblemes' && parts.length === 1) {
+    json(res, 200, {
+      dossier: 'assets/competitions',
+      extensions: EMBLEME_TYPES.map(([ext]) => ext),
+      presents: emblemesDeposes(),
+    });
     return;
   }
 

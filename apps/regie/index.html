@@ -132,6 +132,21 @@
             <span class="field__nom">Vitesse de rejeu</span>
             <select class="menu" id="speed"></select>
           </label>
+
+          <!-- L'emblème de compétition. ESPN date les siens de 2019 : son logo
+               de Ligue 1 est encore l'ancien. Le dossier qui permet d'imposer
+               le bon existait déjà, mais rien ne le disait à l'écran — il
+               fallait ouvrir un README pour l'apprendre. -->
+          <div class="field">
+            <span class="field__nom">Emblème</span>
+            <span class="embleme__etat" id="embleme-etat">—</span>
+          </div>
+          <!-- Le chemin occupe TOUTE la largeur : serré dans la colonne de
+               droite, « …/bra.1.png » se coupait entre le « p » et le « ng »,
+               et un chemin coupé ne se recopie pas. -->
+          <button class="embleme" id="embleme" type="button" title="Copier le chemin du fichier">
+            <code class="embleme__fichier" id="embleme-fichier"></code>
+          </button>
         </div>
 
         <div class="group">

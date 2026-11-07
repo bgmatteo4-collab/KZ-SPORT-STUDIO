@@ -41,10 +41,19 @@ import { crestEl, paintCrest } from './crest.js';
 import { panel } from './panel.js';
 import type { Widget, WidgetContext, WidgetFactory } from './types.js';
 
-/** Hauteur d'une ligne, gouttière comprise. Mesurée sur le rendu. */
-const LIGNE = 46;
-/** Ce que mange l'en-tête du panneau. */
-const CHROME = 76 + 16;
+/**
+ * Hauteur d'une ligne, gouttière comprise. Mesurées sur le rendu réel.
+ *
+ * Deux valeurs, parce qu'il y a deux formes de ligne : sur deux rangées —
+ * le fait, puis son détail en dessous — pour le fil complet, et sur UNE
+ * rangée pour le bandeau permanent. Se tromper ici ne déborde pas, c'est
+ * pire : le conteneur comprime les lignes et rogne le détail par le bas,
+ * ce qui ressemble à une police mal choisie plutôt qu'à un défaut de calcul.
+ */
+const LIGNE_DEUX_RANGEES = 56;
+const LIGNE_UNE_RANGEE = 36;
+/** Ce que mangent l'en-tête du panneau et les marges de la liste. */
+const CHROME = 76 + 24;
 
 /**
  * La marque d'un fait. Volontairement dessinée en CSS et pas en icône :
@@ -84,7 +93,8 @@ export const fil: WidgetFactory = (ctx): Widget => {
     update({ state, box: slot }: WidgetContext) {
       // La capacité vient du créneau, pas d'une constante : le même widget
       // sert un bandeau de trois lignes et une colonne de douze.
-      const parColonne = slot.h > 0 ? Math.max(2, Math.floor((slot.h - CHROME) / LIGNE)) : 8;
+      const ligne = recent ? LIGNE_UNE_RANGEE : LIGNE_DEUX_RANGEES;
+      const parColonne = slot.h > 0 ? Math.max(1, Math.floor((slot.h - CHROME) / ligne)) : 8;
       const capacite = large ? parColonne * 2 : parColonne;
       const faits = recent
         ? derniersFaits(state.feed, capacite)
@@ -138,24 +148,30 @@ export const fil: WidgetFactory = (ctx): Widget => {
         // forme longue finit en « dans l'a… », et une vérité coupée vaut
         // moins qu'une vérité plus courte.
         const detail = detailDuFait(fait, cellule < 520);
-        const ligne = h('div', { class: 'fil__ligne' }, [haut]);
-        if (detail) ligne.append(h('div', { class: 'fil__detail t-caption' }, [detail]));
+        const rangee = h('div', { class: 'fil__ligne' }, [haut]);
+        if (detail) {
+          // Sur un bandeau étroit, le détail passe SUR LA MÊME rangée, après
+          // le libellé : deux rangées y seraient comprimées par le conteneur
+          // et la seconde se retrouverait rognée par le bas.
+          if (recent) {
+            titre.after(h('span', { class: 'fil__detail fil__detail--meme-ligne' }, [detail]));
+          } else {
+            rangee.append(h('div', { class: 'fil__detail t-caption' }, [detail]));
+          }
+        }
 
-        ligne.dataset.valeur = String(VALEUR_FIL[fait.kind]);
-        ligne.dataset.cote = fait.side;
-        if (estBut(fait.kind)) ligne.dataset.but = '1';
-        ligne.style.setProperty(
-          '--teinte',
-          fait.side === 'home' ? teintes.home : teintes.away,
-        );
+        rangee.dataset.valeur = String(VALEUR_FIL[fait.kind]);
+        rangee.dataset.cote = fait.side;
+        if (estBut(fait.kind)) rangee.dataset.but = '1';
+        rangee.style.setProperty('--teinte', fait.side === 'home' ? teintes.home : teintes.away);
 
         // L'entrée n'est animée que pour un fait réellement nouveau. Sans ce
         // garde-fou, le moindre changement de capacité — une scène qui
         // s'ouvre — rejouerait l'animation sur toute la liste, et un plateau
         // qui frissonne entier se remarque immédiatement à l'antenne.
-        if (ordre[0] === fait && tete !== null && fait.seq !== tete) ligne.dataset.neuf = '1';
+        if (ordre[0] === fait && tete !== null && fait.seq !== tete) rangee.dataset.neuf = '1';
 
-        liste.append(ligne);
+        liste.append(rangee);
       }
 
       tete = ordre[0]?.seq ?? null;

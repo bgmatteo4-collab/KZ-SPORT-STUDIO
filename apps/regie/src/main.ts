@@ -212,6 +212,70 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')
   });
 }
 
+// ───────────────────── L'emblème de la compétition ──────────────────────────
+//
+// ESPN sert les emblèmes de compétition, mais il les date de mai 2019 et ne
+// les a jamais remis à jour : son logo de Ligue 1 est encore celui d'avant
+// 2020, en gris. Le dossier qui permet d'imposer le bon existait déjà, avec
+// son mode d'emploi — mais rien ne le disait à l'écran, et « la Ligue 1 n'est
+// toujours pas bonne » est donc resté vrai pendant une semaine. La régie
+// annonce maintenant d'où vient l'emblème, et le nom de fichier exact.
+
+const emblemeBouton = el<HTMLButtonElement>('embleme');
+const emblemeEtat = el('embleme-etat');
+const emblemeFichier = el('embleme-fichier');
+
+/** Les codes pour lesquels un fichier a été déposé. `null` tant qu'on ignore. */
+let emblemesLocaux: Set<string> | null = null;
+let competitionVue: string | null = null;
+
+async function relireEmblemes(): Promise<void> {
+  try {
+    const r = await fetch('/api/emblemes');
+    const d = (await r.json()) as { presents?: string[] };
+    emblemesLocaux = new Set(d.presents ?? []);
+  } catch {
+    // Le serveur ne répond pas : on ne prétend pas savoir. Mieux vaut ne rien
+    // afficher qu'affirmer à tort qu'un fichier manque.
+    emblemesLocaux = null;
+  }
+}
+void relireEmblemes();
+// Un fichier déposé en pleine émission doit se voir sans redémarrer.
+window.setInterval(() => void relireEmblemes(), 30_000);
+
+function majEmbleme(competitionId: string | undefined): void {
+  const id = competitionId ?? '';
+  if (id === competitionVue && emblemesLocaux !== null) return;
+  competitionVue = id;
+
+  if (!id) {
+    setTexte(emblemeEtat, 'compétition inconnue');
+    setTexte(emblemeFichier, '');
+    emblemeBouton.dataset.local = '1';
+    emblemeEtat.dataset.local = '1';
+    return;
+  }
+  const local = emblemesLocaux?.has(id) ?? false;
+  // `data-local` masque le chemin quand il n'y a plus rien à faire : on ne
+  // propose pas une action déjà accomplie.
+  emblemeBouton.dataset.local = local ? '1' : '0';
+  emblemeEtat.dataset.local = local ? '1' : '0';
+  setTexte(emblemeEtat, local ? 'fichier local' : 'fourni par ESPN (2019)');
+  setTexte(emblemeFichier, `assets/competitions/${id}.png`);
+}
+
+emblemeBouton.addEventListener('click', async () => {
+  const chemin = emblemeFichier.textContent ?? '';
+  if (!chemin) return;
+  try {
+    await navigator.clipboard.writeText(chemin);
+    flash('Chemin copié');
+  } catch {
+    flash(chemin);
+  }
+});
+
 let toastTimer = 0;
 function flash(message: string): void {
   toast.textContent = message;
@@ -412,6 +476,7 @@ function refresh(): void {
   setTexte(sourceDetail, provider.detail ?? provider.name);
 
   majInserts(state);
+  majEmbleme(state.meta?.competitionId);
 
   renderFeed(state);
   requestAnimationFrame(refresh);
