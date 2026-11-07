@@ -65,6 +65,25 @@ export function paintCrest(el: HTMLElement, team: AnyTeam | undefined | null): v
  * Le fond est donc remis à sa valeur AU MOMENT où l'image arrive — ou échoue.
  * C'est le seul instant où l'on sait vraiment ce qu'il faut afficher.
  */
+/**
+ * Les écussons déjà chargés une fois dans cette page.
+ *
+ * ── Le clignotement que ça supprime ────────────────────────────────────────
+ *
+ * Les listes se reconstruisent — le multiplex dès qu'une minute avance,
+ * c'est-à-dire sans arrêt. Chaque reconstruction fabriquait un `<img>` neuf,
+ * et `load` est asynchrone MÊME quand l'image est déjà dans le cache du
+ * navigateur : pendant une image ou deux, les vingt lignes montraient donc la
+ * plaque dessinée avant que le vrai écusson ne la remplace. Vingt logos qui
+ * battent une fois par minute, c'est exactement le « tout change brusquement »
+ * qu'on cherche à faire disparaître.
+ *
+ * Une URL qui a déjà chargé une fois charge toujours : on pose donc l'état
+ * final tout de suite, et `load` ne fait plus que confirmer. En cas d'échec,
+ * l'URL sort de la liste et on repasse par la plaque.
+ */
+const DEJA_CHARGEES = new Set<string>();
+
 function poser(
   el: HTMLElement,
   abbr: string,
@@ -97,11 +116,17 @@ function poser(
   n.className = 'crest__img';
   n.alt = '';
   n.decoding = 'async';
+  if (DEJA_CHARGEES.has(url)) {
+    el.setAttribute('data-logo', '1');
+    el.style.background = 'transparent';
+  }
   n.addEventListener('load', () => {
+    DEJA_CHARGEES.add(url);
     el.setAttribute('data-logo', '1');
     el.style.background = 'transparent';
   });
   n.addEventListener('error', () => {
+    DEJA_CHARGEES.delete(url);
     n.remove();
     el.removeAttribute('data-logo');
     el.style.background = plaque;

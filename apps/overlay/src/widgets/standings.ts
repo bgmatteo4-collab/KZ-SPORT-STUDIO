@@ -25,6 +25,7 @@
 
 import { classementProjete, type LigneProjetee, paireCouleurs, tranche } from '@kz/core';
 import { h, setText } from '../dom.js';
+import { listeAnimee, type EntreeListe, type ListeAnimee } from '../mouvement.js';
 import { crestEl, paintCrest } from './crest.js';
 import { panel } from './panel.js';
 import type { Widget, WidgetContext, WidgetFactory } from './types.js';
@@ -39,6 +40,26 @@ export const standings: WidgetFactory = (ctx): Widget => {
   // ainsi » — et le taire serait une affirmation fausse.
   const note = h('p', { class: 'table__note t-caption', hidden: '' }, ['']);
   box.body.append(grid, note);
+
+  /*
+   * Les colonnes sont PERSISTANTES, et seules leurs lignes sont réconciliées.
+   *
+   * Un classement bouge peu et bouge fort : sur un but, deux équipes changent
+   * de place et tout ce qui est entre elles se décale d'un rang. Reconstruire
+   * le tableau faisait disparaître vingt lignes pour en permuter deux — le
+   * mouvement qui PORTE l'information, « untel passe devant untel », était
+   * précisément celui qu'on effaçait. Suivies par identifiant d'équipe, les
+   * lignes se croisent à l'écran.
+   */
+  const colonnes: { el: HTMLElement; liste: ListeAnimee }[] = [];
+  const colonne = (index: number): ListeAnimee => {
+    while (colonnes.length <= index) {
+      const el = h('div', { class: 'table__col' });
+      grid.append(el);
+      colonnes.push({ el, liste: listeAnimee(el) });
+    }
+    return colonnes[index]!.liste;
+  };
 
   let signature: string | null = null;
 
@@ -89,8 +110,10 @@ export const standings: WidgetFactory = (ctx): Widget => {
       note.hidden = texte === '';
       setText(note, texte);
 
-      grid.replaceChildren();
-      if (shown.length === 0) return;
+      if (shown.length === 0) {
+        for (const c of colonnes) c.liste.rendre([]);
+        return;
+      }
 
       // La même paire que la carte des tirs et le fil : les deux lignes en jeu
       // portent la couleur sous laquelle le reste du plateau les montre.
@@ -101,21 +124,26 @@ export const standings: WidgetFactory = (ctx): Widget => {
         ? [shown.slice(0, Math.ceil(shown.length / 2)), shown.slice(Math.ceil(shown.length / 2))]
         : [shown];
 
-      for (const rows of columns) {
-        if (rows.length === 0) continue;
-        const column = h('div', { class: 'table__col' }, [header()]);
+      columns.forEach((rows, index) => {
+        const entrees: EntreeListe[] = [];
+        if (rows.length > 0) entrees.push({ cle: 'tete', faire: header });
         let precedent: number | null = null;
         for (const row of rows) {
           // La fenêtre a sauté des places : le dire. Sans ce trait, passer de
           // la 3e à la 12e ligne se lit comme un tableau faux.
           if (precedent !== null && row.rank > precedent + 1) {
-            column.append(h('div', { class: 'table__saut' }));
+            entrees.push({ cle: `saut:${row.rank}`, faire: () => h('div', { class: 'table__saut' }) });
           }
           precedent = row.rank;
-          column.append(buildRow(row, teintes, state.meta?.home));
+          // L'ÉQUIPE est la clé, pas le rang : c'est le rang qui change, et
+          // la prendre pour identité reviendrait à dire que la 4e place est
+          // toujours la même ligne — exactement le contraire de ce qu'on veut
+          // montrer.
+          const cle = `e:${row.team.id ?? row.team.short}`;
+          entrees.push({ cle, faire: () => buildRow(row, teintes, state.meta?.home) });
         }
-        grid.append(column);
-      }
+        colonne(index).rendre(entrees);
+      });
     },
   };
 };

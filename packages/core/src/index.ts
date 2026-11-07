@@ -4,6 +4,7 @@ export * from './classement.js';
 export * from './couleurs.js';
 export * from './multiplex.js';
 export * from './ressort.js';
+export * from './mouvement.js';
 export * from './clock.js';
 export * from './ecu.js';
 export * from './reduce.js';

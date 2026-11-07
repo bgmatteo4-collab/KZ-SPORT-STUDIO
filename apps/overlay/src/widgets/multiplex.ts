@@ -36,7 +36,8 @@ import {
   trierMultiplex,
   vientDeMarquer,
 } from '@kz/core';
-import { h, setAttr, setText } from '../dom.js';
+import { h, setAttr } from '../dom.js';
+import { listeAnimee, type EntreeListe } from '../mouvement.js';
 import { crestEl, paintCrest } from './crest.js';
 import { panel } from './panel.js';
 import type { Widget, WidgetContext, WidgetFactory } from './types.js';
@@ -63,6 +64,18 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
   // Ce qu'on ne montre pas. Sans cette ligne, un soir de Coupe d'Europe, le
   // panneau laisse croire que huit matchs se jouent quand il y en a quarante.
   box.body.append(list, vide);
+
+  /*
+   * La liste GLISSE au lieu de se reconstruire.
+   *
+   * C'est le panneau où ça compte le plus : l'ordre vient de `trierMultiplex`,
+   * et ce qui vient de marquer REMONTE EN TÊTE. Reconstruire la liste faisait
+   * disparaître et réapparaître vingt blocs pour en déplacer un — autrement
+   * dit, le mouvement le plus porteur de sens de tout l'habillage était
+   * exactement celui qu'on ne voyait pas. Suivi par clé, le match qui vient de
+   * marquer monte à l'écran, et le regard le suit.
+   */
+  const liste = listeAnimee(list);
 
   let signature: string | null = null;
 
@@ -122,15 +135,22 @@ export const multiplex: WidgetFactory = (ctx): Widget => {
       if (next === signature) return;
       signature = next;
 
-      list.replaceChildren();
       vide.hidden = montres > 0;
 
+      const entrees: EntreeListe[] = [];
       for (const paquet of paquets) {
         if (groupe && paquet.competition) {
-          list.append(h('div', { class: 'mx__groupe t-kicker' }, [paquet.competition]));
+          const nom = paquet.competition;
+          entrees.push({
+            cle: `g:${nom}`,
+            faire: () => h('div', { class: 'mx__groupe t-kicker' }, [nom]),
+          });
         }
-        for (const match of paquet.matches) list.append(bloc(match, t, groupe));
+        for (const match of paquet.matches) {
+          entrees.push({ cle: `m:${match.id}`, faire: () => bloc(match, t, groupe) });
+        }
       }
+      liste.rendre(entrees);
     },
   };
 };

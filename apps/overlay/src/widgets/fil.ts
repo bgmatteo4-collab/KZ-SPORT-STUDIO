@@ -37,6 +37,7 @@ import {
   VALEUR_FIL,
 } from '@kz/core';
 import { h } from '../dom.js';
+import { listeAnimee, type EntreeListe } from '../mouvement.js';
 import { crestEl, paintCrest } from './crest.js';
 import { panel } from './panel.js';
 import type { Widget, WidgetContext, WidgetFactory } from './types.js';
@@ -83,9 +84,20 @@ export const fil: WidgetFactory = (ctx): Widget => {
   const vide = h('p', { class: 'fil__vide t-caption' }, ['Aucun fait de jeu pour l’instant']);
   box.body.append(liste, vide);
 
+  /*
+   * Le fil pousse par le HAUT : un fait arrive, tous les autres descendent
+   * d'un cran, et le dernier sort par le bas.
+   *
+   * Avant, seule la ligne de tête portait une animation d'entrée, et le reste
+   * de la liste SAUTAIT d'une rangée sous elle. L'œil voyait donc deux choses
+   * contradictoires — une ligne qui se pose doucement, et une colonne qui se
+   * téléporte. Les lignes sont maintenant suivies par leur numéro de séquence :
+   * celles qui restent glissent jusqu'à leur nouvelle rangée, et le mouvement
+   * de descente se lit comme un fil qui défile.
+   */
+  const defile = listeAnimee(liste);
+
   let signature: string | null = null;
-  /** Le dernier fait montré en tête, pour n'animer que ce qui est NOUVEAU. */
-  let tete: number | null = null;
 
   return {
     el: box.el,
@@ -111,7 +123,6 @@ export const fil: WidgetFactory = (ctx): Widget => {
       signature = next;
 
       vide.hidden = ordre.length > 0;
-      liste.replaceChildren();
       // La grille a besoin du nombre de rangées pour remplir la première
       // colonne avant d'attaquer la seconde. Le dire en CSS seul demanderait
       // un nombre fixe, qui ne survivrait pas au changement de créneau.
@@ -122,7 +133,8 @@ export const fil: WidgetFactory = (ctx): Widget => {
       // dans les deux blocs, et deux maillots rouge sombre ne produisent pas
       // deux liserés identiques.
       const teintes = paireCouleurs(meta?.home, meta?.away);
-      for (const fait of ordre) {
+
+      const construire = (fait: (typeof ordre)[number]): HTMLElement => {
         const equipe = fait.side === 'home' ? meta?.home : meta?.away;
 
         const crest = crestEl('fil__crest');
@@ -164,17 +176,18 @@ export const fil: WidgetFactory = (ctx): Widget => {
         rangee.dataset.cote = fait.side;
         if (estBut(fait.kind)) rangee.dataset.but = '1';
         rangee.style.setProperty('--teinte', fait.side === 'home' ? teintes.home : teintes.away);
+        return rangee;
+      };
 
-        // L'entrée n'est animée que pour un fait réellement nouveau. Sans ce
-        // garde-fou, le moindre changement de capacité — une scène qui
-        // s'ouvre — rejouerait l'animation sur toute la liste, et un plateau
-        // qui frissonne entier se remarque immédiatement à l'antenne.
-        if (ordre[0] === fait && tete !== null && fait.seq !== tete) rangee.dataset.neuf = '1';
-
-        liste.append(rangee);
-      }
-
-      tete = ordre[0]?.seq ?? null;
+      // La clé est le numéro de séquence du fait : il ne change jamais, même
+      // quand la ligne est redessinée plus courte parce que le créneau a
+      // rétréci. C'est ce qui distingue « la même ligne, ailleurs » de « une
+      // autre ligne » — toute l'animation en dépend.
+      const entrees: EntreeListe[] = ordre.map((fait) => ({
+        cle: String(fait.seq),
+        faire: () => construire(fait),
+      }));
+      defile.rendre(entrees);
 
       // Pas de « 10 de 53 » dans le titre : c'est une information de régie,
       // pas d'antenne. Le spectateur n'a aucune idée de ce qu'est un « fait »

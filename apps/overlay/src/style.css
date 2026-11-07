@@ -70,17 +70,112 @@ html {
   transform-origin: top left;
 }
 
+/* ══════════════════════════════ Le mouvement ═══════════════════════════════
+   La grammaire est documentée dans `mouvement.ts`. Ici, seulement sa forme.
+
+   CHAQUE `var()` de cette section porte une valeur de repli, et ce n'est pas
+   de la prudence décorative. Une transition écrite
+   `transform var(--dur-entree) var(--ease-entree)` dont UN seul jeton manque
+   n'est pas « partiellement appliquée » : la déclaration entière devient
+   invalide et retombe sur `all 0s`, c'est-à-dire sur l'absence totale
+   d'animation. Vu pour de vrai, et le symptôme ne ressemble pas à sa cause :
+   tout l'habillage s'était remis à sauter, sans une erreur de console, parce
+   que le serveur de développement servait encore l'ancien thème.
+
+   La POSITION d'une couche passe par `transform`, pas par `left`/`top` : un
+   panneau qui change de créneau d'une scène à l'autre glisse alors jusqu'à sa
+   nouvelle place au lieu d'y sauter, et sans rien coûter au compositeur. La
+   chaîne de transformées est écrite entière depuis le JavaScript — poser la
+   place dans une propriété personnalisée et l'entrée dans une autre marchait,
+   mais dépendait de la façon dont le navigateur réinterpole une transformée
+   dont seule une variable a bougé. Dans OBS, on ne parie pas là-dessus. */
+
 .layer {
   position: absolute;
+  left: 0;
+  top: 0;
   will-change: transform, opacity;
-  transition:
-    transform var(--dur-slow) var(--ease),
-    opacity var(--dur-base) var(--ease);
 }
 
-.layer[data-anim='enter'] { opacity: 0; transform: translate3d(0, 20px, 0); }
-.layer[data-anim='in']    { opacity: 1; transform: translate3d(0, 0, 0); }
-.layer[data-anim='exit']  { opacity: 0; transform: translate3d(0, 14px, 0); pointer-events: none; }
+/* L'image zéro : en place pour le calcul, invisible et décalée. Aucune
+   transition, sinon le navigateur animerait l'arrivée depuis le coin. */
+.layer[data-anim='enter'] {
+  opacity: 0;
+  transition: none;
+}
+
+/* L'entrée. Le retard est posé par le JavaScript : il vaut zéro au premier
+   affichage, et le temps d'une sortie quand ce panneau en remplace un autre
+   dans le même créneau. */
+.layer[data-anim='in'] {
+  opacity: 1;
+  transition:
+    transform var(--dur-entree, 520ms) var(--ease-entree, cubic-bezier(0.16, 1, 0.3, 1)) var(--retard, 0ms),
+    opacity var(--dur-entree, 520ms) var(--ease-entree, cubic-bezier(0.16, 1, 0.3, 1)) var(--retard, 0ms);
+}
+
+/* Posé. Un panneau qui reste à l'antenne et change de créneau glisse. */
+.layer[data-anim='pose'] {
+  opacity: 1;
+  transition:
+    transform var(--dur-glisse, 460ms) var(--ease-glisse, cubic-bezier(0.32, 0.72, 0, 1)),
+    opacity var(--dur-glisse, 460ms) var(--ease-glisse, cubic-bezier(0.32, 0.72, 0, 1));
+}
+
+.layer[data-anim='exit'] {
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dur-sortie, 220ms) var(--ease-sortie, cubic-bezier(0.55, 0, 1, 0.45)),
+    opacity var(--dur-sortie, 220ms) var(--ease-sortie, cubic-bezier(0.55, 0, 1, 0.45));
+}
+
+/* ── Les listes qui glissent ──────────────────────────────────────────────
+   Le conteneur devient le repère des partantes, qu'on fige à leur dernière
+   place le temps qu'elles s'effacent — sans quoi la liste se refermerait d'un
+   coup sous elles. */
+
+.anim-liste {
+  position: relative;
+}
+
+.anim-entre {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0);
+}
+
+.anim-entre--go {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform var(--dur-entree, 520ms) var(--ease-entree, cubic-bezier(0.16, 1, 0.3, 1)) var(--retard, 0ms),
+    opacity var(--dur-entree, 520ms) var(--ease-entree, cubic-bezier(0.16, 1, 0.3, 1)) var(--retard, 0ms);
+}
+
+.anim-part {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.anim-part--go {
+  opacity: 0;
+  transform: translate3d(0, -6px, 0) scale(0.97);
+  transition:
+    transform var(--dur-sortie, 220ms) var(--ease-sortie, cubic-bezier(0.55, 0, 1, 0.45)),
+    opacity var(--dur-sortie, 220ms) var(--ease-sortie, cubic-bezier(0.55, 0, 1, 0.45));
+}
+
+/* Le réglage système passe avant l'habillage. Rien ne bouge, tout reste
+   juste. */
+@media (prefers-reduced-motion: reduce) {
+  .layer,
+  .anim-entre,
+  .anim-entre--go,
+  .anim-part--go {
+    transition: none !important;
+  }
+}
 
 /* ═══════════════════════════ L'échelle typographique ═══════════════════════
    Déclarée une fois, appliquée par classe. Aucune taille de police ne doit

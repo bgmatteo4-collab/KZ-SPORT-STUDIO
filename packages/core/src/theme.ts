@@ -91,6 +91,24 @@ export interface ThemeTokens {
   durBase: string;
   durSlow: string;
   ease: string;
+
+  /**
+   * ── La grammaire du mouvement ───────────────────────────────────────────
+   *
+   * Trois moments, trois couples durée/courbe, et JAMAIS la même courbe pour
+   * entrer et pour sortir. L'œil suit ce qui arrive et ignore ce qui part :
+   * une entrée doit donc être longue et finir doucement, une sortie brève et
+   * franche. Avec une seule courbe symétrique pour les deux — ce qu'avait
+   * l'habillage — tout avait le même poids, et rien n'avait de direction.
+   */
+  durEntree: string;
+  durSortie: string;
+  durGlisse: string;
+  easeEntree: string;
+  easeSortie: string;
+  easeGlisse: string;
+  /** Le chevauchement : le nouveau entre quand l'ancien est déjà parti. */
+  retardEntree: string;
 }
 
 export interface Theme {
@@ -143,6 +161,17 @@ const SHAPE = {
   durBase: '320ms',
   durSlow: '620ms',
   ease: 'cubic-bezier(0.22, 1, 0.36, 1)',
+
+  durEntree: '520ms',
+  durSortie: '220ms',
+  durGlisse: '460ms',
+  /* Décélération longue : la fin du mouvement est presque immobile. */
+  easeEntree: 'cubic-bezier(0.16, 1, 0.3, 1)',
+  /* Accélération : on part, on ne traîne pas. */
+  easeSortie: 'cubic-bezier(0.55, 0, 1, 0.45)',
+  /* Un déplacement n'a ni départ ni arrivée à souligner. */
+  easeGlisse: 'cubic-bezier(0.32, 0.72, 0, 1)',
+  retardEntree: '140ms',
 } as const;
 
 /*

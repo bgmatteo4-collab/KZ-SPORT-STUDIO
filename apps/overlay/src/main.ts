@@ -31,6 +31,7 @@ import {
   type Trigger,
 } from '@kz/core';
 import { Connection } from './connection.js';
+import { directionDuCreneau, DUREE, memeEndroit, orienter } from './mouvement.js';
 import { REGISTRY, type Widget, type WidgetContext } from './widgets/index.js';
 
 const params = new URLSearchParams(location.search);
@@ -158,22 +159,41 @@ function wantedLayers(current: Scene): SceneLayer[] {
   return list;
 }
 
+/** A-t-on déjà affiché quelque chose ? Le tout premier montage s'échelonne. */
+let premierMontage = true;
+
 function syncScene(current: Scene): void {
   const wanted = wantedLayers(current);
   const keys = new Set(wanted.map((l) => l.widget));
 
+  /*
+   * Règle n°2 du mouvement : LA SORTIE PASSE DEVANT.
+   *
+   * On relève d'abord quels créneaux se vident. Un panneau qui arrive dans un
+   * créneau qu'un autre vient de quitter attend que l'autre soit parti — sinon
+   * les deux se croisent à mi-opacité et l'on ne lit ni l'un ni l'autre. C'est
+   * tout le défaut de l'habillage précédent : les inserts automatiques se
+   * relaient dans la MÊME case toutes les trente secondes, et ce croisement
+   * était donc la transition la plus vue de la soirée.
+   */
+  const creneauxLiberes: SceneLayer['slot'][] = [];
+
   // Sortie des couches qui ne sont plus de la scène.
   for (const [key, entry] of mounted) {
     if (keys.has(key)) continue;
+    creneauxLiberes.push(entry.spec.slot);
     entry.host.dataset.anim = 'exit';
+    placeHost(entry.host, entry.spec, 'exit');
     const host = entry.host;
     const widget = entry.widget;
     mounted.delete(key);
     window.setTimeout(() => {
       widget.destroy?.();
       host.remove();
-    }, 700);
+    }, DUREE.sortie + 80);
   }
+
+  let rangEntree = 0;
 
   for (const spec of wanted) {
     const existing = mounted.get(spec.widget);
@@ -181,9 +201,11 @@ function syncScene(current: Scene): void {
     if (existing) {
       if (sameOpts(existing.spec.opts, spec.opts)) {
         // Déjà à l'antenne : il se DÉPLACE, il ne réapparaît pas. C'est ce qui
-        // évite le clignotement du scorebug à chaque changement de scène.
+        // évite le clignotement du scorebug à chaque changement de scène. Le
+        // déplacement est maintenant une transformée, donc il GLISSE.
         existing.spec = spec;
-        placeHost(existing.host, spec);
+        existing.host.dataset.anim = 'pose';
+        placeHost(existing.host, spec, 'pose');
         // Son créneau a pu changer de taille : le contexte doit suivre.
         reseatContext(existing);
         continue;
@@ -191,6 +213,7 @@ function syncScene(current: Scene): void {
       // Les options sont lues à la CONSTRUCTION du widget. Si elles changent
       // d'une scène à l'autre, réutiliser l'instance lui laisserait celles de
       // sa première scène — c'est comme ça qu'un banc de remplaçants disparaît.
+      creneauxLiberes.push(existing.spec.slot);
       existing.widget.destroy?.();
       existing.host.remove();
       mounted.delete(spec.widget);
@@ -206,22 +229,43 @@ function syncScene(current: Scene): void {
     host.className = 'layer';
     host.dataset.widget = spec.widget;
     host.dataset.anim = 'enter';
-    placeHost(host, spec);
+    // Règle n°3 : on entre par où l'on vit. La direction se déduit du créneau,
+    // donc aucun widget n'a à la déclarer ni ne peut l'oublier.
+    const retard = creneauxLiberes.some((libre) => memeEndroit(libre, spec.slot))
+      ? DUREE.sortie
+      : premierMontage
+        ? Math.min(DUREE.echelonMax, rangEntree * 70)
+        : 0;
+    orienter(host, directionDuCreneau(spec.slot), retard);
+    rangEntree += 1;
+    placeHost(host, spec, 'enter');
 
     const ctx = buildContext(connection.cursor.at(connection.renderTime()), 0, spec);
     const widget = factory(ctx);
     host.append(widget.el);
     stage.append(host);
 
-    mounted.set(spec.widget, { widget, host, spec, ctx });
+    const entry: Mounted = { widget, host, spec, ctx };
+    mounted.set(spec.widget, entry);
 
     // Une image d'attente avant d'animer : sinon la transition est avalée.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         host.dataset.anim = 'in';
+        placeHost(host, entry.spec, 'in');
+        // Une fois arrivé, il passe en régime « posé » : la courbe d'entrée ne
+        // sert qu'à entrer, elle n'a rien à faire sur un déplacement plus tard.
+        window.setTimeout(() => {
+          if (host.dataset.anim === 'in') {
+            host.dataset.anim = 'pose';
+            host.style.setProperty('--retard', '0ms');
+          }
+        }, DUREE.entree + retard + 60);
       });
     });
   }
+
+  premierMontage = false;
 
   // L'image de la caméra, en mode navigateur et sur la couche de fond.
   const wantsCam = PORTE_CAMERA && connection.control.camMode === 'browser' && current.cam !== null;
@@ -244,10 +288,23 @@ function sameOpts(a: Record<string, unknown> | undefined, b: Record<string, unkn
   return JSON.stringify(a ?? {}) === JSON.stringify(b ?? {});
 }
 
-function placeHost(host: HTMLElement, spec: SceneLayer): void {
+/**
+ * Pose une couche : sa taille, son rang, et sa place SOUS FORME DE TRANSFORMÉE.
+ *
+ * `left`/`top` auraient été plus simples à lire, mais les animer déclenche un
+ * recalcul de mise en page à chaque image — la règle n°5 du projet l'interdit,
+ * et dans OBS ça se voit immédiatement. La place et le décalage d'entrée sont
+ * donc écrits dans la MÊME chaîne, ici, depuis le JavaScript : une seule
+ * valeur à interpoler, aucune ambiguïté possible pour le navigateur.
+ */
+function placeHost(host: HTMLElement, spec: SceneLayer, phase: 'enter' | 'in' | 'pose' | 'exit'): void {
   const box = rectToPixels(spec.slot);
-  host.style.left = `${box.x}px`;
-  host.style.top = `${box.y}px`;
+  // Combien du vecteur d'entrée on applique. Une sortie ne parcourt que la
+  // moitié du chemin : ce qui part doit s'effacer, pas traverser l'écran.
+  const part = phase === 'enter' ? 1 : phase === 'exit' ? 0.5 : 0;
+  const vx = part === 0 ? 0 : parseFloat(host.style.getPropertyValue('--vx') || '0') * part;
+  const vy = part === 0 ? 0 : parseFloat(host.style.getPropertyValue('--vy') || '0') * part;
+  host.style.transform = `translate3d(${box.x + vx}px, ${box.y + vy}px, 0)`;
   host.style.width = `${box.w}px`;
   host.style.height = `${box.h}px`;
   host.style.zIndex = String(spec.z);
