@@ -170,7 +170,15 @@ export const lineups: WidgetFactory = (ctx): Widget => {
         // Plus larges : à 10,5 % de la colonne ils faisaient pictogramme. Le
         // maillot redessiné porte un numéro, il lui faut la place de le
         // montrer.
-        const size = Math.round(Math.min(132, Math.max(54, slot.w * 0.125)));
+        // La HAUTEUR compte autant que la largeur. Calée sur la seule
+        // largeur, la composition d'un créneau large et bas — la cellule
+        // d'angle d'une scène plein écran — sortait des maillots de 88 px
+        // sur un terrain de 428, et le gardien chevauchait la ligne de
+        // défense. Onze maillots sur quatre rangées demandent de la hauteur,
+        // pas de la largeur.
+        const size = Math.round(
+          Math.min(132, Math.max(44, Math.min(slot.w * 0.125, slot.h * 0.15))),
+        );
         if (pitch.style.getPropertyValue('--jersey') !== `${size}px`) {
           pitch.style.setProperty('--jersey', `${size}px`);
         }

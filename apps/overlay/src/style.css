@@ -2464,6 +2464,74 @@ html {
   color: var(--live);
 }
 
+/* ── Le mode AFFICHE ────────────────────────────────────────────────────────
+   Les mêmes éléments, à l'échelle d'un créneau plein écran. Une affiche de
+   cinéma, pas un encart : les deux noms portent la carte, le compte à rebours
+   les sépare, et tout le reste est du générique.
+
+   Les tailles sont en `clamp()` et non en pixels fixes : la même scène sert
+   un créneau de 1 148 px de large et, si l'on déplace le panneau, un de 700.
+   Une valeur en dur donnerait une affiche superbe dans un cas et tronquée
+   dans l'autre. */
+
+.att[data-grand='1'] {
+  gap: var(--s6);
+  padding: var(--s6) var(--s5);
+}
+
+/* Le bloc ne s'ÉTIRE pas pour remplir la carte : il se groupe au centre.
+
+   Avec `flex: 1` sur l'affiche, les écus et les noms se centraient dans une
+   zone de sept cents pixels et le générique restait collé en bas — deux cent
+   cinquante pixels de vide entre les deux, au milieu de l'écran le plus
+   regardé de la soirée. Une affiche, c'est un bloc compact dans du calme,
+   pas trois morceaux poussés aux quatre coins. */
+.att[data-grand='1'] .att__affiche {
+  flex: none;
+  min-height: 0;
+}
+
+.att[data-grand='1'] .att__crest {
+  width: clamp(96px, 15vw, 190px);
+  height: clamp(100px, 15.7vw, 198px);
+  font-size: clamp(26px, 4vw, 48px);
+}
+
+.att[data-grand='1'] .att__team {
+  font-size: clamp(22px, 3vw, 40px);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 1.04;
+  /* Un nom long s'enroule au lieu de se faire trancher : sur une affiche,
+     « Borussia Mönchengladbach » tronqué à « Borussia Mönch… » est pire que
+     deux lignes. */
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.att[data-grand='1'] .att__valeur {
+  font-size: clamp(64px, 9vw, 120px);
+}
+
+.att[data-grand='1'][data-etat='commence'] .att__valeur {
+  font-size: clamp(40px, 5.5vw, 74px);
+}
+
+.att[data-grand='1'] .att__unite {
+  font-size: 16px;
+  letter-spacing: 0.16em;
+}
+
+/* Le générique : plus aéré, et sur une seule ligne tant que ça tient. */
+.att[data-grand='1'] .att__fait {
+  font-size: 15px;
+  padding: var(--s2) var(--s4);
+}
+
+.att[data-grand='1'] .att__bar { height: 14px; }
+
+.att[data-grand='1'] .att__legend { font-size: 15px; }
+
 .att__faits {
   display: flex;
   align-items: center;

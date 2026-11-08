@@ -54,7 +54,21 @@ function compteARebours(restantMs: number): { valeur: string; unite: string } {
   return { valeur: String(secondes), unite: 'secondes' };
 }
 
-export const attente: WidgetFactory = (): Widget => {
+export const attente: WidgetFactory = (ctx): Widget => {
+  /*
+   * Le mode AFFICHE : le même bloc, en grand.
+   *
+   * Rien n'est ajouté et rien n'est retiré — ce sont les mêmes informations,
+   * à une échelle qui en fait une affiche plutôt qu'une vignette. Dans un
+   * créneau de mille cent pixels de large, les écus de 76 px et les noms de
+   * 17 px laissaient les deux tiers de la carte vides : l'écran d'attente
+   * ressemblait à un panneau qu'on avait oublié d'agrandir.
+   *
+   * Une variante CSS et pas un second widget : deux implémentations du même
+   * écran finiraient par diverger, et c'est sur celle qu'on regarde le moins
+   * que le bogue se logerait.
+   */
+  const grand = ctx.opts.grand === true;
   const crestHome = crestEl('att__crest');
   const crestAway = crestEl('att__crest');
   const nameHome = h('div', { class: 'att__team' }, ['—']);
@@ -87,6 +101,7 @@ export const attente: WidgetFactory = (): Widget => {
   ]);
 
   const el = h('div', { class: 'att' }, [affiche, faits, cotes]);
+  if (grand) el.dataset.grand = '1';
 
   let vuMeta = '';
   let vuCotes = '';

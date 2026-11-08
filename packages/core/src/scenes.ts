@@ -342,28 +342,28 @@ export const SCENES: Scene[] = [
     // caméra, le compte à rebours.
     id: 'avant-match',
     name: 'Avant-match',
-    cam: CAM.case,
+    cam: CAM.coin,
     camStyle: 'framed',
     transition: SLIDE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
+      // L'AFFICHE, en grand. Elle occupait un encart de 456 px en bas de
+      // l'écran pendant que la caméra tenait le centre : les deux écussons
+      // y faisaient 76 px et les noms 17, c'est-à-dire la taille d'une
+      // vignette pour le moment où le plateau n'a rien d'autre à montrer.
+      { widget: 'attente', slot: SLOT.pleinPrincipal, z: 20, opts: { grand: true } },
+      // Les compositions probables, qui ALTERNENT. Deux colonnes figées
+      // prenaient tout l'écran pour dire une chose qui, avant le coup
+      // d'envoi, n'est même pas sûre.
       {
         widget: 'lineups',
-        slot: SLOT.colonneGauche,
+        slot: SLOT.pleinSecondaire,
         z: 20,
-        opts: { side: 'home', probable: true },
+        opts: { probable: true, alterne: true },
       },
-      { widget: 'attente', slot: SLOT.radar, z: 20 },
-      {
-        widget: 'lineups-away',
-        slot: SLOT.colonneDroiteTout,
-        z: 20,
-        opts: { side: 'away', probable: true },
-      },
-      { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
-      { widget: 'social', slot: SLOT.social, z: 20 },
-      { widget: 'cam-frame', slot: CAM.case, z: 110 },
+      { widget: 'social', slot: SLOT.socialSurCam, z: 20 },
+      { widget: 'cam-frame', slot: CAM.coin, z: 110 },
     ],
   },
   {
