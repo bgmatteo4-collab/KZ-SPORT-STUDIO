@@ -37,6 +37,7 @@ import type {
   RencontrePassee,
   Side,
   StandingRow,
+  StatsRencontre,
   Team,
   TeamBrief,
 } from '@kz/core';
@@ -502,6 +503,64 @@ function rencontrePassee(e: EspnLastFiveEvent, idEquipe: string): RencontrePasse
     resultat,
     ...(e.leagueAbbreviation ? { competition: e.leagueAbbreviation } : {}),
   };
+}
+
+/**
+ * Les chiffres d'une rencontre du multiplex.
+ *
+ * Ils étaient sous nos yeux : le tableau de bord global qu'on appelle déjà
+ * toutes les quarante-cinq secondes pour les scores porte un objet
+ * `statistics` par équipe et par rencontre. On ne lisait que le score.
+ *
+ * ── Les unités ne sont PAS homogènes ───────────────────────────────────────
+ *
+ * Même piège que dans le boxscore du match suivi : `possessionPct` vaut 44.4
+ * — un pourcentage — là où d'autres champs du même tableau sont des rapports.
+ * On ne normalise donc rien ici : chaque champ est lu pour ce qu'il est, et
+ * la possession est recadrée sur [0, 100].
+ *
+ * Une paire n'est retenue que si les DEUX camps la publient. Un « 9 corners
+ * contre rien » se lirait comme un écart écrasant alors qu'il ne dit que
+ * l'absence d'une donnée.
+ */
+function statsRencontre(
+  d: EspnCompetitor | undefined,
+  e: EspnCompetitor | undefined,
+): StatsRencontre | null {
+  if (!d || !e) return null;
+  const lire = (c: EspnCompetitor, nom: string): number | null => {
+    for (const s of c.statistics ?? []) {
+      if (s.name === nom) return nombre(s.displayValue) ?? nombre(s.value);
+    }
+    return null;
+  };
+  const paire = (nom: string): Pair | null => {
+    const a = lire(d, nom);
+    const b = lire(e, nom);
+    return a === null || b === null ? null : [a, b];
+  };
+
+  const possession = paire('possessionPct');
+  const out: StatsRencontre = {
+    ...(possession
+      ? {
+          possession: [
+            Math.min(100, Math.max(0, possession[0])),
+            Math.min(100, Math.max(0, possession[1])),
+          ] as Pair,
+        }
+      : {}),
+  };
+  for (const [nom, clef] of [
+    ['totalShots', 'shots'],
+    ['shotsOnTarget', 'shotsOnTarget'],
+    ['wonCorners', 'corners'],
+    ['foulsCommitted', 'fouls'],
+  ] as const) {
+    const v = paire(nom);
+    if (v) out[clef] = v;
+  }
+  return Object.keys(out).length === 0 ? null : out;
 }
 
 function classement(st: EspnStandings | undefined, etat: EtatTraduction): StandingRow[] | null {
@@ -1068,6 +1127,9 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
       // qu'on sache s'il s'agit de la Ligue 1 ou d'une D2 scandinave.
       const ligue = a.id ? src.autresLigues?.[a.id] : undefined;
       const coupDEnvoi = a.date ? Date.parse(a.date) : NaN;
+      const chiffres = statsRencontre(d, e);
+      const formeD = typeof d?.form === 'string' ? d.form : '';
+      const formeE = typeof e?.form === 'string' ? e.form : '';
       matches.push({
         id,
         minute: minuteAffichee(st),
@@ -1075,6 +1137,8 @@ export function traduire(src: SourceEspn, now: number, etat: EtatTraduction): Ma
         home: bref(ed),
         away: bref(ee),
         score: sc,
+        ...(chiffres ? { stats: chiffres } : {}),
+        ...(formeD || formeE ? { forme: { home: formeD, away: formeE } } : {}),
         ...(Number.isFinite(coupDEnvoi) ? { kickoff: coupDEnvoi } : {}),
         ...(ligue
           ? {

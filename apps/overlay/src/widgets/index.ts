@@ -14,6 +14,7 @@ import { fil } from './fil.js';
 import { flash } from './flash.js';
 import { lineups } from './lineups.js';
 import { momentum } from './momentum.js';
+import { mosaique } from './mosaique.js';
 import { multiplex } from './multiplex.js';
 import { odds } from './odds.js';
 import { prematch } from './prematch.js';
@@ -62,6 +63,7 @@ export const REGISTRY: Record<string, WidgetFactory> = {
   // par sa clé, donc deux compositions à l'écran demandent deux clés.
   'lineups-away': lineups,
   multiplex,
+  mosaique,
   momentum,
   standings,
   odds,

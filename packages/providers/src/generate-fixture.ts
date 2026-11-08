@@ -205,13 +205,37 @@ function multiplexAt(matchMs: number): OtherMatch[] {
     }
     const minute =
       theirMs <= 0 ? '—' : theirMs >= 90 * MIN ? 'FIN' : String(Math.floor(theirMs / MIN) + 1);
+    /*
+     * Les chiffres de la rencontre, pour que la mosaïque ait de quoi vivre
+     * hors ligne. Ils sont DÉRIVÉS du temps écoulé et du score, pas tirés au
+     * sort à chaque image : une fiche dont la possession saute de 40 % à
+     * 70 % toutes les secondes rend la page impossible à juger, et c'est
+     * justement sur ce jeu de démonstration qu'on juge la mise en page.
+     *
+     * Un match qui n'a pas commencé n'a pas de chiffres — c'est le cas qu'il
+     * faut pouvoir regarder, puisque c'est celui où la fiche doit se réduire
+     * à son score sans laisser de barres à zéro.
+     */
+    const dom = multiplexScores[i]![0];
+    const ext = multiplexScores[i]![1];
+    const minutes = Math.max(0, Math.floor(theirMs / MIN));
+    const stats =
+      theirMs <= 0
+        ? undefined
+        : {
+            possession: [50 + ((i * 7) % 19) - 9, 50 - ((i * 7) % 19) + 9] as Pair,
+            shots: [Math.round(minutes * 0.14) + dom * 2, Math.round(minutes * 0.12) + ext * 2] as Pair,
+            shotsOnTarget: [Math.round(minutes * 0.05) + dom, Math.round(minutes * 0.04) + ext] as Pair,
+            corners: [Math.round(minutes * 0.06), Math.round(minutes * 0.05)] as Pair,
+          };
     return {
       id: `mx-${i}`,
       minute,
       live: theirMs > 0 && theirMs < 90 * MIN,
       home,
       away,
-      score: [multiplexScores[i]![0], multiplexScores[i]![1]] as Pair,
+      score: [dom, ext] as Pair,
+      ...(stats ? { stats } : {}),
     };
   });
 }

@@ -114,9 +114,41 @@ export const NOM_COURT: Record<string, string> = {
   'fra.w.1': 'D1 fém.',
 };
 
+/**
+ * Au-delà, un nom ne tient plus dans la marge du multiplex et se fait couper.
+ * Mesuré sur la plus étroite des deux mises en page.
+ */
+const LONGUEUR_MARGE = 16;
+
+/** Les mots qu'on laisse tomber avant de fabriquer un sigle. */
+const MOTS_VIDES = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'of', 'the', 'and', 'et']);
+
 export function nomCourtCompetition(id: string | undefined, nom: string | undefined): string {
   if (id && NOM_COURT[id]) return NOM_COURT[id];
-  return nom ?? '';
+  const complet = nom ?? '';
+  if (complet.length <= LONGUEUR_MARGE) return complet;
+
+  /*
+   * ── Le repli, pour tout le football qui n'est pas dans la table ─────────
+   *
+   * La table ne peut pas couvrir les quatre cents compétitions qu'ESPN
+   * publie, et jusqu'ici tout ce qui n'y figurait pas s'affichait en entier :
+   * « Russian Premier League » se faisait trancher au milieu d'un mot, ce
+   * qui ne se lit pas et ressemble à un défaut d'affichage.
+   *
+   * Trois mots ou plus deviennent donc un sigle — « RPL » —, qui est
+   * d'ailleurs ce qu'en fait la presse. Deux mots restent tels quels : un
+   * sigle de deux lettres n'est pas plus lisible que le nom, il est juste
+   * plus obscur.
+   */
+  const mots = complet.split(/\s+/).filter((m) => m.length > 0 && !MOTS_VIDES.has(m.toLowerCase()));
+  if (mots.length >= 3) {
+    return mots
+      .map((m) => m[0]!.toUpperCase())
+      .join('')
+      .slice(0, 5);
+  }
+  return complet;
 }
 
 export function interetDe(competitionId?: string): number {

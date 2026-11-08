@@ -14,6 +14,7 @@ import {
   grouperMultiplex,
   interetDe,
   INTERET_INCONNU,
+  nomCourtCompetition,
   trierMultiplex,
   vientDeMarquer,
 } from './multiplex.js';
@@ -178,4 +179,23 @@ test('le repli est déterministe : deux calculs, même résultat', () => {
     ev(30_000, [match({ id: 'a', score: [1, 0] }), match({ id: 'b', score: [0, 0] })]),
   ];
   assert.deepEqual(reduce(events, T0 + 40_000).otherMatches, reduce(events, T0 + 40_000).otherMatches);
+});
+
+test('un nom de compétition trop long devient un sigle', () => {
+  // Le cas vu à l'antenne : « Russian Premier League » tranché en plein mot
+  // dans la marge du multiplex. Trois mots ou plus → sigle.
+  assert.equal(nomCourtCompetition('rus.1', 'Russian Premier League'), 'RPL');
+  assert.equal(nomCourtCompetition(undefined, 'Primeira Liga de Portugal'), 'PLP');
+});
+
+test('un nom court est laissé tel quel', () => {
+  assert.equal(nomCourtCompetition('tur.1', 'Süper Lig'), 'Süper Lig');
+  assert.equal(nomCourtCompetition(undefined, 'Liga F'), 'Liga F');
+  // Deux mots longs restent lisibles en toutes lettres : un sigle de deux
+  // lettres n'apprendrait rien de plus.
+  assert.equal(nomCourtCompetition(undefined, 'Eredivisie'), 'Eredivisie');
+});
+
+test('la table passe avant le repli', () => {
+  assert.equal(nomCourtCompetition('uefa.champions', 'UEFA Champions League'), 'LDC');
 });

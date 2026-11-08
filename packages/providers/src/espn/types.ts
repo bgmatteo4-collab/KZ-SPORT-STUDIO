@@ -125,6 +125,17 @@ export interface EspnCompetitor {
   /** Une CHAÎNE : « 2 ». Autoritaire — on ne compte jamais les buts soi-même. */
   score?: string;
   team?: EspnTeam;
+  /**
+   * Les chiffres de CETTE rencontre, dans le tableau de bord global.
+   *
+   * `possessionPct`, `totalShots`, `shotsOnTarget`, `wonCorners`,
+   * `foulsCommitted`. On appelait ce tableau toutes les quarante-cinq
+   * secondes pour les scores sans jamais ouvrir ce champ : chaque match de
+   * la soirée portait déjà ses statistiques.
+   */
+  statistics?: { name?: string; displayValue?: string; value?: number }[];
+  /** La forme récente, telle quelle : « WWLDL », le plus récent en tête. */
+  form?: string;
 }
 
 export interface EspnTeam {

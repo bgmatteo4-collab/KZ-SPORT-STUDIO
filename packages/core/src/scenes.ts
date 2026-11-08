@@ -490,6 +490,42 @@ export const SCENES: Scene[] = [
   },
   {
     /*
+     * LA SOIRÉE EUROPÉENNE.
+     *
+     * Un mardi de Ligue des Champions, huit matchs commencent à la même
+     * minute. Le multiplex en donne les scores, et c'est exactement ce qu'il
+     * faut — mais il ne répond pas à la question qui vient juste après :
+     * « ce 1-0, il est mérité, ou ils sont en train de craquer ? ». Une
+     * ligne ne peut pas le dire. Une fiche, oui.
+     *
+     * Et ça ne coûte aucune requête : les chiffres de chaque rencontre sont
+     * déjà dans le tableau de bord global qu'on appelle toutes les
+     * quarante-cinq secondes pour les scores. On ne les lisait pas.
+     *
+     * La caméra reste dans le coin : le streamer commente une grille, il
+     * n'est pas le sujet.
+     */
+    id: 'europe',
+    name: 'Soirée européenne',
+    cam: CAM.coin,
+    camStyle: 'framed',
+    transition: FADE,
+    layers: [
+      { widget: 'backdrop', slot: SLOT.plein, z: 10 },
+      { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
+      // Deux colonnes de fiches : à trois, les chiffres passent sous les
+      // quatorze pixels et la fiche redevient une ligne, en plus encombrant.
+      { widget: 'mosaique', slot: SLOT.pleinPrincipal, z: 20, opts: { colonnes: 2 } },
+      // Et le multiplex à côté, pour les rencontres qui ne tiennent pas dans
+      // la grille : une fiche par match ne veut pas dire que les autres
+      // disparaissent.
+      { widget: 'multiplex', slot: SLOT.pleinSecondaire, z: 20 },
+      { widget: 'social', slot: SLOT.socialSurCam, z: 20 },
+      { widget: 'cam-frame', slot: CAM.coin, z: 110 },
+    ],
+  },
+  {
+    /*
      * LE DÉBRIEF, et non plus « Pause ».
      *
      * L'ancienne scène était un écran d'attente : un mot au milieu, deux
@@ -552,6 +588,7 @@ export const NOM_WIDGET: Record<string, string> = {
   lineups: 'Composition',
   'lineups-away': 'Composition (extérieur)',
   multiplex: 'Autres matchs',
+  mosaique: 'Mosaïque des matchs',
   momentum: 'Momentum',
   standings: 'Classement',
   confrontation: 'Confrontation',

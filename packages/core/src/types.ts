@@ -303,6 +303,40 @@ export interface OtherMatch {
    * sur les deux sources d'OBS et conservé après un rechargement.
    */
   scoreChangedAt?: number;
+  /**
+   * Les chiffres de CE match-là, quand la source les donne.
+   *
+   * ── Pourquoi c'est gratuit ─────────────────────────────────────────────
+   *
+   * On les croyait réservés au match qu'on suit, et ils sont dans le tableau
+   * de bord global qu'on appelle déjà toutes les quarante-cinq secondes pour
+   * les scores — un objet `statistics` par équipe et par rencontre. Aucune
+   * requête de plus : seulement un champ qu'on ne lisait pas.
+   *
+   * C'est ce qui rend possible une soirée de Coupe d'Europe où chaque match
+   * a sa fiche plutôt que sa ligne.
+   */
+  stats?: StatsRencontre;
+  /**
+   * La forme récente des deux équipes, telle que la source l'écrit :
+   * « WWLDL », le plus récent en tête. On la garde BRUTE — la traduire en
+   * V/N/D ici obligerait chaque fournisseur à s'accorder sur nos lettres.
+   */
+  forme?: { home: string; away: string };
+}
+
+/**
+ * Les chiffres d'une rencontre du multiplex. Tous optionnels : les
+ * fournisseurs n'en publient pas autant pour une D2 que pour une finale, et
+ * une case vide vaut mieux qu'un zéro inventé.
+ */
+export interface StatsRencontre {
+  /** En pourcentage, [domicile, extérieur]. */
+  possession?: Pair;
+  shots?: Pair;
+  shotsOnTarget?: Pair;
+  corners?: Pair;
+  fouls?: Pair;
 }
 
 /** Le minimum pour dessiner un écu et un nom. */
