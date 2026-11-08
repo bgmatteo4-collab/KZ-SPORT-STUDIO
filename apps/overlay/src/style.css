@@ -1003,7 +1003,12 @@ html {
   text-align: center;
 }
 
+/* `flex: none`, comme les lignes du fil. Sans lui le conteneur comprime la
+   ligne de cause au lieu de la laisser prendre ses dix-sept pixels, et elle
+   se retrouve rognée par le bas du panneau — ce qui ressemble à une police
+   mal choisie plutôt qu'à un défaut de place. */
 .momentum__cause {
+  flex: none;
   margin: var(--s2) 0 0;
   overflow: hidden;
   color: var(--ink-dim);
@@ -1148,8 +1153,14 @@ html {
   grid-template-columns: 78px 30px minmax(0, 1fr) 82px minmax(0, 1fr) 30px;
   align-items: center;
   gap: var(--s2);
-  flex: none;
-  height: 44px;
+  /* Les lignes absorbent le mou plutôt que de le laisser au bas du panneau.
+     Le bilan au-dessus disparaît quand la source ne publie pas le détail, et
+     une liste de cinq lignes de 44 px sous un panneau de 860 laissait alors
+     la moitié de la carte vide. Bornées, elles s'étirent sans jamais devenir
+     des pavés. */
+  flex: 1 1 44px;
+  min-height: 44px;
+  max-height: 72px;
   padding: 0 var(--s3);
   border-radius: var(--radius-pill);
   background: var(--slab);

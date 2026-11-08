@@ -190,6 +190,15 @@ const SLOT = {
 
   /** Bandeau de titre, sous la caméra des scènes d'attente et de débrief. */
   titreCentre: { x: 0.18, y: 0.72, w: 0.64, h: 0.18 },
+
+  /**
+   * La bande sous la GRANDE caméra, celle du débrief.
+   *
+   * `titreCentre` ne convenait pas : il est plus large que la caméra et
+   * déborde de part et d'autre, ce qui va pour un titre posé sur un fond vide
+   * et pas pour un panneau qui doit se lire comme le socle de l'image.
+   */
+  socleCamera: { x: 0.265, y: 0.645, w: 0.47, h: 0.255 },
 } as const satisfies Record<string, Rect>;
 
 // Les emplacements de la caméra. Elle est LOGÉE dans le plateau, jamais posée
@@ -206,8 +215,16 @@ const CAM = {
   centreHaut: { x: 0.258, y: 0.158, w: 0.484, h: 0.812 },
   /** Plein cadre, pour le commentaire sans habillage lourd. */
   plein: { x: 0, y: 0, w: 1, h: 1 },
-  /** Grande, centrée haut : attente et débrief. */
-  grande: { x: 0.265, y: 0.13, w: 0.47, h: 0.56 },
+  /**
+   * Grande, centrée haut : le débrief.
+   *
+   * Raccourcie de six centièmes depuis que le socle porte la courbe de
+   * momentum. À l'ancienne hauteur il restait deux cent seize pixels en
+   * dessous, et la courbe a un plancher : sans lui elle s'écrase à zéro et
+   * il ne reste que deux pourcentages, qu'une barre dirait aussi bien. Le
+   * second nom d'équipe se retrouvait coupé par le bas du cadre.
+   */
+  grande: { x: 0.265, y: 0.13, w: 0.47, h: 0.5 },
   /** La cellule basse droite des scènes plein écran. */
   coin: { x: 0.622, y: 0.655, w: 0.366, h: 0.317 },
   /** Deux invités côte à côte dans la case centrale. */
@@ -472,21 +489,40 @@ export const SCENES: Scene[] = [
     ],
   },
   {
+    /*
+     * LE DÉBRIEF, et non plus « Pause ».
+     *
+     * L'ancienne scène était un écran d'attente : un mot au milieu, deux
+     * panneaux sur les côtés, et au centre un grand trou. Or la mi-temps
+     * n'est pas une attente — c'est le seul moment du direct où le streamer
+     * a quinze minutes pour PARLER, et où il a quelque chose à dire. Le
+     * laisser hors champ devant un fond vide, c'est rater le passage le
+     * plus bavard de l'émission.
+     *
+     * Il est donc grand et au centre, et tout ce qu'il va commenter est
+     * disposé autour de lui : les chiffres à gauche, le récit de la période
+     * à droite, et sous son image la courbe qui en donne la forme. Rien
+     * n'est décoratif — chaque panneau est une phrase qu'il peut dire.
+     */
     id: 'pause',
-    name: 'Pause',
-    cam: null,
-    camStyle: 'full',
+    name: 'Débrief',
+    cam: CAM.grande,
+    camStyle: 'framed',
     transition: FADE,
     layers: [
       { widget: 'backdrop', slot: SLOT.plein, z: 10 },
       { widget: 'score-banner', slot: SLOT.banniere, z: 120 },
-      { widget: 'multiplex', slot: SLOT.colonneGauche, z: 20 },
-      { widget: 'standings', slot: SLOT.colonneDroite, z: 20 },
+      // Les chiffres de la période. Mêmes que pendant le match : c'est à la
+      // pause qu'on commente enfin les corners, les fautes et les cartons.
+      { widget: 'stats', slot: SLOT.colonneGauche, z: 20, opts: { large: true } },
+      // Le récit, en face. Le fil hiérarchise — il met les occasions avant
+      // les corners — donc il raconte la période au lieu de la lister.
+      { widget: 'fil', slot: SLOT.colonneDroiteTout, z: 20 },
+      // Le socle de l'image : la forme du match, d'un coup d'œil.
+      { widget: 'momentum', slot: SLOT.socleCamera, z: 20 },
       { widget: 'stream-counters', slot: SLOT.compteurs, z: 20 },
-      { widget: 'title', slot: SLOT.titreCentre, z: 120, opts: { text: 'Pause' } },
-      // Le bandeau de titre descend jusqu'à 0,9 : à l'ancienne place, le bloc
-      // réseaux lui mordait dessus sur soixante-quatorze pixels.
       { widget: 'social', slot: SLOT.socialCentre, z: 20 },
+      { widget: 'cam-frame', slot: CAM.grande, z: 110 },
     ],
   },
 ];
